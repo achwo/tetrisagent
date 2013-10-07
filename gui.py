@@ -21,7 +21,7 @@ import sys
 SCALE = 20
 OFFSET = 3
 MAXX = 10
-MAXY = 22
+MAXY = 12
 
 NO_OF_LEVELS = 10
 
@@ -85,6 +85,13 @@ class Board( Frame ):
                              height=(max_y * scale)+offset,
                              width= (max_x * scale)+offset)
         self.canvas.pack()
+
+    def clear(self):
+        keys = self.landed.keys()
+        for k in keys:
+            block = self.landed.pop(k)
+            self.delete_block(block)
+            del block
 
     def check_for_complete_row( self, blocks ):
         """
@@ -398,7 +405,7 @@ class game_controller(object):
         self.parent = parent
         self.score = 0
         self.level = 0
-        self.delay = 1000    #ms
+        self.delay = 1    #ms
         
         #lookup table
         self.shapes = [square_shape,
@@ -440,7 +447,7 @@ class game_controller(object):
         self.shape = self.get_next_shape()
         #self.board.output()
 
-        self.after_id = self.parent.after( self.delay, self.move_my_shape )
+        #self.after_id = self.parent.after( self.delay, self.move_my_shape )
         
     def handle_move(self, direction):
         #if you can't move then you've hit something
@@ -458,22 +465,10 @@ class game_controller(object):
                 # that the check before creating it failed and the
                 # game is over!
                 if self.shape is None:
-                    tkMessageBox.showwarning(
-                        title="GAME OVER",
-                        message ="Score: %7d\tLevel: %d\t" % (
-                            self.score, self.level),
-                        parent=self.parent
-                        )
-                    Toplevel().destroy()
-                    self.parent.destroy()
-                    sys.exit(0)
-                
-                # do we go up a level?
-                if (self.level < NO_OF_LEVELS and 
-                    self.score >= self.thresholds[ self.level]):
-                    self.level+=1
-                    self.delay-=100
-                    
+                    self.score = 0
+                    self.board.clear()
+                    self.shape = self.get_next_shape()
+
                 self.status_bar.set("Score: %-7d\t Level: %d " % (
                     self.score, self.level+1)
                 )
@@ -515,6 +510,15 @@ class game_controller(object):
             message="Continue?",
             type=tkMessageBox.OK)
         self.after_id = self.parent.after( self.delay, self.move_my_shape )
+
+    def setpos_callback(self, event):
+        self.handle_move(LEFT)
+        self.handle_move(LEFT)
+        self.handle_move(LEFT)
+        self.handle_move(LEFT)
+
+        for idx in xrange(event):
+            self.handle_move(RIGHT)
     
     def move_my_shape( self ):
         if self.shape:
@@ -525,13 +529,17 @@ class game_controller(object):
         """
         Randomly select which tetrominoe will be used next.
         """
-        the_shape = self.shapes[ randint(0,len(self.shapes)-1) ]
+        the_shape = self.shapes[0]
+        #the_shape = self.shapes[ randint(0,len(self.shapes)-1) ]
         return the_shape.check_and_create(self.board)
-        
-        
-if __name__ == "__main__":
+ 
+def main():
     root = Tk()
     root.title("Tetris Tk")
+    global theGame
     theGame = game_controller( root )
     
     root.mainloop()
+
+if __name__ == "__main__":
+    main()
