@@ -79,8 +79,22 @@ def is_final_state(s):
     return len(consecutive_zeros) <= 0 or max(consecutive_zeros) < 2
 
 
+# noinspection PyAugmentAssignment
 def episode(S0, Q, A, epsilon, alpha, interactive):
-    gamma = 0.8
+    """
+    Run one episode of the learning algorithm
+    An episode ends, when the next state is a final state
+
+    :param S0:              start state
+    :param Q:               Quality of the state-action-combination
+    :param A:               list with possible actions
+    :param epsilon          epsilon greedy probability
+    :param alpha:           learning rate
+    :param interactive:     If True, things will be animated
+    :return:
+    """
+    gamma = 0.8     # weighting of future rewards in comparison to current
+                    # reward
     s = S0
     last_field = s
     while not is_final_state(s):
@@ -93,6 +107,8 @@ def episode(S0, Q, A, epsilon, alpha, interactive):
             if next_s is not None:
                 utils.animate_piece_drop(s, a)
         h = (s, a)
+
+        # TD-Learning Algorithm:
         Q[h] = Q[h] + alpha * (
             r + gamma * Q[(next_s, choose_action(Q, A, next_s))] - Q[h]
         )
@@ -108,12 +124,24 @@ def episode(S0, Q, A, epsilon, alpha, interactive):
 
 def play(episodes, training, width, height, start_epsilon, start_alpha, Q_in,
          interactive, verbose):
-    '''
+    """
     Play a game of tetris with the given parameters
+    Temporal Difference Learning
 
     Returns a tuple (Q, last_s, episodes_played) containing the Q values, the
     last state and the number of episodes played.
-    '''
+    :param episodes:        Number of episodes to be played. If None,
+                            run until optimal strategy is found
+    :param training:        number of training rounds (?)
+    :param start_epsilon:   used for epsilon-greedy. probability to choose an
+                            option other than the current optimum to learn
+                            new paths
+    :param start_alpha:     learning rate (weighting of new rewards in contrast
+                            to older ones
+    :param Q_in:            dictionary with q-values
+    :param interactive:     sleep between episodes..
+    :param verbose:         if True, console output will be longer
+    """
     alpha = start_alpha
     A = range(0, width-1)
     S0 = tuple([tuple(0 for i in range(0, width)) for i in range(0, height)])

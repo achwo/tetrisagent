@@ -3,6 +3,7 @@
 import sys
 import curses
 import locale
+import algorithm
 import tetris
 import utils
 import gui
@@ -33,9 +34,13 @@ def play(win, interactive, verbose, very_verbose, episode_count,
 
     start_new_thread(gui.main, ())
 
-    Q, last_s, episodes = tetris.play(
-        episode_count, training_count, 10, 12, 0.0, 0.2, None, interactive,
-        verbose)
+    algo = algorithm.TemporalDifferenceLearning()
+    Q, last_s, episodes = algo.play(episode_count, training_count, 10, 12, 0.0,
+                                    0.2, None, interactive, verbose)
+
+    # Q, last_s, episodes = tetris.play(
+    #     episode_count, training_count, 10, 12, 0.0, 0.2, None, interactive,
+    #     verbose)
     if very_verbose:
         print("# of Q values:".format(len(Q)))
         for sa, qval in Q.items():
