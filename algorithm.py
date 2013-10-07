@@ -4,7 +4,11 @@ import random
 import utils
 
 
-class TemporalDifferenceLearning:
+class Algorithm:
+    pass
+
+
+class TemporalDifferenceLearningWithEpsilonGreedyPolicy(Algorithm):
 
     def choose_action(self, Q, A, s):
         candidates = [A[0]]
@@ -14,7 +18,7 @@ class TemporalDifferenceLearning:
                 candidates = [action]
             elif Q[(s, action)] == Q[(s, candidates[0])]:
                 action in candidates or candidates.append(action)
-            #print("{}: {}".format(s, candidates))
+                #print("{}: {}".format(s, candidates))
         return random.choice(candidates)
 
     def create_new_state(self, s, row, a):
@@ -22,13 +26,13 @@ class TemporalDifferenceLearning:
         for i in s:
             s_new.append(tuple(i))
         s_new[row] = list(s_new[row])
-        s_new[row+1] = list(s_new[row+1])
+        s_new[row + 1] = list(s_new[row + 1])
         s_new[row][a] = 1
-        s_new[row][a+1] = 1
-        s_new[row+1][a] = 1
-        s_new[row+1][a+1] = 1
+        s_new[row][a + 1] = 1
+        s_new[row + 1][a] = 1
+        s_new[row + 1][a + 1] = 1
         s_new[row] = tuple(s_new[row])
-        s_new[row+1] = tuple(s_new[row+1])
+        s_new[row + 1] = tuple(s_new[row + 1])
         ret = tuple(s_new)
         return ret
 
@@ -36,14 +40,14 @@ class TemporalDifferenceLearning:
         if s is None:
             return 0
         for row in s:
-            if len(row) != reduce(lambda x, y: x+y, row):
+            if len(row) != reduce(lambda x, y: x + y, row):
                 return -100
         return 100
 
     def reward(self, s, a):
-        row = len(s)-1
+        row = len(s) - 1
         # find row where the piece will land on
-        while row >= 0 and s[row][a] == 0 and s[row][a+1] == 0:
+        while row >= 0 and s[row][a] == 0 and s[row][a + 1] == 0:
             row -= 1
         row += 1
         # piece hit the roof => gameover
@@ -72,18 +76,18 @@ class TemporalDifferenceLearning:
         if s is None:
             return True
         consecutive_zeros = [len(list(v)) for g, v in
-                             groupby(s[len(s)-1], lambda x: x == 0) if g]
+                             groupby(s[len(s) - 1], lambda x: x == 0) if g]
         return len(consecutive_zeros) <= 0 or max(consecutive_zeros) < 2
 
     # noinspection PyAugmentAssignment
-    def episode(self, S0, Q, A, epsilon, alpha, interactive):
+    def episode(self, S0, Q, ACTIONS, epsilon, alpha, interactive):
         """
         Run one episode of the learning algorithm
         An episode ends, when the next state is a final state
 
         :param S0:              start state
         :param Q:               Quality of the state-action-combination
-        :param A:               list with possible actions
+        :param ACTIONS          list of possible actions
         :param epsilon          epsilon greedy probability
         :param alpha:           learning rate
         :param interactive:     If True, things will be animated
@@ -91,60 +95,64 @@ class TemporalDifferenceLearning:
         """
         gamma = 0.8     # weighting of future rewards in comparison to current
         # reward
-        s = S0
-        last_field = s
-        while not self.is_final_state(s):
-            a = self.choose_action(Q, A, s)
+        state = S0
+        last_field = state
+        while not self.is_final_state(state):
+            action = self.choose_action(Q, ACTIONS, state)
             if random.random() < epsilon:
-                idx_a = A.index(a)
-                a = random.choice(A[:idx_a] + A[(idx_a+1):])
-            r, next_s = self.reward(s, a)
+                idx_a = ACTIONS.index(action)
+                action = random.choice(ACTIONS[:idx_a] + ACTIONS[(idx_a + 1):])
+            reward, next_state = self.reward(state, action)
             if interactive:
-                if next_s is not None:
-                    utils.animate_piece_drop(s, a)
-            h = (s, a)
+                if next_state is not None:
+                    utils.animate_piece_drop(state, action)
+            h = (state, action)
 
             # TD-Learning Algorithm:
             Q[h] = Q[h] + alpha * (
-                r + gamma * Q[(next_s, self.choose_action(Q, A, next_s))] - Q[h]
+                reward + gamma * Q[
+                    (next_state, self.choose_action(Q, ACTIONS, next_state))] -
+                Q[h]
             )
 
-            s = next_s
-            if s is not None:
-                last_field = s
-        return (last_field, r)
+            state = next_state
+            if state is not None:
+                last_field = state
+        return (last_field, reward)
 
-    def play(self, episodes, training, width, height, start_epsilon, start_alpha, Q_in,
-             interactive, verbose):
+    def play(self, episodes, training, width, height, start_epsilon,
+             start_alpha, Q_in, interactive, verbose):
         """
         Play a game of tetris with the given parameters
         Temporal Difference Learning
 
-        Returns a tuple (Q, last_s, episodes_played) containing the Q values, the
-        last state and the number of episodes played.
+        Returns a tuple (Q, last_s, episodes_played) containing the Q values,
+        the last state and the number of episodes played.
         :param episodes:        Number of episodes to be played. If None,
                                 run until optimal strategy is found
         :param training:        number of training rounds (?)
-        :param start_epsilon:   used for epsilon-greedy. probability to choose an
-                                option other than the current optimum to learn
-                                new paths
-        :param start_alpha:     learning rate (weighting of new rewards in contrast
-                                to older ones
+        :param start_epsilon:   used for epsilon-greedy. probability to choose
+                                an option other than the current optimum to
+                                learn new paths
+        :param start_alpha:     learning rate (weighting of new rewards in
+                                contrast to older ones
         :param Q_in:            dictionary with q-values
         :param interactive:     sleep between episodes..
         :param verbose:         if True, console output will be longer
         """
         alpha = start_alpha
-        A = range(0, width-1)
-        S0 = tuple([tuple(0 for i in range(0, width)) for i in range(0, height)])
+        ACTIONS = range(0, width - 1)
+        S0 = tuple(
+            [tuple(0 for i in range(0, width)) for i in range(0, height)])
         Q = Q_in or defaultdict(int)
-        last_s = None
+        last_state = None
         episodes_played = 0
         epsilon = start_epsilon
         optimal_strategy_found = False
-        while episodes is not None and episodes_played < episodes or \
-                                episodes is None and not optimal_strategy_found:
-            last_s, last_score = self.episode(S0, Q, A, epsilon, alpha, interactive)
+        while episodes is not None and episodes_played < episodes or episodes \
+            is None and not optimal_strategy_found:
+            last_state, last_score = self.episode(S0, Q, ACTIONS, epsilon, alpha,
+                                              interactive)
             episodes_played += 1
             if training is not None and \
                             episodes_played >= training:  # training done
@@ -159,7 +167,7 @@ class TemporalDifferenceLearning:
             if verbose:
                 if episodes_played % 1000 == 0:
                     utils.echofunc("", True)
-                    utils.print_state(last_s)
-                    utils.echofunc(len(Q), False)
-                    utils.echofunc(episodes_played, False)
-        return (Q, last_s, episodes_played)
+                    utils.print_state(last_state)
+                    utils.echofunc(len(Q))
+                    utils.echofunc(episodes_played)
+        return (Q, last_state, episodes_played)

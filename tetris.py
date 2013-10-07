@@ -1,6 +1,7 @@
 import random
 from collections import defaultdict
 from itertools import groupby
+import gui
 
 import utils
 
@@ -104,6 +105,8 @@ def episode(S0, Q, A, epsilon, alpha, interactive):
             a = random.choice(A[:idx_a] + A[(idx_a+1):])
         r, next_s = reward(s, a)
         if interactive:
+            gui.theGame.setpos_callback(a)
+            gui.theGame.up_callback(None)
             if next_s is not None:
                 utils.animate_piece_drop(s, a)
         h = (s, a)
@@ -116,9 +119,6 @@ def episode(S0, Q, A, epsilon, alpha, interactive):
         s = next_s
         if s is not None:
             last_field = s
-        import gui
-        gui.theGame.setpos_callback(a)
-        gui.theGame.up_callback(None)
     return (last_field, r)
 
 
