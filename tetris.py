@@ -83,6 +83,7 @@ def is_final_state(s):
 def episode(S0, Q, A, epsilon, alpha, interactive):
     """
     Run one episode of the learning algorithm
+    An episode ends, when the next state is a final state
 
     :param S0:              start state
     :param Q:               Quality of the state-action-combination
@@ -90,12 +91,10 @@ def episode(S0, Q, A, epsilon, alpha, interactive):
     :param epsilon          epsilon greedy probability
     :param alpha:           learning rate
     :param interactive:     If True, things will be animated
+    :return:
     """
     gamma = 0.8     # weighting of future rewards in comparison to current
                     # reward
-    # todo was ist A?
-    # todo was is s0
-    # todo was ist q
     s = S0
     last_field = s
     while not is_final_state(s):
@@ -140,7 +139,6 @@ def play(episodes, training, width, height, start_epsilon, start_alpha, Q_in,
     :param interactive:     sleep between episodes..
     :param verbose:         if True, console output will be longer
     """
-    #todo find gamma
     alpha = start_alpha
     A = range(0, width-1)
     S0 = tuple([tuple(0 for i in range(0, width)) for i in range(0, height)])
