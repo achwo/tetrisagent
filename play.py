@@ -30,7 +30,7 @@ def play(win, interactive, verbose, very_verbose, episode_count,
     utils.echofunc = lambda msg, clear: echo(win, msg, clear)
     utils.sleep = lambda ms: curses.napms(ms)
 
-    algo = algorithm.TemporalDifferenceLearning()
+    algo = algorithm.TemporalDifferenceLearningWithEpsilonGreedyPolicy()
     Q, last_s, episodes = algo.play(episode_count, training_count, 10, 12, 0.0,
                                     0.2, None, interactive, verbose)
 
