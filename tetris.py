@@ -100,6 +100,9 @@ def episode(S0, Q, A, epsilon, alpha, interactive):
         s = next_s
         if s is not None:
             last_field = s
+        import gui
+        gui.theGame.setpos_callback(a)
+        gui.theGame.up_callback(None)
     return (last_field, r)
 
 

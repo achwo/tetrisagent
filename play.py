@@ -5,6 +5,8 @@ import curses
 import locale
 import tetris
 import utils
+import gui
+from thread import start_new_thread
 
 
 def parse_command_line(argv):
@@ -28,6 +30,8 @@ def play(win, interactive, verbose, very_verbose, episode_count,
          training_count):
     utils.echofunc = lambda msg, clear: echo(win, msg, clear)
     utils.sleep = lambda ms: curses.napms(ms)
+
+    start_new_thread(gui.main, ())
 
     Q, last_s, episodes = tetris.play(
         episode_count, training_count, 10, 12, 0.0, 0.2, None, interactive,
