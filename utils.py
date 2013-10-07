@@ -4,7 +4,7 @@ import tetris
 import time
 
 
-def echofunc(msg, clear):
+def echofunc(msg, clear=False):
     print msg
 
 
