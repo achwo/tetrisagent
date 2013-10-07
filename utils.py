@@ -25,7 +25,7 @@ def print_state(S):
     for row in reversed(S):
         out = u""
         for i in row:
-            out += u"{} ".format(u"-" if i == 0 else u"⬛")
+            out += u"{} ".format(u"-" if i == 0 else u"#")
         echofunc(out, False)
 
 
