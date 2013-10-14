@@ -4,31 +4,25 @@ import random
 import utils
 
 # will be set through its caller
+from world import World
+
 game_controller = None
 
 
 class Algorithm(object):
-
-    def __init__(self, reward):
-        self.reward = reward
-
-    def reward(self, state, action):
-        raise NotImplementedError()
+    pass
 
 
 class TemporalDifferenceLearningWithEpsilonGreedyPolicy(Algorithm):
 
-    def __init__(self):
+    def __init__(self, world=World()):
+        self.world = world
+
+    def end_episode(self, state, action):
         pass
 
-    def reward(self, state, action):
-        """
-        Calculate the reward for the current state-action-combination
 
-        :param state:
-        :param action:
-        :return:
-        """
+    def reward_and_end_episode(self, state, action):
 
         row = len(state) - 1
         # find row where the piece will land on
@@ -40,25 +34,21 @@ class TemporalDifferenceLearningWithEpsilonGreedyPolicy(Algorithm):
         if row > len(state) - 2:
             return (self.final_score(state), None)
 
-        new_s = self.create_new_state(state, row, action)
+        new_state = self.create_new_state(state, row, action)
+        # looks for more zero groups in a row
+        # (ex. (0, 0, 1, 1, 0, 0, 1, 1, 0) result: (2, 2, 1))
         consecutive_zeros = [len(list(v)) for g, v in
-                             groupby(new_s[row], lambda x: x == 0) if g]
+                             groupby(new_state[row], lambda x: x == 0) if g]
 
         # possibilities depleted => calculate final score
-        if row == len(new_s) - 2:
+        if row == len(new_state) - 2:
             if len(consecutive_zeros) <= 0 or max(consecutive_zeros) < 2:
-                return (self.final_score(new_s), new_s)
+                return (self.final_score(new_state), new_state)
 
         # otherwise, calculate current reward
-        if len(consecutive_zeros) > 0 and max(consecutive_zeros) < 2:
-            score_i = -10
-        elif len(consecutive_zeros) == 0:
-            score_i = 10
-        else:
-            score_i = 0
-        return (score_i, new_s)
+        score_i = self.world.calculate_reward(consecutive_zeros)
 
-
+        return (score_i, new_state)
 
     def choose_action(self, Q, ACTIONS, state):
         """
@@ -94,7 +84,8 @@ class TemporalDifferenceLearningWithEpsilonGreedyPolicy(Algorithm):
         state_new[row] = list(state_new[row])            # convert last 2 rows
         state_new[row + 1] = list(state_new[row + 1])    # to lists
 
-        # todo this part is block-shape specific or i don't understand it
+        # todo this part is block-shape specific
+        # add the new block into the game matrix -> new state
         state_new[row][action] = 1
         state_new[row][action + 1] = 1
         state_new[row + 1][action] = 1
@@ -108,7 +99,7 @@ class TemporalDifferenceLearningWithEpsilonGreedyPolicy(Algorithm):
 
     def final_score(self, state):
         """
-        Returns the score once the game is finished
+        Returns the score once the episode is finished
 
         :param state:
         :return:
@@ -161,14 +152,14 @@ class TemporalDifferenceLearningWithEpsilonGreedyPolicy(Algorithm):
             if random.random() < epsilon:
                 idx_a = ACTIONS.index(action)
                 action = random.choice(ACTIONS[:idx_a] + ACTIONS[(idx_a + 1):])
-            reward, next_state = self.reward(state, action)
+            reward, next_state = self.reward_and_end_episode(state, action)
 
             game_controller.setpos_callback(action)
             game_controller.up_callback(None)
 
             if interactive:
                 if next_state is not None:
-                    utils.animate_piece_drop(state, action)
+                    utils.animate_piece_drop(self, state, action)
             h = (state, action)
 
             # TD-Learning Algorithm:

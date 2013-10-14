@@ -3,11 +3,12 @@ import sys
 import curses
 import locale
 import algorithm
-import tetris
 import utils
 import gui
 from thread import start_new_thread
+from algorithm import TemporalDifferenceLearningWithEpsilonGreedyPolicy
 
+algo = TemporalDifferenceLearningWithEpsilonGreedyPolicy()
 
 def parse_command_line(argv):
     interactive = "-i" in argv
@@ -30,8 +31,8 @@ def play(win, interactive, verbose, very_verbose, episode_count,
          training_count):
     utils.echofunc = lambda msg, clear: echo(win, msg, clear)
     utils.sleep = lambda ms: curses.napms(ms)
-
-    algo = algorithm.TemporalDifferenceLearningWithEpsilonGreedyPolicy()
+    #
+    # algo = algorithm.TemporalDifferenceLearningWithEpsilonGreedyPolicy()
     Q, last_s, episodes = algo.play(episode_count, training_count, 10, 12, 0.0,
                                     0.2, None, interactive, verbose)
 
@@ -48,7 +49,7 @@ def play(win, interactive, verbose, very_verbose, episode_count,
 
     utils.echofunc(
         "game ended after {} episodes, final_score: {}, last state:"
-        .format(episodes, tetris.final_score(last_s)), False)
+        .format(episodes, algo.final_score(last_s)), False)
     utils.print_state(last_s)
 
     while True:
@@ -73,5 +74,5 @@ if __name__ == '__main__':
     tk_root = gui.init()
     controller = gui.game_controller(tk_root)
     algorithm.game_controller = controller
-    start_new_thread(gui.main, (tk_root,))
+    # start_new_thread(gui.main, (tk_root,))
     curses.wrapper(play, *parse_command_line(sys.argv))

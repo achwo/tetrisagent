@@ -1,8 +1,8 @@
 from __future__ import division
 from collections import Counter
-import tetris
 #import utils
 import sys
+from algorithm import TemporalDifferenceLearningWithEpsilonGreedyPolicy
 
 
 def process(alpha):
@@ -11,12 +11,14 @@ def process(alpha):
     training = 550
     epsilon = 0.0
     accumulator = Counter({100: 0, -100: 0})
+    global algo
+    algo = TemporalDifferenceLearningWithEpsilonGreedyPolicy()
     Q = None
     print "# episode, P(win), wins, losses"
     for e in range(1, episodes + 1):
         Q, last_s, episodes_played = \
-            tetris.play(1, 1, 6, 6, epsilon, alpha, Q, False, False)
-        score = tetris.final_score(last_s)
+            algo.play(1, 1, 6, 6, epsilon, alpha, Q, False, False)
+        score = algo.final_score(last_s)
         if e >= training:
             epsilon = 0
             alpha = 0
@@ -34,7 +36,8 @@ def process(alpha):
 def play_episodes(epsilon, row_no):
     episodes_played = []
     for i in range(0, 1000):
-        Q, s, p = tetris.play(None, None, 4, 6, epsilon, 0.2, None, False, False)
+        Q, s, p = algo.play(None, None, 4, 6, epsilon, 0.2, None,
+                                 False, False)
         episodes_played.append(p)
     print "{}\t{}\t{}\t\t\t{}\t\t{}".format(
         row_no,
