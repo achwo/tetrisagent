@@ -29,6 +29,8 @@ LEFT = "left"
 RIGHT = "right"
 DOWN = "down"
 
+controller = None
+
 direction_d = { "left": (-1, 0), "right": (1, 0), "down": (0, 1) }
 
 def level_thresholds( first_level, no_of_levels ):
@@ -496,6 +498,7 @@ class game_controller(object):
             self.handle_move( DOWN )
             
     def a_callback( self, event):
+        self.board.clear()
         if self.shape:
             self.shape.rotate(clockwise=True)
             
@@ -532,14 +535,14 @@ class game_controller(object):
         the_shape = self.shapes[0]
         #the_shape = self.shapes[ randint(0,len(self.shapes)-1) ]
         return the_shape.check_and_create(self.board)
- 
-def main():
-    root = Tk()
-    root.title("Tetris Tk")
-    global theGame
-    theGame = game_controller( root )
-    
-    root.mainloop()
+
+def init():
+    tk_root = Tk()
+    tk_root.title("Tetris Tk")
+    return tk_root
+
+def main(tk_root):
+    tk_root.mainloop()
 
 if __name__ == "__main__":
     main()
