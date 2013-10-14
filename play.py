@@ -1,5 +1,4 @@
 # coding=utf8
-
 import sys
 import curses
 import locale
@@ -31,8 +30,6 @@ def play(win, interactive, verbose, very_verbose, episode_count,
          training_count):
     utils.echofunc = lambda msg, clear: echo(win, msg, clear)
     utils.sleep = lambda ms: curses.napms(ms)
-
-    start_new_thread(gui.main, ())
 
     algo = algorithm.TemporalDifferenceLearningWithEpsilonGreedyPolicy()
     Q, last_s, episodes = algo.play(episode_count, training_count, 10, 12, 0.0,
@@ -73,4 +70,8 @@ def echo(win, msg, clear):
 
 if __name__ == '__main__':
     locale.setlocale(locale.LC_ALL, "")
+    tk_root = gui.init()
+    controller = gui.game_controller(tk_root)
+    algorithm.game_controller = controller
+    start_new_thread(gui.main, (tk_root,))
     curses.wrapper(play, *parse_command_line(sys.argv))

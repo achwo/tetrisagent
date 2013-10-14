@@ -2,7 +2,9 @@ from collections import defaultdict
 from itertools import groupby
 import random
 import utils
-import gui
+
+# will be set through its caller
+game_controller = None
 
 
 class Algorithm:
@@ -105,8 +107,8 @@ class TemporalDifferenceLearningWithEpsilonGreedyPolicy(Algorithm):
                 action = random.choice(ACTIONS[:idx_a] + ACTIONS[(idx_a + 1):])
             reward, next_state = self.reward(state, action)
             if interactive:
-                gui.theGame.setpos_callback(a)
-                gui.theGame.up_callback(None)
+                game_controller.setpos_callback(action)
+                game_controller.up_callback(None)
                 if next_state is not None:
                     utils.animate_piece_drop(state, action)
             h = (state, action)
