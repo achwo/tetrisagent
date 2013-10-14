@@ -1,11 +1,12 @@
 # coding=utf8
-
 import sys
 import curses
 import locale
 import algorithm
 import tetris
 import utils
+import gui
+from thread import start_new_thread
 
 
 def parse_command_line(argv):
@@ -69,4 +70,8 @@ def echo(win, msg, clear):
 
 if __name__ == '__main__':
     locale.setlocale(locale.LC_ALL, "")
+    tk_root = gui.init()
+    controller = gui.game_controller(tk_root)
+    algorithm.game_controller = controller
+    start_new_thread(gui.main, (tk_root,))
     curses.wrapper(play, *parse_command_line(sys.argv))

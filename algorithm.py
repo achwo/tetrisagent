@@ -3,6 +3,9 @@ from itertools import groupby
 import random
 import utils
 
+# will be set through its caller
+game_controller = None
+
 
 def default_reward(self, state, action):
     """
@@ -157,6 +160,8 @@ class TemporalDifferenceLearningWithEpsilonGreedyPolicy(Algorithm):
                 action = random.choice(ACTIONS[:idx_a] + ACTIONS[(idx_a + 1):])
             reward, next_state = self.reward(state, action)
             if interactive:
+                game_controller.setpos_callback(action)
+                game_controller.up_callback(None)
                 if next_state is not None:
                     utils.animate_piece_drop(state, action)
             h = (state, action)
