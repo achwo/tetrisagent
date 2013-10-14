@@ -11,11 +11,11 @@ def sleep(ms):
     time.sleep(ms/1000)
 
 
-def animate_piece_drop(algo, s, a):
+def animate_piece_drop(world, s, a):
     row = len(s)-2
     while row >= 0 and s[row][a] == 0 and s[row][a+1] == 0:
         echofunc("", True)
-        print_state(algo.create_new_state(s, row, a))
+        print_state(world.create_new_state(s, row, a))
         row -= 1
         time.sleep(0.01)
 

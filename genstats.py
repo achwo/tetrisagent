@@ -3,6 +3,7 @@ from collections import Counter
 #import utils
 import sys
 from algorithms import TemporalDifferenceLearningWithEpsilonGreedyPolicy
+import world
 
 
 def process(alpha):
@@ -17,7 +18,7 @@ def process(alpha):
     print "# episode, P(win), wins, losses"
     for e in range(1, episodes + 1):
         Q, last_s, episodes_played = \
-            algo.play(1, 1, 6, 6, epsilon, alpha, Q, False, False)
+            algo.play(1, 1, world.FIELD_WIDTH, world.FIELD_HEIGHT, epsilon, alpha, Q, False, False)
         score = algo.final_score(last_s)
         if e >= training:
             epsilon = 0

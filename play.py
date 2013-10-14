@@ -7,8 +7,10 @@ import utils
 import gui
 from thread import start_new_thread
 from algorithms import TemporalDifferenceLearningWithEpsilonGreedyPolicy
+import world
 
 algo = TemporalDifferenceLearningWithEpsilonGreedyPolicy()
+
 
 def parse_command_line(argv):
     interactive = "-i" in argv
@@ -31,9 +33,9 @@ def play(win, interactive, verbose, very_verbose, episode_count,
          training_count):
     utils.echofunc = lambda msg, clear: echo(win, msg, clear)
     utils.sleep = lambda ms: curses.napms(ms)
-    #
-    # algo = algorithm.TemporalDifferenceLearningWithEpsilonGreedyPolicy()
-    Q, last_s, episodes = algo.play(episode_count, training_count, 10, 12, 0.0,
+
+    Q, last_s, episodes = algo.play(episode_count, training_count,
+                                    world.FIELD_WIDTH, world.FIELD_HEIGHT, 0.0,
                                     0.2, None, interactive, verbose)
 
     if very_verbose:
