@@ -2,6 +2,7 @@ from collections import defaultdict
 from itertools import groupby
 import random
 import utils
+import world as w
 
 # will be set through its caller
 from world import World
@@ -33,7 +34,7 @@ class TemporalDifferenceLearningWithEpsilonGreedyPolicy(Algorithm):
         if row > len(state) - 2:
             return (self.final_score(state), None)
 
-        new_state = self.create_new_state(state, row, action)
+        new_state = self.world.create_new_state(state, row, action)
         # looks for more zero groups in a row
         # (ex. (0, 0, 1, 1, 0, 0, 1, 1, 0) result: (2, 2, 1))
         consecutive_zeros = [len(list(v)) for g, v in
@@ -67,34 +68,6 @@ class TemporalDifferenceLearningWithEpsilonGreedyPolicy(Algorithm):
                 action in candidates or candidates.append(action)
                 #print("{}: {}".format(state, candidates))
         return random.choice(candidates)
-
-    def create_new_state(self, state, row, action):
-        """
-        Creates a new state based on the previous state and the action
-
-        :param state:
-        :param row:
-        :param action:
-        :return:
-        """
-        state_new = []
-        for i in state:
-            state_new.append(tuple(i))
-        state_new[row] = list(state_new[row])            # convert last 2 rows
-        state_new[row + 1] = list(state_new[row + 1])    # to lists
-
-        # todo this part is block-shape specific
-        # add the new block into the game matrix -> new state
-        state_new[row][action] = 1
-        state_new[row][action + 1] = 1
-        state_new[row + 1][action] = 1
-        state_new[row + 1][action + 1] = 1
-
-        state_new[row] = tuple(state_new[row])           # convert last 2 rows
-        state_new[row + 1] = tuple(state_new[row + 1])   # back to tuples
-
-        ret = tuple(state_new)
-        return ret
 
     def final_score(self, state):
         """
@@ -158,7 +131,7 @@ class TemporalDifferenceLearningWithEpsilonGreedyPolicy(Algorithm):
 
             if interactive:
                 if next_state is not None:
-                    utils.animate_piece_drop(self, state, action)
+                    utils.animate_piece_drop(self.world, state, action)
             h = (state, action)
 
             # TD-Learning Algorithm:
@@ -196,8 +169,7 @@ class TemporalDifferenceLearningWithEpsilonGreedyPolicy(Algorithm):
         """
         alpha = start_alpha
         ACTIONS = range(0, width - 1)
-        S0 = tuple(
-            [tuple(0 for i in range(0, width)) for i in range(0, height)])
+
         Q = Q_in or defaultdict(int)
         last_state = None
         episodes_played = 0
@@ -205,7 +177,7 @@ class TemporalDifferenceLearningWithEpsilonGreedyPolicy(Algorithm):
         optimal_strategy_found = False
         while episodes is not None and episodes_played < episodes or episodes \
             is None and not optimal_strategy_found:
-            last_state, last_score = self.episode(S0, Q, ACTIONS, epsilon,
+            last_state, last_score = self.episode(w.S0, Q, ACTIONS, epsilon,
                                                   alpha,
                                                   interactive)
             episodes_played += 1
