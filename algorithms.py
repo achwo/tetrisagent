@@ -21,7 +21,6 @@ class TemporalDifferenceLearningWithEpsilonGreedyPolicy(Algorithm):
     def end_episode(self, state, action):
         pass
 
-
     def reward_and_end_episode(self, state, action):
 
         row = len(state) - 1

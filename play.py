@@ -2,11 +2,11 @@
 import sys
 import curses
 import locale
-import algorithm
+import algorithms
 import utils
 import gui
 from thread import start_new_thread
-from algorithm import TemporalDifferenceLearningWithEpsilonGreedyPolicy
+from algorithms import TemporalDifferenceLearningWithEpsilonGreedyPolicy
 
 algo = TemporalDifferenceLearningWithEpsilonGreedyPolicy()
 
@@ -73,6 +73,6 @@ if __name__ == '__main__':
     locale.setlocale(locale.LC_ALL, "")
     tk_root = gui.init()
     controller = gui.game_controller(tk_root)
-    algorithm.game_controller = controller
+    algorithms.game_controller = controller
     # start_new_thread(gui.main, (tk_root,))
     curses.wrapper(play, *parse_command_line(sys.argv))
