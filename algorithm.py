@@ -7,44 +7,6 @@ import utils
 game_controller = None
 
 
-def default_reward(self, state, action):
-    """
-    Calculate the reward for the current state-action-combination
-
-    :param state:
-    :param action:
-    :return:
-    """
-
-    row = len(state) - 1
-    # find row where the piece will land on
-    while row >= 0 and state[row][action] == 0 and state[row][
-                action + 1] == 0:
-        row -= 1
-    row += 1
-    # piece hit the roof => gameover
-    if row > len(state) - 2:
-        return (self.final_score(state), None)
-
-    new_s = self.create_new_state(state, row, action)
-    consecutive_zeros = [len(list(v)) for g, v in
-                         groupby(new_s[row], lambda x: x == 0) if g]
-
-    # possibilities depleted => calculate final score
-    if row == len(new_s) - 2:
-        if len(consecutive_zeros) <= 0 or max(consecutive_zeros) < 2:
-            return (self.final_score(new_s), new_s)
-
-    # otherwise, calculate current reward
-    if len(consecutive_zeros) > 0 and max(consecutive_zeros) < 2:
-        score_i = -10
-    elif len(consecutive_zeros) == 0:
-        score_i = 10
-    else:
-        score_i = 0
-    return (score_i, new_s)
-
-
 class Algorithm(object):
 
     def __init__(self, reward):
@@ -56,8 +18,47 @@ class Algorithm(object):
 
 class TemporalDifferenceLearningWithEpsilonGreedyPolicy(Algorithm):
 
-    def __init__(self, reward=default_reward):
-        super(Algorithm, self).__init__(reward)    # todo waaht?
+    def __init__(self):
+        pass
+
+    def reward(self, state, action):
+        """
+        Calculate the reward for the current state-action-combination
+
+        :param state:
+        :param action:
+        :return:
+        """
+
+        row = len(state) - 1
+        # find row where the piece will land on
+        while row >= 0 and state[row][action] == 0 and state[row][
+                    action + 1] == 0:
+            row -= 1
+        row += 1
+        # piece hit the roof => gameover
+        if row > len(state) - 2:
+            return (self.final_score(state), None)
+
+        new_s = self.create_new_state(state, row, action)
+        consecutive_zeros = [len(list(v)) for g, v in
+                             groupby(new_s[row], lambda x: x == 0) if g]
+
+        # possibilities depleted => calculate final score
+        if row == len(new_s) - 2:
+            if len(consecutive_zeros) <= 0 or max(consecutive_zeros) < 2:
+                return (self.final_score(new_s), new_s)
+
+        # otherwise, calculate current reward
+        if len(consecutive_zeros) > 0 and max(consecutive_zeros) < 2:
+            score_i = -10
+        elif len(consecutive_zeros) == 0:
+            score_i = 10
+        else:
+            score_i = 0
+        return (score_i, new_s)
+
+
 
     def choose_action(self, Q, ACTIONS, state):
         """
@@ -159,9 +160,11 @@ class TemporalDifferenceLearningWithEpsilonGreedyPolicy(Algorithm):
                 idx_a = ACTIONS.index(action)
                 action = random.choice(ACTIONS[:idx_a] + ACTIONS[(idx_a + 1):])
             reward, next_state = self.reward(state, action)
+
+            game_controller.setpos_callback(action)
+            game_controller.up_callback(None)
+
             if interactive:
-                game_controller.setpos_callback(action)
-                game_controller.up_callback(None)
                 if next_state is not None:
                     utils.animate_piece_drop(state, action)
             h = (state, action)
@@ -176,6 +179,7 @@ class TemporalDifferenceLearningWithEpsilonGreedyPolicy(Algorithm):
             state = next_state
             if state is not None:
                 last_field = state
+            utils.sleep(800)
         return (last_field, reward)
 
     def play(self, episodes, training, width, height, start_epsilon,
@@ -222,7 +226,7 @@ class TemporalDifferenceLearningWithEpsilonGreedyPolicy(Algorithm):
                 epsilon = 0
                 alpha = 0
             if interactive:
-                utils.sleep(100)
+                utils.sleep(500)
             if verbose:
                 if episodes_played % 1000 == 0:
                     utils.echofunc("", True)

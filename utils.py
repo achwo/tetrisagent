@@ -18,7 +18,7 @@ def animate_piece_drop(s, a):
         echofunc("", True)
         print_state(tetris.create_new_state(s, row, a))
         row -= 1
-        time.sleep(0.02)
+        time.sleep(0.01)
 
 
 def print_state(S):
