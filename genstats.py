@@ -2,7 +2,7 @@ from __future__ import division
 from collections import Counter
 #import utils
 import sys
-from algorithm import TemporalDifferenceLearningWithEpsilonGreedyPolicy
+from algorithms import TemporalDifferenceLearningWithEpsilonGreedyPolicy
 
 
 def process(alpha):
