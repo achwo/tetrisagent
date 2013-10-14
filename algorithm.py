@@ -127,6 +127,8 @@ class TemporalDifferenceLearningWithEpsilonGreedyPolicy(Algorithm):
         """
         if state is None:
             return True
+
+        # looks something like [
         consecutive_zeros = [len(list(v)) for g, v in
                              groupby(state[len(state) - 1], lambda x: x == 0) if
                              g]
