@@ -7,6 +7,8 @@ S0 = tuple(
 
 
 class World(object):
+    def __init__(self):
+        self.game_controller = None
 
     def reward(self, state, action):
         pass

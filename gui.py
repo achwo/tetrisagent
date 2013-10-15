@@ -233,9 +233,9 @@ class shape(object):
         before creating and returning the shape instance. Otherwise, return
         None.
         """
-        for coord in coords:
-            if not board.check_block( coord ):
-                return None
+        #for coord in coords:
+        #    if not board.check_block( coord ):
+        #        return None
         
         return cls( board, coords, colour)
             
@@ -468,7 +468,6 @@ class game_controller(object):
                 # game is over!
                 if self.shape is None:
                     self.score = 0
-                    self.board.clear()
                     self.shape = self.get_next_shape()
 
                 self.status_bar.set("Score: %-7d\t Level: %d " % (
@@ -481,11 +480,13 @@ class game_controller(object):
 
     def left_callback( self, event ):
         if self.shape:
-            self.handle_move( LEFT )
+            self.shape.move(LEFT)
+            #self.handle_move( LEFT )
         
     def right_callback( self, event ):
         if self.shape:
-            self.handle_move( RIGHT )
+            self.shape.move(RIGHT)
+            #self.handle_move( RIGHT )
 
     def up_callback( self, event ):
         if self.shape:
@@ -495,10 +496,10 @@ class game_controller(object):
 
     def down_callback( self, event ):
         if self.shape:
-            self.handle_move( DOWN )
+            self.shape.move(DOWN)
+            #self.handle_move( DOWN )
             
     def a_callback( self, event):
-        self.board.clear()
         if self.shape:
             self.shape.rotate(clockwise=True)
             
@@ -515,14 +516,19 @@ class game_controller(object):
         self.after_id = self.parent.after( self.delay, self.move_my_shape )
 
     def setpos_callback(self, event):
-        self.handle_move(LEFT)
-        self.handle_move(LEFT)
-        self.handle_move(LEFT)
-        self.handle_move(LEFT)
+        if self.shape:
+            self.handle_move(LEFT)
+            self.handle_move(LEFT)
+            self.handle_move(LEFT)
+            self.handle_move(LEFT)
 
-        for idx in xrange(event):
-            self.handle_move(RIGHT)
-    
+            for idx in xrange(event):
+                self.handle_move(RIGHT)
+
+    def clear_callback(self, event):
+        self.board.clear()
+        self.shape = self.get_next_shape()
+
     def move_my_shape( self ):
         if self.shape:
             self.handle_move( DOWN )
@@ -536,12 +542,11 @@ class game_controller(object):
         #the_shape = self.shapes[ randint(0,len(self.shapes)-1) ]
         return the_shape.check_and_create(self.board)
 
-def init():
+def main():
     tk_root = Tk()
-    tk_root.title("Tetris Tk")
-    return tk_root
-
-def main(tk_root):
+    tk_root.title("tetris agent")
+    global controller
+    controller = game_controller(tk_root)
     tk_root.mainloop()
 
 if __name__ == "__main__":

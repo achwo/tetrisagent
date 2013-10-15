@@ -4,10 +4,7 @@ import random
 import utils
 import world as w
 
-# will be set through its caller
 from world import World
-
-game_controller = None
 
 
 class Algorithm(object):
@@ -126,9 +123,6 @@ class TemporalDifferenceLearningWithEpsilonGreedyPolicy(Algorithm):
                 action = random.choice(ACTIONS[:idx_a] + ACTIONS[(idx_a + 1):])
             reward, next_state = self.reward_and_end_episode(state, action)
 
-            game_controller.setpos_callback(action)
-            game_controller.up_callback(None)
-
             if interactive:
                 if next_state is not None:
                     utils.animate_piece_drop(self.world, state, action)
@@ -144,6 +138,10 @@ class TemporalDifferenceLearningWithEpsilonGreedyPolicy(Algorithm):
             state = next_state
             if state is not None:
                 last_field = state
+            else:
+                self.world.game_controller.setpos_callback(action)
+                self.world.game_controller.up_callback(None)
+
             utils.sleep(800)
         return (last_field, reward)
 
@@ -190,11 +188,13 @@ class TemporalDifferenceLearningWithEpsilonGreedyPolicy(Algorithm):
                 epsilon = 0
                 alpha = 0
             if interactive:
-                utils.sleep(500)
+                utils.sleep(2000)
             if verbose:
                 if episodes_played % 1000 == 0:
                     utils.echofunc("", True)
                     utils.print_state(last_state)
                     utils.echofunc(len(Q))
                     utils.echofunc(episodes_played)
+            # clear GUI board
+            self.world.game_controller.clear_callback(None)
         return (Q, last_state, episodes_played)
