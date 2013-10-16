@@ -1,3 +1,5 @@
+from itertools import groupby
+
 FIELD_WIDTH = 10
 FIELD_HEIGHT = 12
 
@@ -47,3 +49,65 @@ class World(object):
 
         ret = tuple(state_new)
         return ret
+
+    def is_final_state(self, state):
+        """
+
+        :param state:
+        :return:
+        """
+        if state is None:
+            return True
+
+        consecutive_zeros = [len(list(v)) for g, v in
+                             groupby(state[len(state) - 1], lambda x: x == 0) if
+                             g]
+        return len(consecutive_zeros) <= 0 or max(consecutive_zeros) < 2
+
+    def final_score(self, state):
+        """
+        Returns the score once the episode is finished
+
+        :param state:
+        :return:
+        """
+        # todo  could be abstracted, since it would be great as a parameter
+        #       or maybe changed entirely
+        if state is None:
+            return 0
+        for row in state:
+            # when at least one unfilled field, score is -100
+            if len(row) != reduce(lambda x, y: x + y, row):
+                return -100
+        return 100
+
+    def execute_action(self, state, action):
+        row = len(state) - 1
+        # find row where the piece will land on
+        while row >= 0 and state[row][action] == 0 and state[row][
+                    action + 1] == 0:
+            row -= 1
+        row += 1
+        # piece hit the roof => gameover
+        if row > len(state) - 2:
+            return self.final_score(state), None
+
+        new_state = self.create_new_state(state, row, action)
+
+        # looks for more zero groups in a row
+        # (ex. (0, 0, 1, 1, 0, 0, 1, 1, 0) result: (2, 2, 1))
+        consecutive_zeros = [len(list(v)) for g, v in
+                             groupby(new_state[row], lambda x: x == 0) if g]
+
+        # possibilities depleted => calculate final score
+        if row == len(new_state) - 2:
+            if len(consecutive_zeros) <= 0 or max(consecutive_zeros) < 2:
+                return self.final_score(new_state), new_state
+
+        # otherwise, calculate current reward
+        score_i = self.calculate_reward(consecutive_zeros)
+
+        return score_i, new_state
+
+    def current_state(self):
+        return self.state
