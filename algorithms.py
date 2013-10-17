@@ -14,13 +14,60 @@ class Algorithm(object):
     pass
 
 
-class TemporalDifferenceLearningWithEpsilonGreedyPolicy(Algorithm):
-
-    def __init__(self, world=World()):
+class NewTDLearning(Algorithm):
+    def __init__(self, world=World(), Q_in=None):
         self.world = world
 
-    def end_episode(self, state, action):
+        self.epsilon = 0.0
+        start_alpha = 0.2
+        self.alpha = start_alpha
+
+        self.last_state = None
+        self.training = None
+        self.episodes_played = 0
+        self.Q = Q_in or defaultdict(int)
+
+        self.ACTIONS = range(0, w.FIELD_WIDTH - 1)
+
+        self.optimal_strategy_found = False
+
+    def play(self, episodes, interactive, verbose):
+        while (episodes is not None and self.episodes_played < episodes) or \
+                (episodes is None and not self.optimal_strategy_found):
+            last_state, last_score = self.episode(w.S0, self.Q, self.ACTIONS,
+                                                  self.epsilon, self.alpha,
+                                                  interactive)
+            self.episodes_played += 1
+
+            if self.training is not None and \
+                    self.episodes_played >= self.training:
+                #training done
+                self.epsilon = 0.0
+                self.alpha = 0.0
+            if not self.optimal_strategy_found and last_score == 100:
+                # end training
+                self.optimal_strategy_found = True
+                self.epsilon = 0.0
+                self.alpha = 0.0
+            if interactive:
+                utils.sleep(50)
+            if verbose:
+                if self.episodes_played % 1000 == 0:
+                    utils.echofunc('', True)
+                    utils.print_state(last_state)
+                    utils.echofunc(len(self.Q))
+                    utils.echofunc(self.episodes_played)
+            return self.Q, last_state, self.episodes_played
+        # todo last_state extrahieren
+        # todo episode()
+
+    def episode(self, s, q, ACTIONS, epsilon, alpha, interactive):
         pass
+
+
+class TemporalDifferenceLearningWithEpsilonGreedyPolicy(Algorithm):
+    def __init__(self, world=World()):
+        self.world = world
 
     def reward_and_end_episode(self, state, action):
 
@@ -32,7 +79,7 @@ class TemporalDifferenceLearningWithEpsilonGreedyPolicy(Algorithm):
         row += 1
         # piece hit the roof => gameover
         if row > len(state) - 2:
-            return (self.final_score(state), None)
+            return self.final_score(state), None
 
         new_state = self.world.create_new_state(state, row, action)
         # looks for more zero groups in a row
@@ -43,12 +90,12 @@ class TemporalDifferenceLearningWithEpsilonGreedyPolicy(Algorithm):
         # possibilities depleted => calculate final score
         if row == len(new_state) - 2:
             if len(consecutive_zeros) <= 0 or max(consecutive_zeros) < 2:
-                return (self.final_score(new_state), new_state)
+                return self.final_score(new_state), new_state
 
         # otherwise, calculate current reward
         score_i = self.world.calculate_reward(consecutive_zeros)
 
-        return (score_i, new_state)
+        return score_i, new_state
 
     def choose_action(self, Q, ACTIONS, state):
         """
@@ -144,8 +191,8 @@ class TemporalDifferenceLearningWithEpsilonGreedyPolicy(Algorithm):
             state = next_state
             if state is not None:
                 last_field = state
-            utils.sleep(800)
-        return (last_field, reward)
+            utils.sleep(100)
+        return last_field, reward
 
     def play(self, episodes, training, width, height, start_epsilon,
              start_alpha, Q_in, interactive, verbose):
@@ -176,13 +223,13 @@ class TemporalDifferenceLearningWithEpsilonGreedyPolicy(Algorithm):
         epsilon = start_epsilon
         optimal_strategy_found = False
         while episodes is not None and episodes_played < episodes or episodes \
-            is None and not optimal_strategy_found:
+                is None and not optimal_strategy_found:
             last_state, last_score = self.episode(w.S0, Q, ACTIONS, epsilon,
                                                   alpha,
                                                   interactive)
             episodes_played += 1
             if training is not None and \
-                            episodes_played >= training:  # training done
+                    episodes_played >= training:  # training done
                 epsilon = 0
                 alpha = 0
             if not optimal_strategy_found and last_score == 100:  # end training
@@ -190,11 +237,11 @@ class TemporalDifferenceLearningWithEpsilonGreedyPolicy(Algorithm):
                 epsilon = 0
                 alpha = 0
             if interactive:
-                utils.sleep(500)
+                utils.sleep(50)
             if verbose:
                 if episodes_played % 1000 == 0:
                     utils.echofunc("", True)
                     utils.print_state(last_state)
                     utils.echofunc(len(Q))
                     utils.echofunc(episodes_played)
-        return (Q, last_state, episodes_played)
+        return Q, last_state, episodes_played
