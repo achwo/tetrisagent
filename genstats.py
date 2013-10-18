@@ -18,7 +18,7 @@ def process(alpha):
     print "# episode, P(win), wins, losses"
     for e in range(1, episodes + 1):
         Q, last_s, episodes_played = \
-            algo.play(1, 1, world.FIELD_WIDTH, world.FIELD_HEIGHT, epsilon, alpha, Q, False, False)
+            algo.play(1, 1, world.FIELD_WIDTH, epsilon, alpha, Q, False, False)
         score = algo.final_score(last_s)
         if e >= training:
             epsilon = 0
@@ -37,8 +37,7 @@ def process(alpha):
 def play_episodes(epsilon, row_no):
     episodes_played = []
     for i in range(0, 1000):
-        Q, s, p = algo.play(None, None, 4, 6, epsilon, 0.2, None,
-                                 False, False)
+        Q, s, p = algo.play(None, None, 4, epsilon, 0.2, None, False, False)
         episodes_played.append(p)
     print "{}\t{}\t{}\t\t\t{}\t\t{}".format(
         row_no,
