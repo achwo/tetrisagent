@@ -135,12 +135,12 @@ class TemporalDifferenceLearningWithEpsilonGreedyPolicy(Algorithm):
                 Q[h]
             )
 
+            self.world.game_controller.setpos_callback(action)
+            self.world.game_controller.up_callback(None)
+
             state = next_state
             if state is not None:
                 last_field = state
-            else:
-                self.world.game_controller.setpos_callback(action)
-                self.world.game_controller.up_callback(None)
 
             utils.sleep(800)
         return (last_field, reward)
