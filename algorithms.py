@@ -225,3 +225,15 @@ class TemporalDifferenceLearningWithEpsilonGreedyPolicy(Algorithm):
                 if len(row) != reduce(lambda x, y: x + y, row):
                     return -100
             return 100
+
+
+class Bot(object):
+
+    def __init__(self):
+        self.training_episodes = None
+        self.training = None
+
+    def run(self):
+        for _ in itertools.repeat(None, self.training_episodes):
+            self.training()
+
