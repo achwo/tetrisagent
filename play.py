@@ -73,5 +73,6 @@ def echo(win, msg, clear):
 if __name__ == '__main__':
     locale.setlocale(locale.LC_ALL, "")
     start_new_thread(gui.main, ())
+    print gui.controller
     algo.world.game_controller = gui.controller
-    #curses.wrapper(play, *parse_command_line(sys.argv))
+    curses.wrapper(play, *parse_command_line(sys.argv))
