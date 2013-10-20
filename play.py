@@ -26,7 +26,7 @@ def parse_command_line(argv):
         training_count = int(argv[training_count_idx + 1])
     else:
         training_count = episode_count
-    return (interactive, verbose, very_verbose, episode_count, training_count)
+    return interactive, verbose, very_verbose, episode_count, training_count
 
 
 def play(win, interactive, verbose, very_verbose, episode_count,
