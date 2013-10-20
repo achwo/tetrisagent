@@ -16,6 +16,7 @@ class Algorithm(object):
 
 
 class TemporalDifferenceLearningWithEpsilonGreedyPolicy(Algorithm):
+
     def __init__(self, world=World()):
         self.world = world
 

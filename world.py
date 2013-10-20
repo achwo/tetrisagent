@@ -7,6 +7,8 @@ S0 = tuple(
 
 
 class World(object):
+    def __init__(self):
+        self.game_controller = None
 
     def calculate_reward(self, consecutive_zeros):
         if len(consecutive_zeros) > 0 and max(consecutive_zeros) < 2:

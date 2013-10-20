@@ -5,12 +5,11 @@ import locale
 import algorithms
 import utils
 import gui
+import world
 from thread import start_new_thread
 from algorithms import TemporalDifferenceLearningWithEpsilonGreedyPolicy
-import world
 
 algo = TemporalDifferenceLearningWithEpsilonGreedyPolicy()
-
 
 def parse_command_line(argv):
     interactive = "-i" in argv
@@ -73,8 +72,7 @@ def echo(win, msg, clear):
 
 if __name__ == '__main__':
     locale.setlocale(locale.LC_ALL, "")
-    tk_root = gui.init()
-    controller = gui.game_controller(tk_root)
-    algorithms.game_controller = controller
-    # start_new_thread(gui.main, (tk_root,))
+    start_new_thread(gui.main, ())
+    print gui.controller
+    algo.world.game_controller = gui.controller
     curses.wrapper(play, *parse_command_line(sys.argv))
