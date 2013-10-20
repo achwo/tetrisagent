@@ -113,8 +113,8 @@ class TemporalDifferenceLearningWithEpsilonGreedyPolicy(Algorithm):
                 reward, next_state = self.reward_and_end_episode(self.state,
                                                                  action)
 
-                game_controller.setpos_callback(action)
-                game_controller.up_callback(None)
+                self.world.game_controller.setpos_callback(action)
+                self.world.game_controller.up_callback(None)
 
                 if self.interactive:
                     if next_state is not None:
@@ -218,6 +218,7 @@ class TemporalDifferenceLearningWithEpsilonGreedyPolicy(Algorithm):
             return score_i, new_state
 
         def final_score(self, state):
+            self.world.game_controller.clear_callback(None)
             if state is None:
                 return 0
             for row in state:
