@@ -34,8 +34,8 @@ def play(win, interactive, verbose, very_verbose, episode_count,
     utils.sleep = lambda ms: curses.napms(ms)
 
     Q, last_s, episodes = algo.play(episode_count, training_count,
-                                    world.FIELD_WIDTH, world.FIELD_HEIGHT, 0.0,
-                                    0.2, None, interactive, verbose)
+                                    world.FIELD_WIDTH, 0.0, 0.2, None,
+                                    interactive, verbose)
 
     if very_verbose:
         print("# of Q values:".format(len(Q)))

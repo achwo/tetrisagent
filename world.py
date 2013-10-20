@@ -10,9 +10,6 @@ class World(object):
     def __init__(self):
         self.game_controller = None
 
-    def reward(self, state, action):
-        pass
-
     def calculate_reward(self, consecutive_zeros):
         if len(consecutive_zeros) > 0 and max(consecutive_zeros) < 2:
             score_i = -10
@@ -49,3 +46,12 @@ class World(object):
 
         ret = tuple(state_new)
         return ret
+
+
+class State(object):
+    pass
+
+
+class FieldState(State):
+    def __init__(self, state):
+        self.state = state
