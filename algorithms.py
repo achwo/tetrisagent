@@ -1,6 +1,7 @@
 from collections import defaultdict
 from itertools import groupby
 import random
+import itertools
 import utils
 import world as w
 
@@ -9,7 +10,6 @@ from world import World
 MAXIMUM_REWARD = 100
 
 game_controller = None
-
 
 class Algorithm(object):
     pass
@@ -172,9 +172,6 @@ class TemporalDifferenceLearningWithEpsilonGreedyPolicy(Algorithm):
         def choose_action(self, state):
             """
             Choose the action from ACTIONS to be executed
-
-            :param Q:       Quality-Map of the state-action-combination
-            :param ACTIONS: The available actions
             :param state:   The current state
             """
 
@@ -224,3 +221,15 @@ class TemporalDifferenceLearningWithEpsilonGreedyPolicy(Algorithm):
                 if len(row) != reduce(lambda x, y: x + y, row):
                     return -100
             return 100
+
+
+class Bot(object):
+
+    def __init__(self):
+        self.training_episodes = None
+        self.training = None
+
+    def run(self):
+        for _ in itertools.repeat(None, self.training_episodes):
+            self.training()
+
