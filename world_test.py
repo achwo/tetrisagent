@@ -39,9 +39,11 @@ class WorldTest(unittest.TestCase):
         self.world.current_state = state
         self.assertEqual(state, self.world.current_state)
 
-    @unittest.skip("")
-    def test_execute_action_places_current_shape(self):
-        self.world.shape = shapes.SquareShape()
+    def test_execute_action_updates_current_shape(self):
+        old_shape = self.world.current_shape
+        self.world.execute_action(NEUTRAL_ACTION)
+        new_shape = self.world.current_shape
+        self.assertIsNot(old_shape, new_shape)
 
 
 class ActionTest(unittest.TestCase):
