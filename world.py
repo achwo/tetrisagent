@@ -1,8 +1,11 @@
-import unittest
-import shapes
+
+def enum(**enums):
+    return type('Enum', (), enums)
 
 FIELD_WIDTH = 10
 FIELD_HEIGHT = 12
+Possible_Shapes = enum(T='T', L='L', S='S', Z='Z', O='O', I='I', J='J')
+
 
 S0 = tuple(
     [tuple(0 for i in range(0, FIELD_WIDTH)) for i in
@@ -12,9 +15,13 @@ S0 = tuple(
 class World(object):
     def __init__(self):
         self.game_controller = None
+        self.current_state = State()
         self.update_current_shape()
 
     def calculate_reward(self, consecutive_zeros):
+        """
+        alter kram
+        """
         if len(consecutive_zeros) > 0 and max(consecutive_zeros) < 2:
             score_i = -10
         elif len(consecutive_zeros) == 0:
@@ -25,6 +32,7 @@ class World(object):
 
     def create_new_state(self, state, row, action):
         """
+        alter kram
         Creates a new state based on the previous state and the action
 
         :param state:
@@ -52,7 +60,7 @@ class World(object):
         return ret
 
     def execute_action(self, action):
-        # self.place_current_shape_on_column(action.column)
+        self.place_current_shape_in_column(action.column)
         self.update_current_shape()
         return self.make_reward(action)
 
@@ -60,12 +68,18 @@ class World(object):
         return 0
 
     def update_current_shape(self):
-        self.current_shape = shapes.SquareShape()
+        self.current_shape = Possible_Shapes.O
+
+    def place_current_shape_in_column(self, column):
+        pass
 
 
 class State(object):
     def __init__(self, arrstate=S0):
         self.arrstate = arrstate
+        self.board = None
+
+
 
 
 class Action(object):

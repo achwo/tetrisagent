@@ -21,8 +21,8 @@ class Shape(object):
     @classmethod        
     def check_and_create(cls, board, coords, colour ):
         """
-        Check if the blocks that make theShapecan be placed in empty coords
-        before creating and returning theShapeinstance. Otherwise, return
+        Check if the blocks that make the Shape can be placed in empty coords
+        before creating and returning the Shape instance. Otherwise, return
         None.
         """
         #for coord in coords:

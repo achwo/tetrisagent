@@ -1,6 +1,6 @@
 import unittest
-import shapes
 from world import World, Action, State
+import world
 
 NEUTRAL_REWARD = 0
 NEGATIVE_REWARD = -10
@@ -40,10 +40,24 @@ class WorldTest(unittest.TestCase):
         self.assertEqual(state, self.world.current_state)
 
     def test_execute_action_updates_current_shape(self):
-        old_shape = self.world.current_shape
+        self.world.updated = False
+
+        def update_current_shape():
+            self.world.updated = True
+
+        self.world.update_current_shape = update_current_shape
         self.world.execute_action(NEUTRAL_ACTION)
-        new_shape = self.world.current_shape
-        self.assertIsNot(old_shape, new_shape)
+        self.assertTrue(self.world.updated)
+
+    def test_execute_action_updates_state(self):
+        self.world.updated = False
+
+        def place_current_shape_on_column(column):
+            self.world.updated = True
+
+        self.world.place_current_shape_in_column = place_current_shape_on_column
+        self.world.execute_action(NEUTRAL_ACTION)
+        self.assertTrue(self.world.updated)
 
 
 class ActionTest(unittest.TestCase):
@@ -62,6 +76,15 @@ class ActionTest(unittest.TestCase):
         self.assertTrue(self.a == self.a)
         b = Action(1)
         self.assertTrue(self.a == b)
+
+
+class StateTest(unittest.TestCase):
+    @unittest.skip("")
+    def test_place_shape_adds_shape_to_state(self):
+        s = State()
+        s.place_shape(shape=world.Possible_Shapes.O, column=0)
+
+
 
 
 # todo execute action changes the state
