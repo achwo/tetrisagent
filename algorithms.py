@@ -100,6 +100,11 @@ class TemporalDifferenceLearningWithEpsilonGreedyPolicy(Algorithm):
             self.Q[h] = self.Q[h] + self.alpha * (reward + self.gamma * self.Q[(
                 next_state, self.choose_action(next_state))] - self.Q[h])
 
+        def if_interactive_animate_drop(self, action, next_state):
+            if self.interactive:
+                if next_state is not None:
+                    utils.animate_piece_drop(self.world, self.state, action)
+
         def episode(self):
             # reward
             self.state = w.S0
@@ -116,9 +121,7 @@ class TemporalDifferenceLearningWithEpsilonGreedyPolicy(Algorithm):
                 self.world.game_controller.setpos_callback(action)
                 self.world.game_controller.up_callback(None)
 
-                if self.interactive:
-                    if next_state is not None:
-                        utils.animate_piece_drop(self.world, self.state, action)
+                self.if_interactive_animate_drop(action, next_state)
                 h = (self.state, action)
 
                 self.td_learning(h, next_state, reward)
@@ -226,15 +229,3 @@ class TemporalDifferenceLearningWithEpsilonGreedyPolicy(Algorithm):
                 if len(row) != reduce(lambda x, y: x + y, row):
                     return -100
             return 100
-
-
-class Bot(object):
-
-    def __init__(self):
-        self.training_episodes = None
-        self.training = None
-
-    def run(self):
-        for _ in itertools.repeat(None, self.training_episodes):
-            self.training()
-

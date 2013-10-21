@@ -1,3 +1,5 @@
+import unittest
+
 FIELD_WIDTH = 10
 FIELD_HEIGHT = 12
 
@@ -47,11 +49,25 @@ class World(object):
         ret = tuple(state_new)
         return ret
 
+    def execute_action(self, action):
+        return self.make_reward(action)
+
+    def make_reward(self, action):
+        return 0
+
 
 class State(object):
-    pass
+    def __init__(self, arrstate=S0):
+        self.arrstate = arrstate
 
 
-class FieldState(State):
-    def __init__(self, state):
-        self.state = state
+class Action(object):
+    def __init__(self, column):
+        self.column = column
+
+    def __eq__(self, other):
+        if type(other) is not type(self):
+            return False
+        if other is self:
+            return True
+        return other.column == self.column
