@@ -1,3 +1,6 @@
+import unittest
+import shapes
+
 FIELD_WIDTH = 10
 FIELD_HEIGHT = 12
 
@@ -9,6 +12,7 @@ S0 = tuple(
 class World(object):
     def __init__(self):
         self.game_controller = None
+        self.update_current_shape()
 
     def calculate_reward(self, consecutive_zeros):
         if len(consecutive_zeros) > 0 and max(consecutive_zeros) < 2:
@@ -47,11 +51,30 @@ class World(object):
         ret = tuple(state_new)
         return ret
 
+    def execute_action(self, action):
+        # self.place_current_shape_on_column(action.column)
+        self.update_current_shape()
+        return self.make_reward(action)
+
+    def make_reward(self, action):
+        return 0
+
+    def update_current_shape(self):
+        self.current_shape = shapes.SquareShape()
+
 
 class State(object):
-    pass
+    def __init__(self, arrstate=S0):
+        self.arrstate = arrstate
 
 
-class FieldState(State):
-    def __init__(self, state):
-        self.state = state
+class Action(object):
+    def __init__(self, column):
+        self.column = column
+
+    def __eq__(self, other):
+        if type(other) is not type(self):
+            return False
+        if other is self:
+            return True
+        return other.column == self.column
