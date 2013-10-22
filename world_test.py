@@ -85,8 +85,6 @@ class StateTest(unittest.TestCase):
         s.place_shape(shape=world.Possible_Shapes.O, column=0)
 
 
-
-
 # todo execute action changes the state
 # todo execute action adds a block to the current state
 # todo make_reward actually does something
