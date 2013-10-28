@@ -61,7 +61,6 @@ class WorldTest(unittest.TestCase):
 
 
 class ActionTest(unittest.TestCase):
-
     def setUp(self):
         self.a = Action(1)
 
@@ -78,11 +77,36 @@ class ActionTest(unittest.TestCase):
 
 
 class StateTest(unittest.TestCase):
-    @unittest.skip("")
-    def test_place_shape_adds_shape_to_state(self):
-        s = State()
-        s.place_shape(shape=world.Possible_Shapes.O, column=0)
+    def setUp(self):
+        self.s = State()
+        self.empty_state_blocks = [[0 for i in range(world.FIELD_HEIGHT)] for j
+                                   in range(world.FIELD_WIDTH)]
 
+    def test_place_shape_adds_o_shape_to_empty_state(self):
+        result = self.empty_state_blocks
+        result[0][world.FIELD_HEIGHT - 1 - 1] = 'o'
+        result[0][world.FIELD_HEIGHT - 1] = 'o'
+        result[1][world.FIELD_HEIGHT - 1 - 1] = 'o'
+        result[1][world.FIELD_HEIGHT - 1] = 'o'
+
+        new_state = self.s.place_shape(shape=world.OShape(), column=0)
+        self.assertEqual(result, new_state.blocks)
+
+    def test_place_shape_throws_exception_on_out_of_bounds_column(self):
+        with self.assertRaises(IndexError):
+            self.s.place_shape(world.Possible_Shapes.O, 10)
+
+    # @unittest.skip("")
+    def test_place_shape_adds_i_shape_to_empty_state(self):
+        self.maxDiff = None
+        result = self.empty_state_blocks
+        result[0][world.FIELD_HEIGHT - 1] = 'i'
+        result[0][world.FIELD_HEIGHT - 1 - 1] = 'i'
+        result[0][world.FIELD_HEIGHT - 1 - 2] = 'i'
+        result[0][world.FIELD_HEIGHT - 1 - 3] = 'i'
+
+        new_state = self.s.place_shape(world.IShape(), 0)
+        self.assertEqual(result, new_state.blocks)
 
 # todo execute action changes the state
 # todo execute action adds a block to the current state
