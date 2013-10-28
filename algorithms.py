@@ -107,7 +107,7 @@ class TemporalDifferenceLearningWithEpsilonGreedyPolicy(Algorithm):
 
         def episode(self):
             # reward
-            self.state = w.S0
+            self.state = w.old_S0
             last_field = self.state
             while not self.is_final_state():
                 action = self.choose_action(self.state)

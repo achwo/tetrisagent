@@ -1,15 +1,20 @@
+import copy
+
 
 def enum(**enums):
     return type('Enum', (), enums)
 
 FIELD_WIDTH = 10
 FIELD_HEIGHT = 12
-Possible_Shapes = enum(T='T', L='L', S='S', Z='Z', O='O', I='I', J='J')
+Possible_Shapes = enum(T='t', L='l', S='s', Z='z', O='o', I='i', J='j')
 
 
-S0 = tuple(
+old_S0 = tuple(
     [tuple(0 for i in range(0, FIELD_WIDTH)) for i in
      range(0, FIELD_HEIGHT)])
+
+S0 = [[0 for i in range(FIELD_HEIGHT)] for j in
+      range(FIELD_WIDTH)]
 
 
 class World(object):
@@ -74,9 +79,32 @@ class World(object):
 
 
 class State(object):
-    def __init__(self, arrstate=S0):
-        self.arrstate = arrstate
+
+    def __init__(self, blocks=S0):
+        self.blocks = blocks
         self.board = None
+        self.state = [[0 for i in range(FIELD_HEIGHT)] for j in
+                       range(FIELD_WIDTH)]
+        self.max_index_width = FIELD_WIDTH - 1
+        self.bottom_index = FIELD_HEIGHT - 1
+
+    def place_shape(self, shape, column):
+        if(column > self.max_index_width):
+            raise IndexError("Given column %i greater than max index %i",
+                             column, self.max_index_width)
+        new_blocks = copy.deepcopy(self.blocks)
+        if(type(shape) is OShape):
+            new_blocks[0][self.bottom_index -1] = shape.__repr__()
+            new_blocks[0][self.bottom_index] = shape.__repr__()
+            new_blocks[1][self.bottom_index -1] = shape.__repr__()
+            new_blocks[1][self.bottom_index] = shape.__repr__()
+        elif(type(shape) is IShape):
+            new_blocks[0][self.bottom_index] = shape.__repr__()
+            new_blocks[0][self.bottom_index -1] = shape.__repr__()
+            new_blocks[0][self.bottom_index -2] = shape.__repr__()
+            new_blocks[0][self.bottom_index -3] = shape.__repr__()
+
+        return State(new_blocks)
 
 
 class Action(object):
@@ -89,3 +117,21 @@ class Action(object):
         if other is self:
             return True
         return other.column == self.column
+
+
+class Shape(object):
+    pass
+
+class OShape(Shape):
+    def __init__(self):
+        self.coords = ((0, 0), (0, 1), (1, 0), (1, 1))
+
+    def __repr__(self):
+        return 'o'
+
+class IShape(Shape):
+    def __init__(self):
+        self.coords = ((0, 0), (0, 1), (0, 2), (0, 3))
+
+    def __repr__(self):
+        return 'i'
