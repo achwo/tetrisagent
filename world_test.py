@@ -64,12 +64,11 @@ class ActionTest(unittest.TestCase):
 
     def setUp(self):
         self.a = Action(1)
-        self.a = Action(1)
 
     def test_eq_false_cases(self):
         other_type = 1
-        self.assertFalse(self.a == other_type)
         b = Action(2)
+        self.assertFalse(self.a == other_type)
         self.assertFalse(self.a == b)
 
     def test_eq_true_cases(self):
