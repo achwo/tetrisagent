@@ -56,8 +56,7 @@ class World(object):
         state_new[row] = tuple(state_new[row])           # convert last 2 rows
         state_new[row + 1] = tuple(state_new[row + 1])   # back to tuples
 
-        ret = tuple(state_new)
-        return ret
+        return tuple(state_new)
 
     def execute_action(self, action):
         self.place_current_shape_in_column(action.column)
@@ -78,8 +77,6 @@ class State(object):
     def __init__(self, arrstate=S0):
         self.arrstate = arrstate
         self.board = None
-
-
 
 
 class Action(object):
