@@ -129,7 +129,7 @@ class TemporalDifferenceLearningWithEpsilonGreedyPolicy(Algorithm):
                 self.state = next_state
                 if self.state is not None:
                     last_field = self.state
-                utils.sleep(100)
+                utils.sleep(900)
 
             self.episodes_played += 1
             return last_field, reward

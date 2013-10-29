@@ -18,6 +18,7 @@ from random import randint
 import tkMessageBox
 import sys
 import shapes
+import world
 
 SCALE = 20
 OFFSET = 3
@@ -324,8 +325,20 @@ class game_controller(object):
             #self.handle_move( DOWN )
 
     def a_callback(self, event):
-        if self.shape:
-            self.shape.rotate(clockwise=True)
+        s = world.State()
+        s = s.place_shape(world.OShape(), 0)
+        s = s.place_shape(world.IShape(), 3)
+
+        blocks = s.blocks
+        for r in range(len(blocks)):
+            for c in range(len(blocks[r])):
+                if blocks[r][c] is "o":
+                    self.board.add_block((r, c), "red")
+                if blocks[r][c] is "i":
+                    self.board.add_block((r,c), "green")
+
+        #if self.shape:
+        #    self.shape.rotate(clockwise=True)
 
     def s_callback(self, event):
         if self.shape:
