@@ -4,10 +4,10 @@ import copy
 def enum(**enums):
     return type('Enum', (), enums)
 
+
 FIELD_WIDTH = 10
 FIELD_HEIGHT = 12
 Possible_Shapes = enum(T='t', L='l', S='s', Z='z', O='o', I='i', J='j')
-
 
 old_S0 = tuple(
     [tuple(0 for i in range(0, FIELD_WIDTH)) for i in
@@ -79,32 +79,40 @@ class World(object):
 
 
 class State(object):
-
     def __init__(self, blocks=S0):
         self.blocks = blocks
-        self.board = None
-        self.state = [[0 for i in range(FIELD_HEIGHT)] for j in
-                       range(FIELD_WIDTH)]
         self.max_index_width = FIELD_WIDTH - 1
         self.bottom_index = FIELD_HEIGHT - 1
 
     def place_shape(self, shape, column):
-        if(column > self.max_index_width):
-            raise IndexError("Given column %i greater than max index %i",
-                             column, self.max_index_width)
+        self.check_column_in_bounds(column, shape)
         new_blocks = copy.deepcopy(self.blocks)
-        if(type(shape) is OShape):
-            new_blocks[0][self.bottom_index -1] = shape.__repr__()
-            new_blocks[0][self.bottom_index] = shape.__repr__()
-            new_blocks[1][self.bottom_index -1] = shape.__repr__()
-            new_blocks[1][self.bottom_index] = shape.__repr__()
-        elif(type(shape) is IShape):
-            new_blocks[0][self.bottom_index] = shape.__repr__()
-            new_blocks[0][self.bottom_index -1] = shape.__repr__()
-            new_blocks[0][self.bottom_index -2] = shape.__repr__()
-            new_blocks[0][self.bottom_index -3] = shape.__repr__()
+        shape.add_x_offset(column)
+
+        while not self.collision(shape):
+            for coord in shape.coords:
+                coord[1] += 1
+
+        for coord in shape.coords:
+            new_blocks[coord[0]][coord[1]] = shape.__repr__()
 
         return State(new_blocks)
+
+    def collision(self, shape):
+        for coord in shape.coords:
+            if coord[1] + 1 == FIELD_HEIGHT:
+                return True
+            if self.blocks[coord[0]][coord[1] + 1] is not 0:
+                return True
+        return False
+
+    def check_column_in_bounds(self, column, shape):
+        if column > self.max_index_width or \
+                self.is_column_valid_for_given_shape(column, shape):
+            raise IndexError()
+
+    def is_column_valid_for_given_shape(self, column, shape):
+        return self.max_index_width - shape.furthest_right() < column
 
 
 class Action(object):
@@ -120,18 +128,73 @@ class Action(object):
 
 
 class Shape(object):
-    pass
+    def __init__(self):
+        self.coords = None
+
+    def furthest_right(self):
+        max = 0
+        for coord in self.coords:
+            if coord[0] > max:
+                max = coord[0]
+        return max
+
+    def add_x_offset(self, offset):
+       for coord in self.coords:
+           coord[0] += offset
+
+
 
 class OShape(Shape):
     def __init__(self):
-        self.coords = ((0, 0), (0, 1), (1, 0), (1, 1))
+        self.coords = [[0, 0], [0, 1], [1, 0], [1, 1]]
 
     def __repr__(self):
         return 'o'
 
+
 class IShape(Shape):
     def __init__(self):
-        self.coords = ((0, 0), (0, 1), (0, 2), (0, 3))
+        self.coords = [[0, 0], [0, 1], [0, 2], [0, 3]]
 
     def __repr__(self):
         return 'i'
+
+
+class LShape(Shape):
+    def __init__(self):
+        self.coords = [[0, 0], [0, 1], [0, 2], [1, 2]]
+
+    def __repr__(self):
+        return 'l'
+
+
+class JShape(Shape):
+    def __init__(self):
+        self.coords = [[0, 2], [1, 0], [1, 1], [1, 2]]
+
+    def __repr__(self):
+        return 'j'
+
+
+class TShape(Shape):
+    def __init__(self):
+        self.coords = [[0, 1], [1, 0], [1, 1], [2, 1]]
+
+    def __repr__(self):
+        return 't'
+
+
+class SShape(Shape):
+    def __init__(self):
+        self.coords = [[0, 0], [0, 1], [1, 1], [1, 2]]
+
+    def __repr__(self):
+        return 's'
+
+
+class ZShape(Shape):
+    def __init__(self):
+        self.coords = [[0, 1], [0, 2], [1, 0], [1, 1]]
+
+    def __repr__(self):
+        return 'z'
