@@ -9,8 +9,6 @@ from world import World
 
 MAXIMUM_REWARD = 100
 
-game_controller = None
-
 
 class Algorithm(object):
     pass
@@ -136,12 +134,6 @@ class OldShit(Algorithm):
             self.verbose = verbose
             self.world = world
 
-        def print_output(self):
-            utils.echofunc("", True)
-            utils.print_state(self.previous_state)
-            utils.echofunc(len(self.Q))
-            utils.echofunc(self.episodes_played)
-
         def interactive_stuff(self):
             if self.interactive:
                 utils.sleep(500)
@@ -176,9 +168,7 @@ class OldShit(Algorithm):
                 next_state, self.choose_action(next_state))] - self.Q[h])
 
         def interactive_animate_drop(self, action, next_state):
-            if self.interactive:
-                if next_state is not None:
-                    utils.animate_piece_drop(self.world, self.state, action)
+            pass
 
         def episode(self):
             # reward
@@ -192,9 +182,6 @@ class OldShit(Algorithm):
                         self.ACTIONS[:idx_a] + self.ACTIONS[(idx_a + 1):])
                 reward, next_state = self.reward_and_end_episode(self.state,
                                                                  action)
-
-                self.world.game_controller.setpos_callback(action)
-                self.world.game_controller.up_callback(None)
 
                 self.interactive_animate_drop(action, next_state)
                 h = (self.state, action)
@@ -296,7 +283,6 @@ class OldShit(Algorithm):
             return score_i, new_state
 
         def final_score(self, state):
-            self.world.game_controller.clear_callback(None)
             if state is None:
                 return 0
             for row in state:
