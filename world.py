@@ -27,7 +27,8 @@ class World(object):
         return self.evaluate_features()
 
     def update_current_shape(self):
-        possible_shapes = [OShape, JShape, IShape, LShape, ZShape, TShape, SShape]
+        possible_shapes = [OShape, JShape, IShape, LShape, ZShape, TShape,
+                           SShape]
         self.current_shape = self.random.choice(possible_shapes)()
 
     def place_current_shape_in_column(self, column):
@@ -171,6 +172,7 @@ class SShape(Shape):
 class ZShape(Shape):
     def __init__(self):
         super(ZShape, self).__init__([[0, 1], [0, 2], [1, 0], [1, 1]], 'z')
+
 
 class CollisionShape(Shape):
     def __init__(self):
