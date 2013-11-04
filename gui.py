@@ -253,6 +253,10 @@ class game_controller(object):
             self.score, self.level + 1)
         )
 
+        quitButton = Button(parent, text="Quit",
+            command=parent.quit)
+        quitButton.place(x=0, y=0)
+
         self.board = Board(
             parent,
             scale=SCALE,
@@ -325,17 +329,37 @@ class game_controller(object):
             #self.handle_move( DOWN )
 
     def a_callback(self, event):
+        self.board.clear()
         s = world.State()
         s = s.place_shape(world.OShape(), 0)
         s = s.place_shape(world.IShape(), 3)
+        s = s.place_shape(world.OShape(), 0)
+        s = s.place_shape(world.OShape(), 1)
+        s = s.place_shape(world.OShape(), 8)
+        s = s.place_shape(world.OShape(), 7)
+        s = s.place_shape(world.ZShape(), 7)
+        s = s.place_shape(world.SShape(), 7)
+        s = s.place_shape(world.JShape(), 2)
+        s = s.place_shape(world.LShape(), 1)
+        s = s.place_shape(world.TShape(), 5)
 
         blocks = s.blocks
         for r in range(len(blocks)):
             for c in range(len(blocks[r])):
                 if blocks[r][c] is "o":
-                    self.board.add_block((r, c), "red")
+                    self.board.add_block((r, c), "yellow")
                 if blocks[r][c] is "i":
-                    self.board.add_block((r,c), "green")
+                    self.board.add_block((r, c), "cyan")
+                if blocks[r][c] is "z":
+                    self.board.add_block((r, c), "red")
+                if blocks[r][c] is "s":
+                    self.board.add_block((r, c), "green")
+                if blocks[r][c] is "j":
+                    self.board.add_block((r, c), "blue")
+                if blocks[r][c] is "l":
+                    self.board.add_block((r, c), "orange")
+                if blocks[r][c] is "t":
+                    self.board.add_block((r, c), "magenta")
 
         #if self.shape:
         #    self.shape.rotate(clockwise=True)
