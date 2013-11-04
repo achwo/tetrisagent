@@ -24,7 +24,7 @@ class World(object):
         self.update_current_shape()
 
     def actions(self):
-        return self.current_state.possible_actions()
+        return self.current_state.possible_actions(self.current_shape)
 
     def execute_action(self, action):
         self.place_current_shape_in_column(action.column)
@@ -89,11 +89,20 @@ class State(object):
 
     def check_column_in_bounds(self, column, shape):
         if column > self.max_index_width or \
-                self.is_column_valid_for_given_shape(column, shape):
+                self.column_valid_for_given_shape(column, shape):
             raise IndexError()
 
-    def is_column_valid_for_given_shape(self, column, shape):
+    def column_valid_for_given_shape(self, column, shape):
         return self.max_index_width - shape.furthest_right() < column
+
+    def possible_actions(self, shape):
+
+        actions = list(range(0, FIELD_WIDTH))
+        for column in range(0, FIELD_WIDTH):
+            if self.column_valid_for_given_shape(column, shape):
+                actions.append(Action(column))
+
+        return actions
 
 
 class Action(object):
