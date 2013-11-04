@@ -1,9 +1,10 @@
 from collections import defaultdict
 from itertools import groupby
 import random
+import time
 from sys import _current_frames
-import utils
 import world as w
+import threading
 
 from world import World
 
@@ -84,6 +85,19 @@ class TDLearningAlgorithm(Algorithm):
         return set(best_actions)
 
 
+class TDLearningAlgorithmSlow(TDLearningAlgorithm):
+    def _step(self):
+        TDLearningAlgorithm._step(self)
+        time.sleep(0.5)
+        self.dataQ.put(1)
+
+    def _episode(self):
+        self._initialize_state()
+        while (not self.stop_event.is_set() and 
+               not self.current_state.terminal):
+            self._step()
+
+
 class OldShit(Algorithm):
     def __init__(self, world=World()):
         self.world = world
@@ -136,7 +150,7 @@ class OldShit(Algorithm):
 
         def interactive_stuff(self):
             if self.interactive:
-                utils.sleep(500)
+                time.sleep(500)
 
         def verbose_stuff(self):
             if self.verbose and self.episodes_played % 1000 == 0:
@@ -191,7 +205,7 @@ class OldShit(Algorithm):
                 self.state = next_state
                 if self.state is not None:
                     last_field = self.state
-                utils.sleep(900)
+                time.sleep(900)
 
             self.episodes_played += 1
             return last_field, reward
