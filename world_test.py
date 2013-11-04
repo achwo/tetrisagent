@@ -1,4 +1,5 @@
 import unittest
+from mock import MagicMock
 from world import World, Action, State
 import world
 import copy
@@ -18,22 +19,8 @@ class WorldTest(unittest.TestCase):
         self.world = World()
 
     def test_execute_action_returns_a_reward(self):
-        self.assertEqual(0, self.world.execute_action(Action(0)))
-
-    @unittest.skip("")
-    def test_execute_action_returns_positive_reward_on_well_rated_action(self):
-        def make_reward(action):
-            if action == POSITIVE_ACTION:
-                return POSITIVE_REWARD
-            elif action == NEGATIVE_ACTION:
-                return NEGATIVE_REWARD
-            else:
-                return NEUTRAL_REWARD
-
-        self.world.make_reward = make_reward
-        self.reward_on_action(POSITIVE_ACTION, POSITIVE_REWARD)
-        self.reward_on_action(NEUTRAL_ACTION, NEUTRAL_REWARD)
-        self.reward_on_action(NEGATIVE_ACTION, NEGATIVE_REWARD)
+        state, reward = self.world.execute_action(Action(0))
+        self.assertEqual(10, reward)
 
     def reward_on_action(self, action, reward):
         self.assertEqual(reward, self.world.execute_action(action))
@@ -44,24 +31,14 @@ class WorldTest(unittest.TestCase):
         self.assertEqual(state, self.world.current_state)
 
     def test_execute_action_updates_current_shape(self):
-        self.world.updated = False
-
-        def update_current_shape():
-            self.world.updated = True
-
-        self.world.update_current_shape = update_current_shape
+        self.world.update_current_shape = MagicMock()
         self.world.execute_action(NEUTRAL_ACTION)
-        self.assertTrue(self.world.updated)
+        self.assertTrue(self.world.update_current_shape.called)
 
     def test_execute_action_updates_state(self):
-        self.world.updated = False
-
-        def place_current_shape_on_column(column):
-            self.world.updated = True
-
-        self.world.place_current_shape_in_column = place_current_shape_on_column
+        self.world.place_current_shape_in_column = MagicMock()
         self.world.execute_action(NEUTRAL_ACTION)
-        self.assertTrue(self.world.updated)
+        self.assertTrue(self.world.place_current_shape_in_column.called)
 
 
 class ActionTest(unittest.TestCase):
@@ -98,7 +75,7 @@ class StateTest(unittest.TestCase):
 
     def test_place_shape_throws_exception_on_out_of_bounds_column(self):
         with self.assertRaises(IndexError):
-            self.s.place_shape(world.Possible_Shapes.O, 10)
+            self.s.place_shape(world.OShape(), 10)
 
     def test_place_shape_exception_on_high_column_with_wide_shape(self):
         with self.assertRaises(IndexError):
