@@ -249,21 +249,8 @@ class game_controller(object):
         self.parent.bind("a", self.a_callback)
 
     def a_callback(self, event):
-        dataQ.put(10)
-        s = world.State()
-        s = s.place_shape(world.OShape(), 0)
-        s = s.place_shape(world.IShape(), 3)
-        s = s.place_shape(world.OShape(), 0)
-        s = s.place_shape(world.OShape(), 1)
-        s = s.place_shape(world.OShape(), 8)
-        s = s.place_shape(world.OShape(), 7)
-        s = s.place_shape(world.ZShape(), 7)
-        s = s.place_shape(world.SShape(), 7)
-        s = s.place_shape(world.JShape(), 2)
-        s = s.place_shape(world.LShape(), 1)
-        s = s.place_shape(world.TShape(), 5)
-        self.update_board(s)
-
+        print self.board.landed
+        self.board.clear()
 
     def update_board(self, state):
         self.board.clear()
@@ -291,9 +278,13 @@ class game_controller(object):
 
 
 def update_state():
-    item = dataQ.get(timeout=0.1)
+    while True:
+        try:
+            item = dataQ.get(timeout=0.1)
+        except:
+            break
     controller.update_board(world.current_state)
-    tk_root.after(1000, update_state)
+    tk_root.after(100, update_state)
 
 
 def run(stop_event):
