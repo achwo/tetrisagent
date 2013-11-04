@@ -7,9 +7,9 @@ import utils
 import gui
 import world
 from thread import start_new_thread
-from algorithms import TemporalDifferenceLearningWithEpsilonGreedyPolicy
+from algorithms import TDLearningAlgorithm
 
-algo = TemporalDifferenceLearningWithEpsilonGreedyPolicy()
+algo = TDLearningAlgorithm()
 
 def parse_command_line(argv):
     interactive = "-i" in argv

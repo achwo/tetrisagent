@@ -66,16 +66,23 @@ class World(object):
         self.place_current_shape_in_column(action.column)
         self.update_current_shape()
 
-        return self.make_reward(action)
+        return self.current_state, self.make_reward(action)
 
     def make_reward(self, action):
+        # todo machen
         return 0
 
     def update_current_shape(self):
         self.current_shape = OShape()
 
     def place_current_shape_in_column(self, column):
-        self.current_state.place_shape(self.current_shape, column)
+        self.current_state = self.current_state.place_shape(self.current_shape, column)
+
+    def init_state(self):
+        self.current_state = State()
+
+    def current_state_terminal(self):
+        return self.current_state.terminal
 
 
 class State(object):
@@ -83,6 +90,7 @@ class State(object):
         self.blocks = blocks
         self.max_index_width = FIELD_WIDTH - 1
         self.bottom_index = FIELD_HEIGHT - 1
+        self.terminal = False
 
     def drop_shape(self, shape):
         while not self.collision(shape):
