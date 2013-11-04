@@ -35,6 +35,7 @@ class World(object):
         return self.evaluate_features()
 
     def update_current_shape(self):
+        # todo fancy shape random
         self.current_shape = OShape()
 
     def place_current_shape_in_column(self, column):
