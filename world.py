@@ -51,7 +51,6 @@ class World(object):
         state_new[row] = list(state_new[row])            # convert last 2 rows
         state_new[row + 1] = list(state_new[row + 1])    # to lists
 
-        # todo this part is block-shape specific
         # add the new block into the game matrix -> new state
         state_new[row][action] = 1
         state_new[row][action + 1] = 1
@@ -66,16 +65,17 @@ class World(object):
     def execute_action(self, action):
         self.place_current_shape_in_column(action.column)
         self.update_current_shape()
+
         return self.make_reward(action)
 
     def make_reward(self, action):
         return 0
 
     def update_current_shape(self):
-        self.current_shape = Possible_Shapes.O
+        self.current_shape = OShape()
 
     def place_current_shape_in_column(self, column):
-        pass
+        self.current_state.place_shape(self.current_shape, column)
 
 
 class State(object):
@@ -84,17 +84,22 @@ class State(object):
         self.max_index_width = FIELD_WIDTH - 1
         self.bottom_index = FIELD_HEIGHT - 1
 
-    def place_shape(self, shape, column):
-        self.check_column_in_bounds(column, shape)
-        new_blocks = copy.deepcopy(self.blocks)
-        shape.add_x_offset(column)
-
+    def drop_shape(self, shape):
         while not self.collision(shape):
             for coord in shape.coords:
                 coord[1] += 1
 
+    def add_shape_to_field(self, shape):
+        new_blocks = copy.deepcopy(self.blocks)
         for coord in shape.coords:
             new_blocks[coord[0]][coord[1]] = shape.__repr__()
+        return new_blocks
+
+    def place_shape(self, shape, column):
+        self.check_column_in_bounds(column, shape)
+        shape.add_x_offset(column)
+        self.drop_shape(shape)
+        new_blocks = self.add_shape_to_field(shape)
 
         return State(new_blocks)
 
