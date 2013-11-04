@@ -173,9 +173,5 @@ class StateTest(unittest.TestCase):
         self.s.terminal = True
         self.assertTrue(self.s.terminal)
 
-# todo execute action changes the state
-# todo execute action adds a block to the current state
-# todo make_reward actually does something
-
 if __name__ == '__main__':
     unittest.main()

@@ -32,14 +32,14 @@ class World(object):
         return self.current_state, self.make_reward(action)
 
     def make_reward(self, action):
-
         return self.evaluate_features()
 
     def update_current_shape(self):
         self.current_shape = OShape()
 
     def place_current_shape_in_column(self, column):
-        self.current_state = self.current_state.place_shape(self.current_shape, column)
+        self.current_state = self.current_state.place_shape(self.current_shape,
+                                                            column)
 
     def init_state(self):
         self.current_state = State()
@@ -87,16 +87,18 @@ class State(object):
         return False
 
     def check_column_in_bounds(self, column, shape):
-        if column > self.max_index_width or \
-                self.column_valid_for_given_shape(column, shape):
-            raise IndexError("column %i, max_index_width: %i", column, self.max_index_width)
+        if not self.column_valid_for_given_shape(column, shape):
+            raise IndexError(
+                '{0} + {2} <= {1}'.format(column, self.max_index_width,
+                                          shape.rightmost))
 
     def column_valid_for_given_shape(self, column, shape):
-        return self.max_index_width - shape.furthest_right() < column
+        return column + shape.rightmost <= self.max_index_width
+        # return self.max_index_width - shape.furthest_right() < column
 
     def possible_actions(self, shape):
+        actions = []
 
-        actions = list(range(0, FIELD_WIDTH))
         for column in range(0, FIELD_WIDTH):
             if self.column_valid_for_given_shape(column, shape):
                 actions.append(Action(column))
@@ -117,25 +119,25 @@ class Action(object):
 
 
 class Shape(object):
-    def __init__(self):
-        self.coords = None
+    def __init__(self, coords):
+        self.coords = coords
+        self.rightmost = self.__furthest_right()
 
-    def furthest_right(self):
-        max = 0
+    def __furthest_right(self):
+        maximum = 0
         for coord in self.coords:
-            if coord[0] > max:
-                max = coord[0]
-        return max
+            if coord[0] > maximum:
+                maximum = coord[0]
+        return maximum
 
     def add_x_offset(self, offset):
-       for coord in self.coords:
-           coord[0] += offset
-
+        for coord in self.coords:
+            coord[0] += offset
 
 
 class OShape(Shape):
     def __init__(self):
-        self.coords = [[0, 0], [0, 1], [1, 0], [1, 1]]
+        super(OShape, self).__init__([[0, 0], [0, 1], [1, 0], [1, 1]])
 
     def __repr__(self):
         return 'o'
@@ -143,7 +145,7 @@ class OShape(Shape):
 
 class IShape(Shape):
     def __init__(self):
-        self.coords = [[0, 0], [0, 1], [0, 2], [0, 3]]
+        super(IShape, self).__init__([[0, 0], [0, 1], [0, 2], [0, 3]])
 
     def __repr__(self):
         return 'i'
@@ -151,7 +153,7 @@ class IShape(Shape):
 
 class LShape(Shape):
     def __init__(self):
-        self.coords = [[0, 0], [0, 1], [0, 2], [1, 2]]
+        super(LShape, self).__init__([[0, 0], [0, 1], [0, 2], [1, 2]])
 
     def __repr__(self):
         return 'l'
@@ -159,7 +161,7 @@ class LShape(Shape):
 
 class JShape(Shape):
     def __init__(self):
-        self.coords = [[0, 2], [1, 0], [1, 1], [1, 2]]
+        super(JShape, self).__init__([[0, 2], [1, 0], [1, 1], [1, 2]])
 
     def __repr__(self):
         return 'j'
@@ -167,7 +169,7 @@ class JShape(Shape):
 
 class TShape(Shape):
     def __init__(self):
-        self.coords = [[0, 1], [1, 0], [1, 1], [2, 1]]
+        super(TShape, self).__init__([[0, 1], [1, 0], [1, 1], [2, 1]])
 
     def __repr__(self):
         return 't'
@@ -175,7 +177,7 @@ class TShape(Shape):
 
 class SShape(Shape):
     def __init__(self):
-        self.coords = [[0, 0], [0, 1], [1, 1], [1, 2]]
+        super(SShape, self).__init__([[0, 0], [0, 1], [1, 1], [1, 2]])
 
     def __repr__(self):
         return 's'
@@ -183,7 +185,7 @@ class SShape(Shape):
 
 class ZShape(Shape):
     def __init__(self):
-        self.coords = [[0, 1], [0, 2], [1, 0], [1, 1]]
+        super(ZShape, self).__init__([[0, 1], [0, 2], [1, 0], [1, 1]])
 
     def __repr__(self):
         return 'z'
