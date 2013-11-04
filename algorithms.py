@@ -1,5 +1,7 @@
 from collections import defaultdict
 import random
+import time
+import threading
 
 from world import World
 
@@ -78,3 +80,15 @@ class TDLearningAlgorithm(Algorithm):
                 best_actions.append(action)
 
         return set(best_actions)
+class TDLearningAlgorithmSlow(TDLearningAlgorithm):
+    def _step(self):
+        TDLearningAlgorithm._step(self)
+        time.sleep(0.5)
+        self.dataQ.put(1)
+
+    def _episode(self):
+        self._initialize_state()
+        while (not self.stop_event.is_set() and 
+               not self.current_state.terminal):
+            self._step()
+

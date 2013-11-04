@@ -3,7 +3,7 @@
 from Tkinter import *
 from time import sleep
 from random import randint
-from algorithms import TDLearningAlgorithm
+from algorithms import TDLearningAlgorithmSlow
 import Queue
 import tkMessageBox
 import sys
@@ -16,14 +16,14 @@ OFFSET = 3
 MAXX = 10
 MAXY = 12
 
-NO_OF_LEVELS = 10
-
 LEFT = "left"
 RIGHT = "right"
 DOWN = "down"
 
+global world
 global tk_root
 global controller
+global dataQ
 dataQ = Queue.Queue(maxsize=0)
 
 direction_d = {"left": (-1, 0), "right": (1, 0), "down": (0, 1)}
@@ -248,57 +248,8 @@ class game_controller(object):
 
         self.parent.bind("a", self.a_callback)
 
-    def handle_move(self, direction):
-        #if you can't move then you've hit something
-        if not self.shape.move(direction):
-
-            # if your heading down then the shape has 'landed'
-            if direction == DOWN:
-                self.score += self.board.check_for_complete_row(
-                    self.shape.blocks
-                )
-                del self.shape
-                self.shape = self.get_next_shape()
-
-                # If the shape returned is None, then this indicates that
-                # that the check before creating it failed and the
-                # game is over!
-                if self.shape is None:
-                    self.score = 0
-                    self.shape = self.get_next_shape()
-
-                self.status_bar.set("Score: %-7d\t Level: %d " % (
-                    self.score, self.level + 1)
-                )
-
-                # Signal that the shape has 'landed'
-                return False
-        return True
-
-    def left_callback(self, event):
-        if self.shape:
-            self.shape.move(LEFT)
-            #self.handle_move( LEFT )
-
-    def right_callback(self, event):
-        if self.shape:
-            self.shape.move(RIGHT)
-            #self.handle_move( RIGHT )
-
-    def up_callback(self, event):
-        if self.shape:
-            # drop the tetrominoe to the bottom
-            while self.handle_move(DOWN):
-                pass
-
-    def down_callback(self, event):
-        if self.shape:
-            self.shape.move(DOWN)
-            #self.handle_move( DOWN )
-
     def a_callback(self, event):
         dataQ.put(10)
-        self.board.clear()
         s = world.State()
         s = s.place_shape(world.OShape(), 0)
         s = s.place_shape(world.IShape(), 3)
@@ -311,8 +262,12 @@ class game_controller(object):
         s = s.place_shape(world.JShape(), 2)
         s = s.place_shape(world.LShape(), 1)
         s = s.place_shape(world.TShape(), 5)
+        self.update_board(s)
 
-        blocks = s.blocks
+
+    def update_board(self, state):
+        self.board.clear()
+        blocks = state.blocks
         for r in range(len(blocks)):
             for c in range(len(blocks[r])):
                 if blocks[r][c] is "o":
@@ -330,60 +285,23 @@ class game_controller(object):
                 if blocks[r][c] is "t":
                     self.board.add_block((r, c), "magenta")
 
-        #if self.shape:
-        #    self.shape.rotate(clockwise=True)
-
-    def s_callback(self, event):
-        if self.shape:
-            self.shape.rotate(clockwise=False)
-
-    def p_callback(self, event):
-        self.parent.after_cancel(self.after_id)
-        tkMessageBox.askquestion(
-            title="Paused!",
-            message="Continue?",
-            type=tkMessageBox.OK)
-        self.after_id = self.parent.after(self.delay, self.move_my_shape)
-
-    def setpos_callback(self, event):
-        if self.shape:
-            self.handle_move(LEFT)
-            self.handle_move(LEFT)
-            self.handle_move(LEFT)
-            self.handle_move(LEFT)
-
-            for idx in xrange(event):
-                self.handle_move(RIGHT)
 
     def clear_callback(self, event):
         self.board.clear()
-        self.shape = self.get_next_shape()
 
-    def move_my_shape(self):
-        if self.shape:
-            self.handle_move(DOWN)
-            self.after_id = self.parent.after(self.delay, self.move_my_shape)
-
-    def get_next_shape(self):
-        """
-        Randomly select which tetrominoe will be used next.
-        """
-        the_shape = self.shapes[0]
-        #the_shape = self.shapes[ randint(0,len(self.shapes)-1) ]
-        return the_shape.check_and_create(self.board)
 
 def update_state():
-    try:
-        item = dataQ.get(timeout=0.1)
-        if item:
-            print "item"
-    except:
-        pass
+    item = dataQ.get(timeout=0.1)
+    controller.update_board(world.current_state)
     tk_root.after(1000, update_state)
 
 
-def run():
-    algo = TDLearningAlgorithm()
+def run(stop_event):
+    global world
+    algo = TDLearningAlgorithmSlow()
+    algo.dataQ = dataQ
+    world = algo.world
+    algo.stop_event = stop_event
     algo.run(100)
 
 
@@ -391,8 +309,10 @@ if __name__ == "__main__":
     tk_root = Tk()
     tk_root.title("tetris agent")
     controller = game_controller(tk_root)
-    logic_thread = threading.Thread(target=run)
+    logic_stop_event = threading.Event()
+    logic_thread = threading.Thread(target=run, args=(logic_stop_event,))
     logic_thread.start()
     tk_root.after(1000, update_state)
     tk_root.mainloop()
+    logic_stop_event.set()
     logic_thread.join()
