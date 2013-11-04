@@ -11,7 +11,7 @@ import shapes
 import world
 import threading
 
-SCALE = 20
+SCALE = 30
 OFFSET = 3
 MAXX = 10
 MAXY = 12
@@ -19,6 +19,8 @@ MAXY = 12
 LEFT = "left"
 RIGHT = "right"
 DOWN = "down"
+
+REFRESH_IN_MS = 100
 
 global world
 global tk_root
@@ -77,11 +79,7 @@ class Board(Frame):
         self.canvas.pack()
 
     def clear(self):
-        keys = self.landed.keys()
-        for k in keys:
-            block = self.landed.pop(k)
-            self.delete_block(block)
-            del block
+        self.canvas.delete(ALL)
 
     def check_for_complete_row(self, blocks):
         """
@@ -284,7 +282,7 @@ def update_state():
         except:
             break
     controller.update_board(world.current_state)
-    tk_root.after(100, update_state)
+    tk_root.after(REFRESH_IN_MS, update_state)
 
 
 def run(stop_event):
@@ -293,7 +291,7 @@ def run(stop_event):
     algo.dataQ = dataQ
     world = algo.world
     algo.stop_event = stop_event
-    algo.run(100)
+    algo.run(REFRESH_IN_MS)
 
 
 if __name__ == "__main__":
@@ -301,9 +299,10 @@ if __name__ == "__main__":
     tk_root.title("tetris agent")
     controller = game_controller(tk_root)
     logic_stop_event = threading.Event()
-    logic_thread = threading.Thread(target=run, args=(logic_stop_event,))
+    logic_thread = threading.Thread(target=run, 
+                                    args=(logic_stop_event,))
     logic_thread.start()
-    tk_root.after(1000, update_state)
+    tk_root.after(REFRESH_IN_MS, update_state)
     tk_root.mainloop()
     logic_stop_event.set()
     logic_thread.join()

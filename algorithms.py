@@ -80,10 +80,12 @@ class TDLearningAlgorithm(Algorithm):
                 best_actions.append(action)
 
         return set(best_actions)
+
+
 class TDLearningAlgorithmSlow(TDLearningAlgorithm):
     def _step(self):
         TDLearningAlgorithm._step(self)
-        time.sleep(0.5)
+        time.sleep(0.2)
         self.dataQ.put(1)
 
     def _episode(self):

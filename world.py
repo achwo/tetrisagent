@@ -102,7 +102,7 @@ class State(object):
         return set(actions)
 
     def check_terminal(self):
-        if self.collision(CollisionShape()):
+        if self.collision(OShape()):
             self.terminal = True
 
 
