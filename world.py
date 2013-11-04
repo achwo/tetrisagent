@@ -76,7 +76,10 @@ class State(object):
         self.drop_shape(shape)
         new_blocks = self.add_shape_to_field(shape)
 
-        return State(new_blocks)
+        new_state = State(new_blocks)
+        new_state.check_terminal()
+
+        return new_state
 
     def collision(self, shape):
         for coord in shape.coords:
@@ -94,7 +97,6 @@ class State(object):
 
     def column_valid_for_given_shape(self, column, shape):
         return column + shape.rightmost <= self.max_index_width
-        # return self.max_index_width - shape.furthest_right() < column
 
     def possible_actions(self, shape):
         actions = []
@@ -104,6 +106,10 @@ class State(object):
                 actions.append(Action(column))
 
         return set(actions)
+
+    def check_terminal(self):
+        if self.collision(CollisionShape()):
+            self.terminal = True
 
 
 class Action(object):
@@ -119,9 +125,13 @@ class Action(object):
 
 
 class Shape(object):
-    def __init__(self, coords):
+    def __init__(self, coords, name):
         self.coords = coords
         self.rightmost = self.__furthest_right()
+        self.name = name
+
+    def __repr__(self):
+        return self.name
 
     def __furthest_right(self):
         maximum = 0
@@ -137,55 +147,40 @@ class Shape(object):
 
 class OShape(Shape):
     def __init__(self):
-        super(OShape, self).__init__([[0, 0], [0, 1], [1, 0], [1, 1]])
-
-    def __repr__(self):
-        return 'o'
+        super(OShape, self).__init__([[0, 0], [0, 1], [1, 0], [1, 1]], 'o')
 
 
 class IShape(Shape):
     def __init__(self):
-        super(IShape, self).__init__([[0, 0], [0, 1], [0, 2], [0, 3]])
-
-    def __repr__(self):
-        return 'i'
+        super(IShape, self).__init__([[0, 0], [0, 1], [0, 2], [0, 3]], 'i')
 
 
 class LShape(Shape):
     def __init__(self):
-        super(LShape, self).__init__([[0, 0], [0, 1], [0, 2], [1, 2]])
-
-    def __repr__(self):
-        return 'l'
+        super(LShape, self).__init__([[0, 0], [0, 1], [0, 2], [1, 2]], 'l')
 
 
 class JShape(Shape):
     def __init__(self):
-        super(JShape, self).__init__([[0, 2], [1, 0], [1, 1], [1, 2]])
-
-    def __repr__(self):
-        return 'j'
+        super(JShape, self).__init__([[0, 2], [1, 0], [1, 1], [1, 2]], 'j')
 
 
 class TShape(Shape):
     def __init__(self):
-        super(TShape, self).__init__([[0, 1], [1, 0], [1, 1], [2, 1]])
-
-    def __repr__(self):
-        return 't'
+        super(TShape, self).__init__([[0, 1], [1, 0], [1, 1], [2, 1]], 't')
 
 
 class SShape(Shape):
     def __init__(self):
-        super(SShape, self).__init__([[0, 0], [0, 1], [1, 1], [1, 2]])
-
-    def __repr__(self):
-        return 's'
+        super(SShape, self).__init__([[0, 0], [0, 1], [1, 1], [1, 2]], 's')
 
 
 class ZShape(Shape):
     def __init__(self):
-        super(ZShape, self).__init__([[0, 1], [0, 2], [1, 0], [1, 1]])
+        super(ZShape, self).__init__([[0, 1], [0, 2], [1, 0], [1, 1]], 'z')
 
-    def __repr__(self):
-        return 'z'
+class CollisionShape(Shape):
+    def __init__(self):
+        super(CollisionShape, self).__init__([[0, 0], [0, 1], [0, 2], [1, 0],
+                                              [1, 1], [1, 2], [2, 0], [2, 1],
+                                              [2, 2]], 'COLLISION ATTACK')

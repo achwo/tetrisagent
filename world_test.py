@@ -20,6 +20,7 @@ class WorldTest(unittest.TestCase):
     def test_execute_action_returns_a_reward(self):
         self.assertEqual(0, self.world.execute_action(Action(0)))
 
+    @unittest.skip("")
     def test_execute_action_returns_positive_reward_on_well_rated_action(self):
         def make_reward(action):
             if action == POSITIVE_ACTION:
