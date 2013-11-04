@@ -279,7 +279,7 @@ class OldShit(Algorithm):
             if row > len(state) - 2:
                 return self.final_score(state), None
 
-            new_state = self.world.create_new_state(state, row, action)
+            new_state = self.create_new_state(state, row, action)
             # looks for more zero groups in a row
             # (ex. (0, 0, 1, 1, 0, 0, 1, 1, 0) result: (2, 2, 1))
             consecutive_zeros = [len(list(v)) for g, v in
@@ -291,7 +291,7 @@ class OldShit(Algorithm):
                     return self.final_score(new_state), new_state
 
             # otherwise, calculate current reward
-            score_i = self.world.calculate_reward(consecutive_zeros)
+            score_i = self.calculate_reward(consecutive_zeros)
 
             return score_i, new_state
 
@@ -304,3 +304,42 @@ class OldShit(Algorithm):
                 if len(row) != reduce(lambda x, y: x + y, row):
                     return -100
             return 100
+
+        def calculate_reward(self, consecutive_zeros):
+            """
+            alter kram
+            """
+            if len(consecutive_zeros) > 0 and max(consecutive_zeros) < 2:
+                score_i = -10
+            elif len(consecutive_zeros) == 0:
+                score_i = 10
+            else:
+                score_i = 0
+            return score_i
+
+        def create_new_state(self, state, row, action):
+            """
+            alter kram
+            Creates a new state based on the previous state and the action
+
+            :param state:
+            :param row:
+            :param action:
+            :return:
+            """
+            state_new = []
+            for i in state:
+                state_new.append(tuple(i))
+            state_new[row] = list(state_new[row])            # convert last 2 rows
+            state_new[row + 1] = list(state_new[row + 1])    # to lists
+
+            # add the new block into the game matrix -> new state
+            state_new[row][action] = 1
+            state_new[row][action + 1] = 1
+            state_new[row + 1][action] = 1
+            state_new[row + 1][action + 1] = 1
+
+            state_new[row] = tuple(state_new[row])           # convert last 2 rows
+            state_new[row + 1] = tuple(state_new[row + 1])   # back to tuples
+
+            return tuple(state_new)
