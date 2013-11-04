@@ -13,7 +13,7 @@ class AlgorithmTests(unittest.TestCase):
         def episode():
             self.episodes += 1
 
-        self.algorithm.episode = episode
+        self.algorithm._episode = episode
 
         self.algorithm.run(100)
         self.assertEqual(100, self.episodes)
@@ -25,24 +25,10 @@ class AlgorithmTests(unittest.TestCase):
         def initialize_state():
             self.init = True
 
-        self.algorithm.initialize_state = initialize_state
+        self.algorithm._initialize_state = initialize_state
 
-        self.algorithm.episode()
+        self.algorithm._episode()
         self.assertTrue(self.init)
-
-    @unittest.skip("")
-    def test_step_does_not_run_when_state_is_terminal(self):
-        self.algorithm.world.current_state.terminal = True
-
-        self.run = False
-
-        def step():
-            self.run = True
-
-        self.algorithm.step = step
-        self.algorithm.run(1)
-
-        self.assertFalse(self.run)
 
     def test_step_choose_action(self):
         self.chosen = False
@@ -51,9 +37,9 @@ class AlgorithmTests(unittest.TestCase):
             a1 = Action(1)
             return a1
 
-        self.algorithm.choose_action = choose_action
+        self.algorithm._choose_action = choose_action
 
-        self.algorithm.step()
+        self.algorithm._step()
 
         self.assertTrue(self.chosen)
 
@@ -61,10 +47,10 @@ class AlgorithmTests(unittest.TestCase):
         self.run = False
         def take_action(action):
             self.run = True
-            return None, None
+            return self.algorithm.world.current_state, 0
 
-        self.algorithm.take_action = take_action
-        self.algorithm.step()
+        self.algorithm._take_action = take_action
+        self.algorithm._step()
 
         self.assertTrue(self.run)
 
@@ -73,8 +59,8 @@ class AlgorithmTests(unittest.TestCase):
         def q(state, action, reward):
             self.run = True
 
-        self.algorithm.q = q
-        self.algorithm.step()
+        self.algorithm._q = q
+        self.algorithm._step()
 
         self.assertTrue(self.run)
 
@@ -88,7 +74,7 @@ class AlgorithmTests(unittest.TestCase):
 
         self.algorithm.world.actions = actions
 
-        self.algorithm.step()
+        self.algorithm._step()
 
         self.assertTrue(self.run)
 
@@ -97,11 +83,11 @@ class AlgorithmTests(unittest.TestCase):
         action = Action(1)
         def execute_action(action):
             self.run = True
-            return (None, None)
+            return self.algorithm.world.current_state, 0
 
         self.algorithm.world.execute_action = execute_action
 
-        self.algorithm.step()
+        self.algorithm._step()
         self.assertTrue(self.run)
 
 
