@@ -1,9 +1,5 @@
 from collections import defaultdict
-from itertools import groupby
 import random
-from sys import _current_frames
-import utils
-import world as w
 
 from world import World
 
