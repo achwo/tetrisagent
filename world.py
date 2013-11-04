@@ -1,4 +1,5 @@
 import copy
+import random
 
 FIELD_WIDTH = 10
 FIELD_HEIGHT = 12
@@ -10,6 +11,7 @@ S0 = [[0 for i in range(FIELD_HEIGHT)] for j in
 class World(object):
     def __init__(self):
         self.current_state = State()
+        self.random = random.Random()
         self.update_current_shape()
 
     def actions(self):
@@ -25,8 +27,8 @@ class World(object):
         return self.evaluate_features()
 
     def update_current_shape(self):
-        # todo fancy shape random
-        self.current_shape = OShape()
+        possible_shapes = [OShape, JShape, IShape, LShape, ZShape, TShape, SShape]
+        self.current_shape = self.random.choice(possible_shapes)()
 
     def place_current_shape_in_column(self, column):
         self.current_state = self.current_state.place_shape(self.current_shape,
