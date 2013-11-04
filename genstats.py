@@ -2,7 +2,7 @@ from __future__ import division
 from collections import Counter
 #import utils
 import sys
-from algorithms import TemporalDifferenceLearningWithEpsilonGreedyPolicy
+from algorithms import TDLearningAlgorithm
 import world
 
 
@@ -13,7 +13,7 @@ def process(alpha):
     epsilon = 0.0
     accumulator = Counter({100: 0, -100: 0})
     global algo
-    algo = TemporalDifferenceLearningWithEpsilonGreedyPolicy()
+    algo = TDLearningAlgorithm()
     Q = None
     print "# episode, P(win), wins, losses"
     for e in range(1, episodes + 1):

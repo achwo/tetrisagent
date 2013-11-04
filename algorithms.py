@@ -1,6 +1,7 @@
 from collections import defaultdict
 from itertools import groupby
 import random
+from sys import _current_frames
 import utils
 import world as w
 
@@ -15,10 +16,14 @@ class Algorithm(object):
     pass
 
 
-class TemporalDifferenceLearningWithEpsilonGreedyPolicy(Algorithm):
-
+class TDLearningAlgorithm(Algorithm):
     def __init__(self, world=World()):
         self.world = world
+        self.current_state = self.world.current_state
+        self.random = random.Random()
+        self.Q = defaultdict(int)
+        self.alpha = 0.1 # lernrate
+        self.gamma = 0.8 # discount rate
 
     def play(self, episodes, training, width, start_epsilon, start_alpha, Q_in,
              interactive, verbose):
@@ -86,7 +91,7 @@ class TemporalDifferenceLearningWithEpsilonGreedyPolicy(Algorithm):
         def invoke(self, number_episodes):
             self.number_episodes = number_episodes
             while self.not_finished_with_episodes() \
-                    or self.optimal_strategy_not_found():
+                or self.optimal_strategy_not_found():
                 self.previous_state, self.previous_score = self.episode()
 
                 self.end_training_if_enough_episodes()
@@ -139,14 +144,14 @@ class TemporalDifferenceLearningWithEpsilonGreedyPolicy(Algorithm):
             should training phase be ended because training limit exceeded?
             """
             return self.number_training_episodes is not None and \
-                self.episodes_played >= self.number_training_episodes
+                   self.episodes_played >= self.number_training_episodes
 
         def should_end_training(self):
             """
             should training be ended because previously the score was maximal?
             """
             return not self.optimal_strategy_found and \
-                self.previous_score == MAXIMUM_REWARD
+                   self.previous_score == MAXIMUM_REWARD
 
         def end_training(self):
             self.optimal_strategy_found = True
@@ -229,3 +234,53 @@ class TemporalDifferenceLearningWithEpsilonGreedyPolicy(Algorithm):
                 if len(row) != reduce(lambda x, y: x + y, row):
                     return -100
             return 100
+
+    def run(self, episodes):
+        for i in range(0, episodes):
+            self.episode()
+
+    def episode(self):
+        self.initialize_state()
+        while (not self.current_state.terminal):
+            self.step()
+
+    def initialize_state(self):
+        self.world.init_state()
+        self.current_state = self.world.current_state
+
+    def step(self):
+        action = self.choose_action()
+        new_state, reward = self.take_action(action)
+        self.q(new_state, action, reward)
+        self.current_state = self.world.current_state
+
+    def choose_action(self):
+        # todo choose wisely
+
+        actions = self.find_best_Q_value(self.current_state)
+
+        actions = self.world.actions()
+        return self.random.sample(actions, 1)[0]
+
+    def take_action(self, action):
+        return self.world.execute_action(action)
+
+    def q(self, new_state, action, reward):
+        c = (self.current_state, action)
+
+        self.Q[c] = (1 - self.alpha) * self.Q[
+            c] + self.alpha * self.learned_value(reward, new_state)
+
+    def learned_value(self, reward, new_state):
+        return reward + self.gamma * self.find_best_Q_value(new_state)
+
+    def find_best_Q_value(self, state):
+        actions = self.world.actions()
+        best = 0
+        for action in actions:
+            value = self.Q[(state, action)]
+            if value > best:
+                best = value
+
+        return best
+

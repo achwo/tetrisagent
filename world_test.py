@@ -168,7 +168,10 @@ class StateTest(unittest.TestCase):
         new_state = self.s.place_shape(shape, column)
         self.assertEqual(expected, new_state.blocks)
 
-
+    def test_state_can_be_terminal(self):
+        self.assertFalse(self.s.terminal)
+        self.s.terminal = True
+        self.assertTrue(self.s.terminal)
 
 # todo execute action changes the state
 # todo execute action adds a block to the current state
