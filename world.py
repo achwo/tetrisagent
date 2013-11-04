@@ -23,44 +23,8 @@ class World(object):
         self.current_state = State()
         self.update_current_shape()
 
-    def calculate_reward(self, consecutive_zeros):
-        """
-        alter kram
-        """
-        if len(consecutive_zeros) > 0 and max(consecutive_zeros) < 2:
-            score_i = -10
-        elif len(consecutive_zeros) == 0:
-            score_i = 10
-        else:
-            score_i = 0
-        return score_i
-
-    def create_new_state(self, state, row, action):
-        """
-        alter kram
-        Creates a new state based on the previous state and the action
-
-        :param state:
-        :param row:
-        :param action:
-        :return:
-        """
-        state_new = []
-        for i in state:
-            state_new.append(tuple(i))
-        state_new[row] = list(state_new[row])            # convert last 2 rows
-        state_new[row + 1] = list(state_new[row + 1])    # to lists
-
-        # add the new block into the game matrix -> new state
-        state_new[row][action] = 1
-        state_new[row][action + 1] = 1
-        state_new[row + 1][action] = 1
-        state_new[row + 1][action + 1] = 1
-
-        state_new[row] = tuple(state_new[row])           # convert last 2 rows
-        state_new[row + 1] = tuple(state_new[row + 1])   # back to tuples
-
-        return tuple(state_new)
+    def actions(self):
+        return self.current_state.possible_actions()
 
     def execute_action(self, action):
         self.place_current_shape_in_column(action.column)
@@ -69,8 +33,8 @@ class World(object):
         return self.current_state, self.make_reward(action)
 
     def make_reward(self, action):
-        # todo machen
-        return 0
+
+        return self.evaluate_features()
 
     def update_current_shape(self):
         self.current_shape = OShape()
@@ -83,6 +47,10 @@ class World(object):
 
     def current_state_terminal(self):
         return self.current_state.terminal
+
+    def evaluate_features(self):
+        # todo evaluate and include features
+        return 10
 
 
 class State(object):

@@ -1,6 +1,7 @@
 # coding=utf8
 
 import time
+from algorithms import OldShit
 
 
 def echofunc(msg, clear=False):
@@ -15,7 +16,7 @@ def animate_piece_drop(world, s, a):
     row = len(s)-2
     while row >= 0 and s[row][a] == 0 and s[row][a+1] == 0:
         echofunc("", True)
-        print_state(world.create_new_state(s, row, a))
+        print_state(OldShit.create_new_state(s, row, a))
         row -= 1
         time.sleep(0.01)
 
