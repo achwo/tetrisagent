@@ -75,7 +75,7 @@ class StateTest(unittest.TestCase):
 
     def test_place_shape_throws_exception_on_out_of_bounds_column(self):
         with self.assertRaises(IndexError):
-            self.s.place_shape(world.Possible_Shapes.O, 10)
+            self.s.place_shape(world.OShape(), 10)
 
     def test_place_shape_exception_on_high_column_with_wide_shape(self):
         with self.assertRaises(IndexError):

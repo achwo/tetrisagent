@@ -1,6 +1,7 @@
-from mock import MagicMock
-import algorithms
 import unittest
+
+from mock import MagicMock
+
 from algorithms import TDLearningAlgorithm
 from world import Action
 

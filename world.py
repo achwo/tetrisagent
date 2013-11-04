@@ -1,17 +1,7 @@
 import copy
 
-
-def enum(**enums):
-    return type('Enum', (), enums)
-
-
 FIELD_WIDTH = 10
 FIELD_HEIGHT = 12
-Possible_Shapes = enum(T='t', L='l', S='s', Z='z', O='o', I='i', J='j')
-
-old_S0 = tuple(
-    [tuple(0 for i in range(0, FIELD_WIDTH)) for i in
-     range(0, FIELD_HEIGHT)])
 
 S0 = [[0 for i in range(FIELD_HEIGHT)] for j in
       range(FIELD_WIDTH)]
