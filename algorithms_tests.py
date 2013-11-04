@@ -1,5 +1,7 @@
-import algorithms
 import unittest
+
+from mock import MagicMock
+
 from algorithms import TDLearningAlgorithm
 from world import Action
 
@@ -10,6 +12,7 @@ class AlgorithmTests(unittest.TestCase):
 
     def test_algorithm_runs_n_episodes(self):
         self.episodes = 0
+
         def episode():
             self.episodes += 1
 
@@ -32,6 +35,7 @@ class AlgorithmTests(unittest.TestCase):
 
     def test_step_choose_action(self):
         self.chosen = False
+
         def choose_action():
             self.chosen = True
             a1 = Action(1)
@@ -44,51 +48,33 @@ class AlgorithmTests(unittest.TestCase):
         self.assertTrue(self.chosen)
 
     def test_step_takes_action(self):
-        self.run = False
-        def take_action(action):
-            self.run = True
-            return self.algorithm.world.current_state, 0
-
-        self.algorithm._take_action = take_action
+        self.algorithm._take_action = MagicMock(
+            return_value=(self.algorithm.world.current_state, 0))
         self.algorithm._step()
 
-        self.assertTrue(self.run)
+        self.assertTrue(self.algorithm._take_action.called)
 
     def test_step_runs_q(self):
-        self.run = False
-        def q(state, action, reward):
-            self.run = True
-
-        self.algorithm._q = q
+        self.algorithm._q = MagicMock()
         self.algorithm._step()
 
-        self.assertTrue(self.run)
+        self.assertTrue(self.algorithm._q.called)
 
     def test_choose_action(self):
-        self.run = False
-        def actions():
-            self.run = True
-            a1 = Action(1)
-            a2 = Action(2)
-            return {a1, a2}
+        a1 = Action(1)
+        a2 = Action(2)
 
-        self.algorithm.world.actions = actions
-
+        self.algorithm.world.actions = MagicMock(return_value={a1, a2})
         self.algorithm._step()
 
-        self.assertTrue(self.run)
+        self.assertTrue(self.algorithm.world.actions.called)
 
     def test_take_action(self):
-        self.run = False
-        action = Action(1)
-        def execute_action(action):
-            self.run = True
-            return self.algorithm.world.current_state, 0
-
-        self.algorithm.world.execute_action = execute_action
-
+        self.algorithm.world.execute_action = MagicMock(
+            return_value=(self.algorithm.world.current_state, 0))
         self.algorithm._step()
-        self.assertTrue(self.run)
+
+        self.assertTrue(self.algorithm.world.execute_action.called)
 
 
 if __name__ == '__main__':
