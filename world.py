@@ -19,7 +19,6 @@ S0 = [[0 for i in range(FIELD_HEIGHT)] for j in
 
 class World(object):
     def __init__(self):
-        self.game_controller = None
         self.current_state = State()
         self.update_current_shape()
 

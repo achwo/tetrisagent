@@ -1,24 +1,15 @@
 #!/usr/bin/env python
-"""
-Tetris Tk - A tetris clone written in Python using the Tkinter GUI library.
-
-Controls:
-    Left Arrow      Move left
-    Right Arrow     Move right
-    Down Arrow      Move down
-    Up Arrow        Drop Tetronimoe to the bottom
-    'a'             Rotate anti-clockwise (to the left)
-    'b'             Rotate clockwise (to the right)
-    'p'             Pause the game.
-"""
 
 from Tkinter import *
 from time import sleep
 from random import randint
+from algorithms import TDLearningAlgorithm
+import Queue
 import tkMessageBox
 import sys
 import shapes
 import world
+import threading
 
 SCALE = 20
 OFFSET = 3
@@ -31,21 +22,11 @@ LEFT = "left"
 RIGHT = "right"
 DOWN = "down"
 
-controller = None
+global tk_root
+global controller
+dataQ = Queue.Queue(maxsize=0)
 
 direction_d = {"left": (-1, 0), "right": (1, 0), "down": (0, 1)}
-
-
-def level_thresholds(first_level, no_of_levels):
-    """
-    Calculates the score at which the level will change, for n levels.
-    """
-    thresholds = []
-    for x in xrange(no_of_levels):
-        multiplier = 2 ** x
-        thresholds.append(first_level * multiplier)
-
-    return thresholds
 
 
 class status_bar(Frame):
@@ -243,8 +224,6 @@ class game_controller(object):
                        shapes.SShape,
                        shapes.IShape]
 
-        self.thresholds = level_thresholds(500, NO_OF_LEVELS)
-
         self.status_bar = status_bar(parent)
         self.status_bar.pack(side=TOP, fill=X)
         #print "Status bar width",self.status_bar.cget("width")
@@ -267,18 +246,7 @@ class game_controller(object):
 
         self.board.pack(side=BOTTOM)
 
-        self.parent.bind("<Left>", self.left_callback)
-        self.parent.bind("<Right>", self.right_callback)
-        self.parent.bind("<Up>", self.up_callback)
-        self.parent.bind("<Down>", self.down_callback)
         self.parent.bind("a", self.a_callback)
-        self.parent.bind("s", self.s_callback)
-        self.parent.bind("p", self.p_callback)
-
-        self.shape = self.get_next_shape()
-        #self.board.output()
-
-        #self.after_id = self.parent.after( self.delay, self.move_my_shape )
 
     def handle_move(self, direction):
         #if you can't move then you've hit something
@@ -329,6 +297,7 @@ class game_controller(object):
             #self.handle_move( DOWN )
 
     def a_callback(self, event):
+        dataQ.put(10)
         self.board.clear()
         s = world.State()
         s = s.place_shape(world.OShape(), 0)
@@ -403,14 +372,27 @@ class game_controller(object):
         #the_shape = self.shapes[ randint(0,len(self.shapes)-1) ]
         return the_shape.check_and_create(self.board)
 
+def update_state():
+    try:
+        item = dataQ.get(timeout=0.1)
+        if item:
+            print "item"
+    except:
+        pass
+    tk_root.after(1000, update_state)
 
-def main():
-    tk_root = Tk()
-    tk_root.title("tetris agent")
-    global controller
-    controller = game_controller(tk_root)
-    tk_root.mainloop()
+
+def run():
+    algo = TDLearningAlgorithm()
+    algo.run(100)
 
 
 if __name__ == "__main__":
-    main()
+    tk_root = Tk()
+    tk_root.title("tetris agent")
+    controller = game_controller(tk_root)
+    logic_thread = threading.Thread(target=run)
+    logic_thread.start()
+    tk_root.after(1000, update_state)
+    tk_root.mainloop()
+    logic_thread.join()
