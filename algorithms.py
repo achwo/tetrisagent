@@ -91,4 +91,3 @@ class TDLearningAlgorithmSlow(TDLearningAlgorithm):
         while (not self.stop_event.is_set() and 
                not self.current_state.terminal):
             self._step()
-
