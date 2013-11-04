@@ -89,7 +89,7 @@ class State(object):
     def check_column_in_bounds(self, column, shape):
         if column > self.max_index_width or \
                 self.column_valid_for_given_shape(column, shape):
-            raise IndexError()
+            raise IndexError("column %i, max_index_width: %i", column, self.max_index_width)
 
     def column_valid_for_given_shape(self, column, shape):
         return self.max_index_width - shape.furthest_right() < column
@@ -101,7 +101,7 @@ class State(object):
             if self.column_valid_for_given_shape(column, shape):
                 actions.append(Action(column))
 
-        return actions
+        return set(actions)
 
 
 class Action(object):
