@@ -46,7 +46,8 @@ class TDLearningAlgorithm(Algorithm):
         actions = self._find_best_actions(self.current_state,
                                           self.world.actions())
 
-        return self.random.sample(actions, 1)[0]
+        # return self.random.sample(actions, 1)[0]
+        return w.Action(1)
 
     def _take_action(self, action):
         return self.world.execute_action(action)
