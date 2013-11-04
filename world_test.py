@@ -1,8 +1,11 @@
 import unittest
+import copy
+
 from mock import MagicMock
+
 from world import World, Action, State
 import world
-import copy
+
 
 BOTTOM_LINE = world.FIELD_HEIGHT - 1
 
@@ -150,6 +153,7 @@ class StateTest(unittest.TestCase):
         self.assertFalse(self.s.terminal)
         self.s.terminal = True
         self.assertTrue(self.s.terminal)
+
 
 if __name__ == '__main__':
     unittest.main()
