@@ -5,12 +5,8 @@ FIELD_WIDTH = 10
 FIELD_HEIGHT = 12
 VANISH_ZONE = 11
 
-S0 = [[0 for i in range(FIELD_HEIGHT)] for j in
+S0 = [[0 for _ in range(FIELD_HEIGHT)] for _ in
       range(FIELD_WIDTH)]
-
-
-class InvalidActionError(RuntimeError):
-    pass
 
 
 class Environment(object):
@@ -41,8 +37,6 @@ class Environment(object):
 
         self._place_current_shape_in_column(action.column)
         self._choose_next_shape()
-
-        return self._make_reward(action) # todo reward has to go
 
     def _is_action_valid(self, action):
         return action in self.possible_actions()
@@ -76,10 +70,6 @@ class Environment(object):
         possible_shapes = [OShape, JShape, IShape, LShape, ZShape, TShape,
                            SShape]
         self.current_shape = self.random.choice(possible_shapes)()
-
-    def _make_reward(self, action):
-        #todo aufgabe des agents, anhand perceived state
-        return 10
 
     def is_game_over(self):
         return self._is_spawn_blocked() or self._is_block_in_vanish_zone()
@@ -173,3 +163,7 @@ class SShape(Shape):
 class ZShape(Shape):
     def __init__(self):
         super(ZShape, self).__init__([[0, 1], [0, 2], [1, 0], [1, 1]], 'z', FIELD_WIDTH / 2 - 1)
+
+
+class InvalidActionError(RuntimeError):
+    pass

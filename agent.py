@@ -1,7 +1,6 @@
 from collections import defaultdict
 import random
 import time
-import threading
 
 from environment import Environment
 
@@ -14,12 +13,11 @@ class TDLearningAgent(object):
         self._update_perceived_state()
         self.random = random.Random()
         self.Q = defaultdict(int)
-        self.alpha = 0.1 # lernrate
-        self.gamma = 0.8 # discount rate
+        self.alpha = 0.1  # lernrate
+        self.gamma = 0.8  # discount rate
 
     def _update_perceived_state(self):
-        self.current_state = PerceivedState(self.environment.blocks,
-                                            self.environment.possible_actions())
+        self.current_state = self._perceived_state()
 
     def run(self, episodes):
         for i in range(0, episodes):
@@ -27,7 +25,7 @@ class TDLearningAgent(object):
 
     def _episode(self):
         self._initialize_state()
-        while (not self.current_state.terminal()):
+        while not self.current_state.is_terminal():
             self._step()
 
     def _initialize_state(self):
@@ -36,7 +34,8 @@ class TDLearningAgent(object):
 
     def _step(self):
         action = self._choose_action()
-        new_state, reward = self._take_action(action)
+        reward = self._take_action(action)
+        new_state = self._perceived_state()
         self._q(new_state, action, reward)
         self._update_perceived_state()
 
@@ -47,7 +46,8 @@ class TDLearningAgent(object):
         return self.random.sample(actions, 1)[0]
 
     def _take_action(self, action):
-        return self.environment.execute_action(action)
+        self.environment.execute_action(action)
+        return 10  # todo real reward calculation
 
     def _q(self, new_state, action, reward):
         c = (self.current_state, action)
@@ -81,6 +81,9 @@ class TDLearningAgent(object):
 
         return set(best_actions)
 
+    def _perceived_state(self):
+        return PerceivedState(self.environment)
+
 
 class TDLearningAlgorithmSlow(TDLearningAgent):
     def _step(self):
@@ -91,14 +94,16 @@ class TDLearningAlgorithmSlow(TDLearningAgent):
     def _episode(self):
         self._initialize_state()
         while (not self.stop_event.is_set() and
-                   not self.current_state.terminal):
+                   not self.current_state.is_terminal()):
             self._step()
 
 
 class PerceivedState(object):
-    def __init__(self, blocks, possible_actions):
-        self.blocks = blocks
-        self.possible_actions = possible_actions
+    def __init__(self, environment):
+        self.blocks = environment.blocks
+        self.possible_actions = environment.possible_actions()
+        self.terminal = environment.is_game_over()
 
-    def terminal(self):
-        return self.possible_actions.__len__() == 0
+    def is_terminal(self):
+        # return self.possible_actions.__len__() == 0
+        return self.terminal

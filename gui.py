@@ -1,15 +1,13 @@
 #!/usr/bin/env python
 
 from Tkinter import *
-from time import sleep
-from random import randint
-from agent import TDLearningAlgorithmSlow
 import Queue
-import tkMessageBox
-import sys
+import threading
+
+from agent import TDLearningAlgorithmSlow
 import shapes
 import environment
-import threading
+
 
 SCALE = 20
 OFFSET = 3
@@ -20,7 +18,7 @@ LEFT = "left"
 RIGHT = "right"
 DOWN = "down"
 
-global world
+global environment
 global tk_root
 global controller
 global dataQ
@@ -283,15 +281,15 @@ def update_state():
             item = dataQ.get(timeout=0.1)
         except:
             break
-    controller.update_board(environment.current_state)
+    controller.update_board(environment)
     tk_root.after(100, update_state)
 
 
 def run(stop_event):
-    global world
+    global environment
     algo = TDLearningAlgorithmSlow()
     algo.dataQ = dataQ
-    world = algo.environment
+    environment = algo.environment
     algo.stop_event = stop_event
     algo.run(100)
 
