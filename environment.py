@@ -3,7 +3,10 @@ import random
 
 FIELD_WIDTH = 10
 FIELD_HEIGHT = 12
-VANISH_ZONE = 11
+VANISH_ZONE_HEIGHT = 2
+
+BOTTOM_INDEX = FIELD_HEIGHT - 1
+RIGHTMOST_INDEX = FIELD_WIDTH - 1
 
 S0 = [[0 for _ in range(FIELD_HEIGHT)] for _ in
       range(FIELD_WIDTH)]
@@ -14,8 +17,6 @@ class Environment(object):
         self.blocks = blocks
         self.random = random.Random()
         self._choose_next_shape()
-        self.max_index_width = FIELD_WIDTH - 1
-        self.bottom_index = FIELD_HEIGHT - 1
 
     def possible_actions(self):
         if self.is_game_over():
@@ -29,7 +30,7 @@ class Environment(object):
         return actions
 
     def _column_valid(self, column):
-        return column + self.current_shape.rightmost <= self.max_index_width
+        return column + self.current_shape.rightmost <= RIGHTMOST_INDEX
 
     def execute_action(self, action):
         if not self._is_action_valid(action):
@@ -45,7 +46,6 @@ class Environment(object):
         self.current_shape.add_x_offset(column)
         self._drop_shape()
         self._add_shape_to_field()
-        # todo agent has to update his perceived state
 
     def _drop_shape(self):
         while not self._collision():
@@ -54,17 +54,19 @@ class Environment(object):
 
     def _collision(self):
         for coord in self.current_shape.coords:
-            if coord[1] + 1 == FIELD_HEIGHT:
-                return True
-            if self.blocks[coord[0]][coord[1] + 1] is not 0:
+            if self._touches_ground(coord) or self._touches_block(coord):
                 return True
         return False
+
+    def _touches_ground(self, coord):
+        return coord[1] + 1 == FIELD_HEIGHT
+
+    def _touches_block(self, coord):
+        return self.blocks[coord[0]][coord[1] + 1] is not 0
 
     def _add_shape_to_field(self):
         for coord in self.current_shape.coords:
             self.blocks[coord[0]][coord[1]] = self.current_shape.__repr__()
-    #todo add shape to field
-
 
     def _choose_next_shape(self):
         possible_shapes = [OShape, JShape, IShape, LShape, ZShape, TShape,
@@ -76,8 +78,9 @@ class Environment(object):
 
     def _is_block_in_vanish_zone(self):
         for col in self.blocks:
-            if col[1] != 0 or col[0] != 0:
-                return True
+            for row in range(VANISH_ZONE_HEIGHT):
+                if col[row] != 0:
+                    return True
         return False
 
     def _is_spawn_blocked(self):
@@ -132,37 +135,44 @@ class Shape(object):
 
 class OShape(Shape):
     def __init__(self):
-        super(OShape, self).__init__([[0, 0], [0, 1], [1, 0], [1, 1]], 'o', FIELD_WIDTH / 2)
+        super(OShape, self).__init__([[0, 0], [0, 1], [1, 0], [1, 1]], 'o',
+                                     FIELD_WIDTH / 2)
 
 
 class IShape(Shape):
     def __init__(self):
-        super(IShape, self).__init__([[0, 0], [0, 1], [0, 2], [0, 3]], 'i', FIELD_WIDTH / 2)
+        super(IShape, self).__init__([[0, 0], [0, 1], [0, 2], [0, 3]], 'i',
+                                     FIELD_WIDTH / 2)
 
 
 class LShape(Shape):
     def __init__(self):
-        super(LShape, self).__init__([[0, 0], [0, 1], [0, 2], [1, 2]], 'l', FIELD_WIDTH / 2 - 1)
+        super(LShape, self).__init__([[0, 0], [0, 1], [0, 2], [1, 2]], 'l',
+                                     FIELD_WIDTH / 2 - 1)
 
 
 class JShape(Shape):
     def __init__(self):
-        super(JShape, self).__init__([[0, 2], [1, 0], [1, 1], [1, 2]], 'j', FIELD_WIDTH / 2 - 1)
+        super(JShape, self).__init__([[0, 2], [1, 0], [1, 1], [1, 2]], 'j',
+                                     FIELD_WIDTH / 2 - 1)
 
 
 class TShape(Shape):
     def __init__(self):
-        super(TShape, self).__init__([[0, 1], [1, 0], [1, 1], [2, 1]], 't', FIELD_WIDTH / 2 - 1)
+        super(TShape, self).__init__([[0, 1], [1, 0], [1, 1], [2, 1]], 't',
+                                     FIELD_WIDTH / 2 - 1)
 
 
 class SShape(Shape):
     def __init__(self):
-        super(SShape, self).__init__([[0, 0], [0, 1], [1, 1], [1, 2]], 's', FIELD_WIDTH / 2 - 1)
+        super(SShape, self).__init__([[0, 0], [0, 1], [1, 1], [1, 2]], 's',
+                                     FIELD_WIDTH / 2 - 1)
 
 
 class ZShape(Shape):
     def __init__(self):
-        super(ZShape, self).__init__([[0, 1], [0, 2], [1, 0], [1, 1]], 'z', FIELD_WIDTH / 2 - 1)
+        super(ZShape, self).__init__([[0, 1], [0, 2], [1, 0], [1, 1]], 'z',
+                                     FIELD_WIDTH / 2 - 1)
 
 
 class InvalidActionError(RuntimeError):

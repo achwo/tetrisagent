@@ -4,7 +4,7 @@ from Tkinter import *
 import Queue
 import threading
 
-from agent import TDLearningAlgorithmSlow
+from agent import TDLearningAgentSlow
 import shapes
 import environment
 
@@ -287,11 +287,11 @@ def update_state():
 
 def run(stop_event):
     global environment
-    algo = TDLearningAlgorithmSlow()
-    algo.dataQ = dataQ
-    environment = algo.environment
-    algo.stop_event = stop_event
-    algo.run(100)
+    agent = TDLearningAgentSlow()
+    agent.dataQ = dataQ
+    environment = agent.environment
+    agent.stop_event = stop_event
+    agent.run(100)
 
 
 if __name__ == "__main__":
