@@ -2,8 +2,8 @@ from __future__ import division
 from collections import Counter
 #import utils
 import sys
-from algorithms import TDLearningAlgorithm
-import world
+from agent import TDLearningAgent
+import environment
 
 
 def process(alpha):
@@ -13,12 +13,12 @@ def process(alpha):
     epsilon = 0.0
     accumulator = Counter({100: 0, -100: 0})
     global algo
-    algo = TDLearningAlgorithm()
+    algo = TDLearningAgent()
     Q = None
     print "# episode, P(win), wins, losses"
     for e in range(1, episodes + 1):
         Q, last_s, episodes_played = \
-            algo.play(1, 1, world.FIELD_WIDTH, epsilon, alpha, Q, False, False)
+            algo.play(1, 1, environment.FIELD_WIDTH, epsilon, alpha, Q, False, False)
         score = algo.final_score(last_s)
         if e >= training:
             epsilon = 0
