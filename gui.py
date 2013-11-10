@@ -8,6 +8,11 @@ from agent import TDLearningAgentSlow
 import shapes
 import environment
 
+SCALE = 30
+
+import shapes
+import environment
+
 
 SCALE = 20
 OFFSET = 3
@@ -17,6 +22,8 @@ MAXY = 12
 LEFT = "left"
 RIGHT = "right"
 DOWN = "down"
+
+REFRESH_IN_MS = 100
 
 global environment
 global tk_root
@@ -75,11 +82,7 @@ class Board(Frame):
         self.canvas.pack()
 
     def clear(self):
-        keys = self.landed.keys()
-        for k in keys:
-            block = self.landed.pop(k)
-            self.delete_block(block)
-            del block
+        self.canvas.delete(ALL)
 
     def check_for_complete_row(self, blocks):
         """
@@ -282,7 +285,7 @@ def update_state():
         except:
             break
     controller.update_board(environment)
-    tk_root.after(100, update_state)
+    tk_root.after(REFRESH_IN_MS, update_state)
 
 
 def run(stop_event):
@@ -291,7 +294,7 @@ def run(stop_event):
     agent.dataQ = dataQ
     environment = agent.environment
     agent.stop_event = stop_event
-    agent.run(100)
+    agent.run(REFRESH_IN_MS)
 
 
 if __name__ == "__main__":
@@ -301,7 +304,7 @@ if __name__ == "__main__":
     logic_stop_event = threading.Event()
     logic_thread = threading.Thread(target=run, args=(logic_stop_event,))
     logic_thread.start()
-    tk_root.after(1000, update_state)
+    tk_root.after(REFRESH_IN_MS, update_state)
     tk_root.mainloop()
     logic_stop_event.set()
     logic_thread.join()
