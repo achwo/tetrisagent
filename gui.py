@@ -42,7 +42,8 @@ class status_bar(Frame):
     def __init__(self, parent):
         Frame.__init__(self, parent)
         self.label = Label(self, bd=1, relief=SUNKEN, anchor=W)
-        self.label.pack(fill=X)
+        self.grid(row=0, column=0)
+        #self.label.pack(fill=X)
 
     def set(self, format, *args):
         self.label.config(text=format % args)
@@ -79,7 +80,8 @@ class Board(Frame):
         self.canvas = Canvas(parent,
                              height=(max_y * scale) + offset,
                              width=(max_x * scale) + offset)
-        self.canvas.pack()
+        #self.canvas.pack()
+        self.canvas.grid(row=1, column=0, rowspan=5)
 
     def clear(self):
         self.canvas.delete(ALL)
@@ -226,16 +228,31 @@ class game_controller(object):
                        shapes.IShape]
 
         self.status_bar = status_bar(parent)
-        self.status_bar.pack(side=TOP, fill=X)
+        #self.status_bar.grid(row=0, columnspan=2)
+        #self.status_bar.pack(side=TOP, fill=X)
         #print "Status bar width",self.status_bar.cget("width")
 
         self.status_bar.set("Score: %-7d\t Level: %d " % (
             self.score, self.level + 1)
         )
 
+        Label(parent, text="First:").grid(row=1, column=1)
+        Label(parent, text="Second:").grid(row=2, column=1)
+        Label(parent, text="Third:").grid(row=3, column=1)
+        Label(parent, text="Forth:").grid(row=4, column=1)
+
+        input1 = Entry(parent)
+        input1.grid(row=1, column=2)
+        input2 = Entry(parent)
+        input2.grid(row=2, column=2)
+        input3 = Entry(parent)
+        input3.grid(row=3, column=2)
+        input4 = Entry(parent)
+        input4.grid(row=4, column=2)
+
         quitButton = Button(parent, text="Quit",
             command=parent.quit)
-        quitButton.place(x=0, y=0)
+        quitButton.grid(row=5, column=2, sticky=E)
 
         self.board = Board(
             parent,
@@ -244,9 +261,6 @@ class game_controller(object):
             max_y=MAXY,
             offset=OFFSET
         )
-
-        self.board.pack(side=BOTTOM)
-
         self.parent.bind("a", self.a_callback)
 
     def a_callback(self, event):
@@ -300,6 +314,8 @@ def run(stop_event):
 if __name__ == "__main__":
     tk_root = Tk()
     tk_root.title("tetris agent")
+    tk_root.minsize(450, 250)
+    tk_root.geometry("450x250")
     controller = game_controller(tk_root)
     logic_stop_event = threading.Event()
     logic_thread = threading.Thread(target=run, args=(logic_stop_event,))
