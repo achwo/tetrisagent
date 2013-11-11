@@ -20,7 +20,7 @@ class TDLearningAgent(object):
         self.iterations = 0
 
     def _initialize_state(self):
-        self.environment.reset_blocks()
+        self.environment.initialize_field()
         self._update_perceived_state()
 
     def _update_perceived_state(self):
@@ -38,10 +38,9 @@ class TDLearningAgent(object):
 
     def _step(self):
         action = self._choose_action()
-        self.environment.execute_action(action)
+        reward = self.environment.execute_action(action)
         old_state = self.current_state
         self._update_perceived_state()
-        reward = self._calculate_reward()
         self._q(old_state, action, reward)
 
     def _choose_action(self):
@@ -83,23 +82,6 @@ class TDLearningAgent(object):
 
     def _perceived_state(self):
         return self.state_class(self.environment)
-        # return SimplePerceivedState(self.environment)
-
-    def _calculate_reward(self):
-        if self.environment.is_game_over():
-            return -100
-        return self.height_based_reward()
-
-    def height_based_reward(self):
-        highest = self.environment.highest_block_row()
-        reward = 0
-        if highest >= environment.BOTTOM_INDEX - 4:
-            reward = 10
-        elif highest >= environment.BOTTOM_INDEX - 8:
-            reward = 0
-        else:
-            reward = -10
-        return reward
 
 
 class TDLearningAgentSlow(TDLearningAgent):
