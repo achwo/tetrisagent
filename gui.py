@@ -300,12 +300,14 @@ class TDLearningAgentSlow(TDLearningAgent):
                 break
             self._episode()
             self.iterations += 1
-            
-            if self.iterations % 50 == 0:
-                blockcopy = copy.deepcopy(self.environment.blocks)
-                self.dataQ.put(blockcopy)
-                print self.iterations
-            time.sleep(0.05)
+            self._update_gui()
+
+    def _update_gui(self):
+        if self.iterations % 50 == 0:
+            blockcopy = copy.deepcopy(self.environment.blocks)
+            self.dataQ.put(blockcopy)
+            print self.iterations
+        time.sleep(0.05)
 
 
 def update_state():
