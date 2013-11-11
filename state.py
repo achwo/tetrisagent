@@ -1,22 +1,24 @@
 import copy
-import features
+
+from features import number_of_holes
+from features import min_height
 
 
 class PerceivedState(object):
-    pass
+    def __init__(self, environment, *features):
+        self.features = []
+        for f in features:
+            self.features.append(f(environment))
 
 
 class SimplePerceivedState(PerceivedState):
-    def __init__(self, environment):
+    def __init__(self, environment, *features):
+        super(SimplePerceivedState, self).__init__(environment, *features)
         self.blocks = copy.deepcopy(environment.blocks)
         self.shape = environment.current_shape
 
 
-class HolePerceivedState(PerceivedState):
-    def __init__(self, environment):
-        self.number_holes = features.number_of_holes(environment)
-
-
-class MinHeightPerceivedState(PerceivedState):
-    def __init__(self, environment):
-        self.min_height = features.min_height(environment)
+class FirstPerceivedState(PerceivedState):
+    def __init__(self, environment, *features):
+        super(FirstPerceivedState, self).__init__(environment, number_of_holes,
+                                                  min_height)

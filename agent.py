@@ -9,7 +9,7 @@ from state import *
 
 
 class TDLearningAgent(object):
-    def __init__(self, state_class=MinHeightPerceivedState):
+    def __init__(self, state_class=FirstPerceivedState):
         self.state_class = state_class
         self.environment = Environment()
         self._initialize_state()
