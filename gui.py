@@ -19,7 +19,8 @@ RIGHT = "right"
 DOWN = "down"
 
 REFRESH_IN_MS = 100
-EPISODE_COUNT = 5000
+EPISODE_COUNT = 60000
+EPISODES_PER_OUTPUT = 1000
 
 global agent
 global tk_root
@@ -316,11 +317,7 @@ class TDLearningAgentSlow(TDLearningAgent):
 
 
     def _update_gui(self):
-        if self.iterations % 10 == 0:
-            blockcopy = copy.deepcopy(self.environment.blocks)
-            self.dataQ.put(blockcopy)
-
-
+        if self.iterations % 100 == 0:
             avg = reduce(lambda x, y: x + y, self.blocks_per_iteration) / len(
                 self.blocks_per_iteration)
             maximum = max(self.blocks_per_iteration)
@@ -329,8 +326,13 @@ class TDLearningAgentSlow(TDLearningAgent):
             max_label["text"] = "maximum number blocks: {0}".format(maximum)
             it_label["text"] = "iterations: {0}".format(self.iterations)
 
+        if self.iterations % EPISODES_PER_OUTPUT == 0:
+            blockcopy = copy.deepcopy(self.environment.blocks)
+            self.dataQ.put(blockcopy)
+
+
             self.blocks_per_iteration = []
-        time.sleep(0.05)
+            time.sleep(0.05)
 
 
 def update_state():

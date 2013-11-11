@@ -1,14 +1,13 @@
 from collections import defaultdict
-import copy
 import random
 
 from environment import Environment
-import environment
+import features
 from state import *
 
 
 class TDLearningAgent(object):
-    def __init__(self, state_class=FirstPerceivedState):
+    def __init__(self, state_class=TestState):
         self.state_class = state_class
         self.environment = Environment()
         self._initialize_state()
@@ -21,7 +20,7 @@ class TDLearningAgent(object):
         self.blocks_per_iteration = []
 
     def _initialize_state(self):
-        self.environment.initialize_field()
+        self.environment.initialize()
         self._update_perceived_state()
 
     def _update_perceived_state(self):
@@ -62,7 +61,6 @@ class TDLearningAgent(object):
                 best_actions = [action]
             elif value == best_value:
                 best_actions.append(action)
-
         return set(best_actions)
 
     def _q(self, old_state, action, reward):
@@ -81,8 +79,7 @@ class TDLearningAgent(object):
             value = self.Q[(state, action)]
             if value > best:
                 best = value
-
         return best
 
     def _perceived_state(self):
-        return self.state_class(self.environment)
+        return self.state_class(self.environment, features.individual_height)

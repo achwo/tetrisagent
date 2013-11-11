@@ -1,7 +1,7 @@
 import copy
 import random
 
-FIELD_WIDTH = 10
+FIELD_WIDTH = 6
 FIELD_HEIGHT = 12
 VANISH_ZONE_HEIGHT = 2
 
@@ -12,10 +12,11 @@ RIGHTMOST_INDEX = FIELD_WIDTH - 1
 class Environment(object):
     def __init__(self):
         self.random = random.Random()
-        self.initialize_field()
+        self.initialize()
         self._choose_next_shape()
 
-    def initialize_field(self):
+    def initialize(self):
+        self.highest = BOTTOM_INDEX  # counted backwards because of indexing
         self.blocks = [[0 for _ in range(FIELD_HEIGHT)] for _ in
                        range(FIELD_WIDTH)]
         self._choose_next_shape()
@@ -72,8 +73,9 @@ class Environment(object):
             self.blocks[coord[0]][coord[1]] = self.current_shape.__repr__()
 
     def _choose_next_shape(self):
-        possible_shapes = [OShape, JShape, IShape, LShape, ZShape, TShape,
-                           SShape]
+        possible_shapes = [OShape]
+        # possible_shapes = [OShape, JShape, IShape, LShape, ZShape, TShape,
+        #                    SShape]
         self.current_shape = self.random.choice(possible_shapes)()
 
     def is_game_over(self):
@@ -101,17 +103,21 @@ class Environment(object):
     def _calculate_reward(self):
         if self.is_game_over():
             return -100
-        # return self._height_based_reward()
-        return 0
+        return self._height_based_reward()
 
     def _height_based_reward(self):
-        highest = self._highest_block_row()
-        if highest >= BOTTOM_INDEX - 4:
-            reward = 10
-        elif highest >= BOTTOM_INDEX - 8:
-            reward = 0
-        else:
+
+        new_highest = self._highest_block_row()
+
+        if new_highest < self.highest:
             reward = -10
+            self.highest = new_highest
+        elif new_highest > self.highest:
+            reward = 0
+            print "that's not possible"
+        else:
+            reward = 10
+
         return reward
 
 
