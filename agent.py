@@ -7,6 +7,7 @@ import sys
 
 from environment import Environment
 import environment
+import features
 
 
 class TDLearningAgent(object):
@@ -97,6 +98,7 @@ class TDLearningAgent(object):
             reward = 0
         else:
             reward = -10
+        return reward
 
 
 class TDLearningAgentSlow(TDLearningAgent):
@@ -120,4 +122,8 @@ class SimplePerceivedState(PerceivedState):
     def __init__(self, environment):
         self.blocks = copy.deepcopy(environment.blocks)
         self.shape = environment.current_shape
-        self.terminal = environment.is_game_over()
+
+
+class HolePerceivedState(PerceivedState):
+    def __init__(self, environment):
+        self.number_holes = features.number_of_holes(environment)
