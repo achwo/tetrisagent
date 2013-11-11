@@ -89,6 +89,12 @@ class Environment(object):
                 return True
         return False
 
+    def highest_block_row(self):
+        for row in range(len(self.blocks)):
+            for col in self.blocks[row]:
+                if col != 0:
+                    return row
+
 
 class Action(object):
     def __init__(self, column):
