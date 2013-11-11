@@ -15,10 +15,10 @@ S0 = [[0 for _ in range(FIELD_HEIGHT)] for _ in
 class Environment(object):
     def __init__(self, blocks=S0):
         self.random = random.Random()
-        self.reset_blocks()
+        self.initialize_field()
         self._choose_next_shape()
 
-    def reset_blocks(self):
+    def initialize_field(self):
         self.blocks = [[0 for _ in range(FIELD_HEIGHT)] for _ in
           range(FIELD_WIDTH)]
         self._choose_next_shape()
@@ -43,6 +43,7 @@ class Environment(object):
 
         self._place_current_shape_in_column(action.column)
         self._choose_next_shape()
+        return self._calculate_reward()
 
     def _is_action_valid(self, action):
         return action in self.possible_actions()
@@ -94,11 +95,27 @@ class Environment(object):
                 return True
         return False
 
-    def highest_block_row(self):
+    def _highest_block_row(self):
         for row in range(len(self.blocks)):
             for col in self.blocks[row]:
                 if col != 0:
                     return row
+
+    def _calculate_reward(self):
+        if self.is_game_over():
+            return -100
+        return self._height_based_reward()
+
+    def _height_based_reward(self):
+        highest = self._highest_block_row()
+        if highest >= BOTTOM_INDEX - 4:
+            reward = 10
+        elif highest >= BOTTOM_INDEX - 8:
+            reward = 0
+        else:
+            reward = -10
+        return reward
+
 
 
 class Action(object):
