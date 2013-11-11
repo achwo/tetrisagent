@@ -239,7 +239,7 @@ class game_controller(object):
         Label(parent, text="First:").grid(row=1, column=1)
         Label(parent, text="Second:").grid(row=2, column=1)
         Label(parent, text="Third:").grid(row=3, column=1)
-        Label(parent, text="Forth:").grid(row=4, column=1)
+        Label(parent, text="Fourth:").grid(row=4, column=1)
 
         input1 = Entry(parent)
         input1.grid(row=1, column=2)
