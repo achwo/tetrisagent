@@ -6,6 +6,7 @@ import threading
 import sys
 
 from environment import Environment
+import environment
 
 
 class TDLearningAgent(object):
@@ -15,6 +16,7 @@ class TDLearningAgent(object):
         self.Q = defaultdict(int)
         self.alpha = 0.1  # lernrate
         self.gamma = 0.8  # discount rate
+        self.iterations = 0
 
     def _initialize_state(self):
         self.environment = Environment()
@@ -26,6 +28,7 @@ class TDLearningAgent(object):
     def run(self, episodes):
         for i in range(0, episodes):
             self._episode()
+            self.iterations += 1
 
     def _episode(self):
         self._initialize_state()
@@ -35,10 +38,10 @@ class TDLearningAgent(object):
     def _step(self):
         action = self._choose_action()
         self.environment.execute_action(action)
-        new_state = self._perceived_state()
-        reward = self._calculate_reward(new_state)
-        self._q(new_state, action, reward)
+        old_state = self.current_state
         self._update_perceived_state()
+        reward = self._calculate_reward()
+        self._q(old_state, action, reward)
 
     def _choose_action(self):
         actions = self._find_best_actions()
@@ -58,11 +61,11 @@ class TDLearningAgent(object):
 
         return set(best_actions)
 
-    def _q(self, new_state, action, reward):
-        c = (self.current_state, action)
+    def _q(self, old_state, action, reward):
+        c = (old_state, action)
 
         self.Q[c] = (1 - self.alpha) * self.Q[
-            c] + self.alpha * self._learned_value(reward, new_state)
+            c] + self.alpha * self._learned_value(reward, self.current_state)
 
     def _learned_value(self, reward, new_state):
         return reward + self.gamma * self._find_best_Q_value(new_state)
@@ -80,8 +83,20 @@ class TDLearningAgent(object):
     def _perceived_state(self):
         return SimplePerceivedState(self.environment)
 
-    def _calculate_reward(self, new_state):
-        return 10  # todo real reward calculation
+    def _calculate_reward(self):
+        if self.environment.is_game_over():
+            return -100
+        return self.height_based_reward()
+
+    def height_based_reward(self):
+        highest = self.environment.highest_block_row()
+        reward = 0
+        if highest >= environment.BOTTOM_INDEX - 4:
+            reward = 10
+        elif highest >= environment.BOTTOM_INDEX - 8:
+            reward = 0
+        else:
+            reward = -10
 
 
 class TDLearningAgentSlow(TDLearningAgent):
