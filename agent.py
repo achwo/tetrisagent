@@ -1,7 +1,6 @@
 from collections import defaultdict
 import copy
 import random
-import time
 
 from environment import Environment
 import environment
@@ -29,6 +28,7 @@ class TDLearningAgent(object):
         for i in range(0, episodes):
             self._episode()
             self.iterations += 1
+            self.environment.next_episode_event.set()
 
     def _episode(self):
         self._initialize_state()
@@ -98,19 +98,6 @@ class TDLearningAgent(object):
         else:
             reward = -10
         return reward
-
-
-class TDLearningAgentSlow(TDLearningAgent):
-    def _step(self):
-        TDLearningAgent._step(self)
-        time.sleep(0.5)
-        self.dataQ.put(1)
-
-    def _episode(self):
-        self._initialize_state()
-        while (not self.stop_event.is_set() and
-                   not self.environment.is_game_over()):
-            self._step()
 
 
 class PerceivedState(object):

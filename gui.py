@@ -4,9 +4,9 @@ from Tkinter import *
 import Queue
 import threading
 
-from agent import TDLearningAgentSlow
 import shapes
-import environment
+from agent import TDLearningAgent
+import time
 
 SCALE = 20
 OFFSET = 3
@@ -27,6 +27,19 @@ global dataQ
 dataQ = Queue.Queue(maxsize=0)
 
 direction_d = {"left": (-1, 0), "right": (1, 0), "down": (0, 1)}
+
+
+class TDLearningAgentSlow(TDLearningAgent):
+    def _step(self):
+        TDLearningAgent._step(self)
+        time.sleep(0.5)
+        self.dataQ.put(1)
+
+    def _episode(self):
+        self._initialize_state()
+        while (not self.stop_event.is_set() and
+                   not self.environment.is_game_over()):
+            self._step()
 
 
 class status_bar(Frame):
@@ -288,21 +301,25 @@ class game_controller(object):
 
 
 def update_state():
+    if env and env.next_episode_event.is_set():
+        controller.update_board(env)
+        env.next_episode_event.clear()
     while True:
         try:
             item = dataQ.get(timeout=0.1)
         except:
             break
-    controller.update_board(env)
+    #controller.update_board(env)
     tk_root.after(REFRESH_IN_MS, update_state)
 
 
-def run(stop_event):
+def run(stop_event, next_episode_event):
     global env
     agent = TDLearningAgentSlow()
     agent.dataQ = dataQ
     env = agent.environment
     agent.stop_event = stop_event
+    env.next_episode_event = next_episode_event
     agent.run(EPISODE_COUNT)
 
 
@@ -313,7 +330,9 @@ if __name__ == "__main__":
     tk_root.geometry("450x250")
     controller = game_controller(tk_root)
     logic_stop_event = threading.Event()
-    logic_thread = threading.Thread(target=run, args=(logic_stop_event,))
+    next_episode_event = threading.Event()
+    logic_thread = threading.Thread(target=run,
+        args=(logic_stop_event, next_episode_event))
     logic_thread.start()
     tk_root.after(REFRESH_IN_MS, update_state)
     tk_root.mainloop()
