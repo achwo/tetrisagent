@@ -5,11 +5,12 @@ import time
 
 from environment import Environment
 import environment
-import features
+from state import *
 
 
 class TDLearningAgent(object):
-    def __init__(self):
+    def __init__(self, state_class=MinHeightPerceivedState):
+        self.state_class = state_class
         self.environment = Environment()
         self._initialize_state()
         self.random = random.Random()
@@ -81,7 +82,8 @@ class TDLearningAgent(object):
         return best
 
     def _perceived_state(self):
-        return SimplePerceivedState(self.environment)
+        return self.state_class(self.environment)
+        # return SimplePerceivedState(self.environment)
 
     def _calculate_reward(self):
         if self.environment.is_game_over():
@@ -111,18 +113,3 @@ class TDLearningAgentSlow(TDLearningAgent):
         while (not self.stop_event.is_set() and
                    not self.environment.is_game_over()):
             self._step()
-
-
-class PerceivedState(object):
-    pass
-
-
-class SimplePerceivedState(PerceivedState):
-    def __init__(self, environment):
-        self.blocks = copy.deepcopy(environment.blocks)
-        self.shape = environment.current_shape
-
-
-class HolePerceivedState(PerceivedState):
-    def __init__(self, environment):
-        self.number_holes = features.number_of_holes(environment)
