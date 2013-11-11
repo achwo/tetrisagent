@@ -357,7 +357,7 @@ if __name__ == "__main__":
     tk_root = Tk()
     tk_root.title("tetris agent")
     tk_root.minsize(450, 250)
-    tk_root.geometry("550x250")
+    tk_root.geometry("450x250")
     controller = game_controller(tk_root)
     logic_stop_event = threading.Event()
     logic_thread = threading.Thread(target=run,
