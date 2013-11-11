@@ -232,19 +232,31 @@ class game_controller(object):
             self.score, self.level + 1)
         )
 
-        Label(parent, text="First:").grid(row=1, column=1)
-        Label(parent, text="Second:").grid(row=2, column=1)
-        Label(parent, text="Third:").grid(row=3, column=1)
-        Label(parent, text="Fourth:").grid(row=4, column=1)
+        # Label(parent, text="First:").grid(row=1, column=1)
+        # Label(parent, text="Second:").grid(row=2, column=1)
+        # Label(parent, text="Third:").grid(row=3, column=1)
+        # Label(parent, text="Fourth:").grid(row=4, column=1)
+        #
+        # input1 = Entry(parent)
+        # input1.grid(row=1, column=2)
+        # input2 = Entry(parent)
+        # input2.grid(row=2, column=2)
+        # input3 = Entry(parent)
+        # input3.grid(row=3, column=2)
+        # input4 = Entry(parent)
+        # input4.grid(row=4, column=2)
 
-        input1 = Entry(parent)
-        input1.grid(row=1, column=2)
-        input2 = Entry(parent)
-        input2.grid(row=2, column=2)
-        input3 = Entry(parent)
-        input3.grid(row=3, column=2)
-        input4 = Entry(parent)
-        input4.grid(row=4, column=2)
+        global avg_label
+        global max_label
+        global it_label
+
+        avg_label = Label(tk_root, text="avg number blocks: 0")
+        avg_label.grid(row=1, column=1, sticky=W)
+        max_label = Label(tk_root, text="maximum number blocks: 0")
+        max_label.grid(row=2, column=1, sticky=W)
+        it_label = Label(tk_root, text="iterations: 0")
+        it_label.grid(row=3, column=1, sticky=W)
+
 
         quitButton = Button(parent, text="Quit",
             command=parent.quit)
@@ -301,21 +313,21 @@ class TDLearningAgentSlow(TDLearningAgent):
             self._episode()
             self.iterations += 1
             self._update_gui()
-            
+
 
     def _update_gui(self):
         if self.iterations % 10 == 0:
             blockcopy = copy.deepcopy(self.environment.blocks)
             self.dataQ.put(blockcopy)
 
-            avg = 'avg number blocks: {0}'.format(reduce(lambda x, y: x + y,
-                                                         self.blocks_per_iteration) / len(
-                self.blocks_per_iteration))
 
-            maximum =  "maximum number blocks: {0}".format(max(self.blocks_per_iteration))
-            Label(tk_root, text=avg).grid(row=1, column=1, sticky=W)
-            Label(tk_root, text=maximum).grid(row=2, column=1, sticky=W)
-            Label(tk_root, text="iterations: {0}".format(self.iterations)).grid(row=3, column=1, sticky=W)
+            avg = reduce(lambda x, y: x + y, self.blocks_per_iteration) / len(
+                self.blocks_per_iteration)
+            maximum = max(self.blocks_per_iteration)
+
+            avg_label["text"] = 'avg number blocks: {0}'.format(avg)
+            max_label["text"] = "maximum number blocks: {0}".format(maximum)
+            it_label["text"] = "iterations: {0}".format(self.iterations)
 
             self.blocks_per_iteration = []
         time.sleep(0.05)
