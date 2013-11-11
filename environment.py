@@ -8,19 +8,16 @@ VANISH_ZONE_HEIGHT = 2
 BOTTOM_INDEX = FIELD_HEIGHT - 1
 RIGHTMOST_INDEX = FIELD_WIDTH - 1
 
-S0 = [[0 for _ in range(FIELD_HEIGHT)] for _ in
-      range(FIELD_WIDTH)]
-
 
 class Environment(object):
-    def __init__(self, blocks=S0):
+    def __init__(self):
         self.random = random.Random()
         self.initialize_field()
         self._choose_next_shape()
 
     def initialize_field(self):
         self.blocks = [[0 for _ in range(FIELD_HEIGHT)] for _ in
-          range(FIELD_WIDTH)]
+                       range(FIELD_WIDTH)]
         self._choose_next_shape()
 
     def possible_actions(self):
@@ -104,7 +101,8 @@ class Environment(object):
     def _calculate_reward(self):
         if self.is_game_over():
             return -100
-        return self._height_based_reward()
+        # return self._height_based_reward()
+        return 0
 
     def _height_based_reward(self):
         highest = self._highest_block_row()
@@ -115,7 +113,6 @@ class Environment(object):
         else:
             reward = -10
         return reward
-
 
 
 class Action(object):

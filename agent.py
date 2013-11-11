@@ -17,6 +17,7 @@ class TDLearningAgent(object):
         self.alpha = 0.1  # lernrate
         self.gamma = 0.8  # discount rate
         self.iterations = 0
+        self.block_last_iteration = 0
 
     def _initialize_state(self):
         self.environment.initialize_field()
@@ -32,6 +33,7 @@ class TDLearningAgent(object):
 
     def _episode(self):
         self._initialize_state()
+        self.block_last_iteration = 0
         while not self.environment.is_game_over():
             self._step()
 
@@ -41,6 +43,7 @@ class TDLearningAgent(object):
         old_state = self.current_state
         self._update_perceived_state()
         self._q(old_state, action, reward)
+        self.block_last_iteration += 1
 
     def _choose_action(self):
         actions = self._find_best_actions()
@@ -81,23 +84,3 @@ class TDLearningAgent(object):
 
     def _perceived_state(self):
         return self.state_class(self.environment)
-
-    def _calculate_reward(self):
-        if self.environment.is_game_over():
-            return -100
-        return self.height_based_reward()
-
-
-class PerceivedState(object):
-    pass
-
-
-class SimplePerceivedState(PerceivedState):
-    def __init__(self, environment):
-        self.blocks = copy.deepcopy(environment.blocks)
-        self.shape = environment.current_shape
-
-
-class HolePerceivedState(PerceivedState):
-    def __init__(self, environment):
-        self.number_holes = features.number_of_holes(environment)
