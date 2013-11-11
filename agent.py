@@ -1,4 +1,5 @@
 from collections import defaultdict
+import copy
 import random
 import time
 import threading
@@ -28,7 +29,7 @@ class TDLearningAgent(object):
 
     def _episode(self):
         self._initialize_state()
-        while not self.current_state.is_terminal():
+        while not self.environment.is_game_over():
             self._step()
 
     def _step(self):
@@ -77,7 +78,7 @@ class TDLearningAgent(object):
         return best
 
     def _perceived_state(self):
-        return PerceivedState(self.environment)
+        return SimplePerceivedState(self.environment)
 
     def _calculate_reward(self, new_state):
         return 10  # todo real reward calculation
@@ -92,15 +93,16 @@ class TDLearningAgentSlow(TDLearningAgent):
     def _episode(self):
         self._initialize_state()
         while (not self.stop_event.is_set() and
-                   not self.current_state.is_terminal()):
+                   not self.environment.is_game_over()):
             self._step()
 
 
 class PerceivedState(object):
-    def __init__(self, environment):
-        self.blocks = environment.blocks
-        self.possible_actions = environment.possible_actions()
-        self.terminal = environment.is_game_over()
+    pass
 
-    def is_terminal(self):
-        return self.terminal
+
+class SimplePerceivedState(PerceivedState):
+    def __init__(self, environment):
+        self.blocks = copy.deepcopy(environment.blocks)
+        self.shape = environment.current_shape
+        self.terminal = environment.is_game_over()
