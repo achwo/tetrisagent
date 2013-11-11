@@ -19,7 +19,7 @@ RIGHT = "right"
 DOWN = "down"
 
 REFRESH_IN_MS = 100
-EPISODE_COUNT = 5000
+EPISODE_COUNT = 50000000
 
 global agent
 global tk_root
@@ -45,11 +45,11 @@ class TDLearningAgentSlow(TDLearningAgent):
                    not self.environment.is_game_over()):
             self._step()
 
-        if self.iterations % 50 == 0:
+        if self.iterations % 1000 == 0:
             blockcopy = copy.deepcopy(self.environment.blocks)
             self.dataQ.put(blockcopy)
             print self.iterations
-        time.sleep(0.05)
+            time.sleep(0.05)
 
 
 class status_bar(Frame):
