@@ -120,6 +120,12 @@ class Environment(object):
 
         return reward
 
+    def row(self, row_number):
+        row = []
+        for col in self.blocks:
+            row.append(col[row_number])
+        return row
+
 
 class Action(object):
     def __init__(self, column):

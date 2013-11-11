@@ -7,19 +7,21 @@ from state import *
 
 
 class TDLearningAgent(object):
-    def __init__(self, state_class=TestState):
+    def __init__(self, state_class=WorkingAreaPerceivedState):
+        self.iterations = 0
         self.state_class = state_class
         self.environment = Environment()
         self._initialize_state()
         self.random = random.Random()
         self.Q = defaultdict(int)
-        self.alpha = 0.1  # lernrate
+        self.alpha = 0.9  # lernrate
         self.gamma = 0.8  # discount rate
-        self.iterations = 0
         self.blocks_last_iteration = 0
         self.blocks_per_iteration = []
 
     def _initialize_state(self):
+        if self.iterations >= 30000:
+            self.alpha = 0.1
         self.environment.initialize()
         self._update_perceived_state()
 
