@@ -17,7 +17,8 @@ class TDLearningAgent(object):
         self.alpha = 0.1  # lernrate
         self.gamma = 0.8  # discount rate
         self.iterations = 0
-        self.block_last_iteration = 0
+        self.blocks_last_iteration = 0
+        self.blocks_per_iteration = []
 
     def _initialize_state(self):
         self.environment.initialize_field()
@@ -33,9 +34,10 @@ class TDLearningAgent(object):
 
     def _episode(self):
         self._initialize_state()
-        self.block_last_iteration = 0
+        self.blocks_last_iteration = 0
         while not self.environment.is_game_over():
             self._step()
+        self.blocks_per_iteration.append(self.blocks_last_iteration)
 
     def _step(self):
         action = self._choose_action()
@@ -43,7 +45,7 @@ class TDLearningAgent(object):
         old_state = self.current_state
         self._update_perceived_state()
         self._q(old_state, action, reward)
-        self.block_last_iteration += 1
+        self.blocks_last_iteration += 1
 
     def _choose_action(self):
         actions = self._find_best_actions()
