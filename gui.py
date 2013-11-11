@@ -9,7 +9,7 @@ from agent import TDLearningAgent
 import time
 import copy
 
-SCALE = 30
+SCALE = 20
 OFFSET = 3
 MAXX = 10
 MAXY = 12
