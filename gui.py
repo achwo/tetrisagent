@@ -20,7 +20,7 @@ DOWN = "down"
 
 REFRESH_IN_MS = 100
 EPISODE_COUNT = 60000
-EPISODES_PER_OUTPUT = 1000
+EPISODES_PER_OUTPUT = 500
 
 global agent
 global tk_root

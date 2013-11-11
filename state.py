@@ -2,6 +2,7 @@ import copy
 
 from features import number_of_holes
 from features import min_height
+import environment as e
 
 
 class TestState(object):
@@ -30,6 +31,20 @@ class PerceivedState(object):
                 if self_p != other_p:
                     return False
         return True
+
+
+class WorkingAreaPerceivedState(PerceivedState):
+    def __init__(self, environment, *features):
+        super(WorkingAreaPerceivedState, self).__init__(environment)
+        highest = environment.highest
+        if highest == e.BOTTOM_INDEX:
+            highest -= 1
+
+        self.area = [environment.row(highest), environment.row(highest+1)]
+
+    def __eq__(self, other):
+        return super.__eq__(other) and self.area == other.area
+
 
 
 class BlockPerceivedState(PerceivedState):
