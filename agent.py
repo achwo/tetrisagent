@@ -28,7 +28,6 @@ class TDLearningAgent(object):
         for i in range(0, episodes):
             self._episode()
             self.iterations += 1
-            self.environment.next_episode_event.set()
 
     def _episode(self):
         self._initialize_state()
