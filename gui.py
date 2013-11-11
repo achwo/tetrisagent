@@ -9,7 +9,7 @@ from agent import TDLearningAgent
 import time
 import copy
 
-SCALE = 20
+SCALE = 50
 OFFSET = 3
 MAXX = 10
 MAXY = 12
@@ -37,19 +37,15 @@ class TDLearningAgentSlow(TDLearningAgent):
 
     def _step(self):
         TDLearningAgent._step(self)
+        blockcopy = copy.deepcopy(self.environment.blocks)
+        self.dataQ.put(blockcopy)
+        time.sleep(0.1)
 
     def _episode(self):
         self._initialize_state()
-        self.environment.next_episode_event.set()
         while (not self.stop_event.is_set() and
                    not self.environment.is_game_over()):
             self._step()
-
-        if self.iterations % 50 == 0:
-            blockcopy = copy.deepcopy(self.environment.blocks)
-            self.dataQ.put(blockcopy)
-            print self.iterations
-        time.sleep(0.05)
 
 
 class status_bar(Frame):
@@ -324,9 +320,7 @@ def run(stop_event, next_episode_event):
     global agent
     agent = TDLearningAgentSlow()
     agent.dataQ = dataQ
-    env = agent.environment
     agent.stop_event = stop_event
-    env.next_episode_event = next_episode_event
     agent.run(EPISODE_COUNT)
 
 
@@ -337,9 +331,8 @@ if __name__ == "__main__":
     tk_root.geometry("450x250")
     controller = game_controller(tk_root)
     logic_stop_event = threading.Event()
-    next_episode_event = threading.Event()
     logic_thread = threading.Thread(target=run,
-        args=(logic_stop_event, next_episode_event))
+        args=(logic_stop_event,))
     logic_thread.start()
     tk_root.after(REFRESH_IN_MS, update_state)
     tk_root.mainloop()

@@ -87,18 +87,6 @@ class TDLearningAgent(object):
             return -100
         return self.height_based_reward()
 
-class TDLearningAgentSlow(TDLearningAgent):
-    def _step(self):
-        TDLearningAgent._step(self)
-        time.sleep(0.5)
-        self.dataQ.put(1)
-
-    def _episode(self):
-        self._initialize_state()
-        while (not self.stop_event.is_set() and
-                   not self.environment.is_game_over()):
-            self._step()
-
 
 class PerceivedState(object):
     pass
