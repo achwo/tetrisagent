@@ -7,6 +7,7 @@ import threading
 import shapes
 from agent import TDLearningAgent
 import time
+import copy
 
 SCALE = 20
 OFFSET = 3
@@ -18,9 +19,9 @@ RIGHT = "right"
 DOWN = "down"
 
 REFRESH_IN_MS = 100
-EPISODE_COUNT = 50
+EPISODE_COUNT = 5000
 
-global env
+global agent
 global tk_root
 global controller
 global dataQ
@@ -30,16 +31,25 @@ direction_d = {"left": (-1, 0), "right": (1, 0), "down": (0, 1)}
 
 
 class TDLearningAgentSlow(TDLearningAgent):
+    """
+    Special class for GUI representation with slower calculation speed
+    """
+
     def _step(self):
         TDLearningAgent._step(self)
-        time.sleep(0.5)
-        self.dataQ.put(1)
 
     def _episode(self):
         self._initialize_state()
+        self.environment.next_episode_event.set()
         while (not self.stop_event.is_set() and
                    not self.environment.is_game_over()):
             self._step()
+
+        if self.iterations % 50 == 0:
+            blockcopy = copy.deepcopy(self.environment.blocks)
+            self.dataQ.put(blockcopy)
+            print self.iterations
+        time.sleep(0.05)
 
 
 class status_bar(Frame):
@@ -272,12 +282,10 @@ class game_controller(object):
         self.parent.bind("a", self.a_callback)
 
     def a_callback(self, event):
-        print self.board.landed
-        self.board.clear()
+        pass
 
-    def update_board(self, env):
+    def update_board(self, blocks):
         self.board.clear()
-        blocks = env.blocks
         for r in range(len(blocks)):
             for c in range(len(blocks[r])):
                 if blocks[r][c] is "o":
@@ -301,20 +309,19 @@ class game_controller(object):
 
 
 def update_state():
-    if env and env.next_episode_event.is_set():
-        controller.update_board(env)
-        env.next_episode_event.clear()
     while True:
         try:
-            item = dataQ.get(timeout=0.1)
+            blocks = dataQ.get(timeout=0.1)
+            if blocks:
+                controller.update_board(blocks)
         except:
             break
-    #controller.update_board(env)
+    #controller.update_board(environment)
     tk_root.after(REFRESH_IN_MS, update_state)
 
 
 def run(stop_event, next_episode_event):
-    global env
+    global agent
     agent = TDLearningAgentSlow()
     agent.dataQ = dataQ
     env = agent.environment
