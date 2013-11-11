@@ -97,8 +97,8 @@ def number_of_holes(environment):
 
 def min_height(environment):
     min_height = FIELD_HEIGHT
-    for i in range(FIELD_WIDTH-1):
-        for j in range(FIELD_HEIGHT-1):
+    for i in range(FIELD_WIDTH):
+        for j in range(FIELD_HEIGHT):
             if environment.blocks[i][j] is not 0 and (FIELD_HEIGHT - j) < min_height:
                 min_height = FIELD_HEIGHT - j
                 break
