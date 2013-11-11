@@ -9,7 +9,7 @@ from agent import TDLearningAgent
 import time
 import copy
 
-SCALE = 50
+SCALE = 30
 OFFSET = 3
 MAXX = 10
 MAXY = 12
@@ -28,24 +28,6 @@ global dataQ
 dataQ = Queue.Queue(maxsize=0)
 
 direction_d = {"left": (-1, 0), "right": (1, 0), "down": (0, 1)}
-
-
-class TDLearningAgentSlow(TDLearningAgent):
-    """
-    Special class for GUI representation with slower calculation speed
-    """
-
-    def _step(self):
-        TDLearningAgent._step(self)
-        blockcopy = copy.deepcopy(self.environment.blocks)
-        self.dataQ.put(blockcopy)
-        time.sleep(0.1)
-
-    def _episode(self):
-        self._initialize_state()
-        while (not self.stop_event.is_set() and
-                   not self.environment.is_game_over()):
-            self._step()
 
 
 class status_bar(Frame):
@@ -304,6 +286,28 @@ class game_controller(object):
         self.board.clear()
 
 
+class TDLearningAgentSlow(TDLearningAgent):
+    """
+    Special class for GUI representation with slower calculation speed
+    """
+
+    def _step(self):
+        TDLearningAgent._step(self)
+
+    def run(self, episodes):
+        for i in range(0, episodes):
+            if self.stop_event.is_set():
+                break
+            self._episode()
+            self.iterations += 1
+            
+            if self.iterations % 50 == 0:
+                blockcopy = copy.deepcopy(self.environment.blocks)
+                self.dataQ.put(blockcopy)
+                print self.iterations
+            time.sleep(0.05)
+
+
 def update_state():
     while True:
         try:
@@ -316,7 +320,7 @@ def update_state():
     tk_root.after(REFRESH_IN_MS, update_state)
 
 
-def run(stop_event, next_episode_event):
+def run(stop_event):
     global agent
     agent = TDLearningAgentSlow()
     agent.dataQ = dataQ
