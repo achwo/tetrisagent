@@ -20,7 +20,7 @@ DOWN = "down"
 REFRESH_IN_MS = 100
 EPISODE_COUNT = 50
 
-global environment
+global env
 global tk_root
 global controller
 global dataQ
@@ -262,9 +262,9 @@ class game_controller(object):
         print self.board.landed
         self.board.clear()
 
-    def update_board(self, environment):
+    def update_board(self, env):
         self.board.clear()
-        blocks = environment.blocks
+        blocks = env.blocks
         for r in range(len(blocks)):
             for c in range(len(blocks[r])):
                 if blocks[r][c] is "o":
@@ -293,15 +293,15 @@ def update_state():
             item = dataQ.get(timeout=0.1)
         except:
             break
-    controller.update_board(environment)
+    controller.update_board(env)
     tk_root.after(REFRESH_IN_MS, update_state)
 
 
 def run(stop_event):
-    global environment
+    global env
     agent = TDLearningAgentSlow()
     agent.dataQ = dataQ
-    environment = agent.environment
+    env = agent.environment
     agent.stop_event = stop_event
     agent.run(EPISODE_COUNT)
 

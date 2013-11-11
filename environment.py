@@ -14,13 +14,14 @@ S0 = [[0 for _ in range(FIELD_HEIGHT)] for _ in
 
 class Environment(object):
     def __init__(self, blocks=S0):
-        self.reset_blocks()
         self.random = random.Random()
+        self.reset_blocks()
         self._choose_next_shape()
 
     def reset_blocks(self):
         self.blocks = [[0 for _ in range(FIELD_HEIGHT)] for _ in
           range(FIELD_WIDTH)]
+        self._choose_next_shape()
 
     def possible_actions(self):
         if self.is_game_over():

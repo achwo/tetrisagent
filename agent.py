@@ -97,6 +97,7 @@ class TDLearningAgent(object):
             reward = 0
         else:
             reward = -10
+        return reward
 
 
 class TDLearningAgentSlow(TDLearningAgent):
