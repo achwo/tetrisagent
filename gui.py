@@ -8,12 +8,6 @@ from agent import TDLearningAgentSlow
 import shapes
 import environment
 
-SCALE = 30
-
-import shapes
-import environment
-
-
 SCALE = 20
 OFFSET = 3
 MAXX = 10
@@ -24,6 +18,7 @@ RIGHT = "right"
 DOWN = "down"
 
 REFRESH_IN_MS = 100
+EPISODE_COUNT = 50
 
 global environment
 global tk_root
@@ -267,9 +262,9 @@ class game_controller(object):
         print self.board.landed
         self.board.clear()
 
-    def update_board(self, state):
+    def update_board(self, environment):
         self.board.clear()
-        blocks = state.blocks
+        blocks = environment.blocks
         for r in range(len(blocks)):
             for c in range(len(blocks[r])):
                 if blocks[r][c] is "o":
@@ -308,7 +303,7 @@ def run(stop_event):
     agent.dataQ = dataQ
     environment = agent.environment
     agent.stop_event = stop_event
-    agent.run(REFRESH_IN_MS)
+    agent.run(EPISODE_COUNT)
 
 
 if __name__ == "__main__":

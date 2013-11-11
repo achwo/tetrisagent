@@ -2,8 +2,6 @@ from collections import defaultdict
 import copy
 import random
 import time
-import threading
-import sys
 
 from environment import Environment
 import environment
@@ -12,6 +10,7 @@ import features
 
 class TDLearningAgent(object):
     def __init__(self):
+        self.environment = Environment()
         self._initialize_state()
         self.random = random.Random()
         self.Q = defaultdict(int)
@@ -20,7 +19,7 @@ class TDLearningAgent(object):
         self.iterations = 0
 
     def _initialize_state(self):
-        self.environment = Environment()
+        self.environment.reset_blocks()
         self._update_perceived_state()
 
     def _update_perceived_state(self):
@@ -98,7 +97,6 @@ class TDLearningAgent(object):
             reward = 0
         else:
             reward = -10
-        return reward
 
 
 class TDLearningAgentSlow(TDLearningAgent):
