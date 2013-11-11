@@ -301,12 +301,23 @@ class TDLearningAgentSlow(TDLearningAgent):
             self._episode()
             self.iterations += 1
             self._update_gui()
+            
 
     def _update_gui(self):
-        if self.iterations % 50 == 0:
+        if self.iterations % 10 == 0:
             blockcopy = copy.deepcopy(self.environment.blocks)
             self.dataQ.put(blockcopy)
-            print self.iterations
+
+            avg = 'avg number blocks: {0}'.format(reduce(lambda x, y: x + y,
+                                                         self.blocks_per_iteration) / len(
+                self.blocks_per_iteration))
+
+            maximum =  "maximum number blocks: {0}".format(max(self.blocks_per_iteration))
+            Label(tk_root, text=avg).grid(row=1, column=1, sticky=W)
+            Label(tk_root, text=maximum).grid(row=2, column=1, sticky=W)
+            Label(tk_root, text="iterations: {0}".format(self.iterations)).grid(row=3, column=1, sticky=W)
+
+            self.blocks_per_iteration = []
         time.sleep(0.05)
 
 
@@ -334,11 +345,11 @@ if __name__ == "__main__":
     tk_root = Tk()
     tk_root.title("tetris agent")
     tk_root.minsize(450, 250)
-    tk_root.geometry("450x250")
+    tk_root.geometry("550x250")
     controller = game_controller(tk_root)
     logic_stop_event = threading.Event()
     logic_thread = threading.Thread(target=run,
-        args=(logic_stop_event,))
+                                    args=(logic_stop_event,))
     logic_thread.start()
     tk_root.after(REFRESH_IN_MS, update_state)
     tk_root.mainloop()
