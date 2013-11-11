@@ -22,3 +22,4 @@ class FirstPerceivedState(PerceivedState):
     def __init__(self, environment, *features):
         super(FirstPerceivedState, self).__init__(environment, number_of_holes,
                                                   min_height, *features)
+        self.shape = environment.current_shape
