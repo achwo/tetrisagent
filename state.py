@@ -1,17 +1,9 @@
 import copy
+from BitVector import BitVector
 
 from features import number_of_holes
 from features import min_height
 import environment as e
-
-
-class TestState(object):
-    def __init__(self, environment, *features):
-        self.value = 1
-
-    def __eq__(self, other):
-        return self.value == other.value
-
 
 
 class PerceivedState(object):
@@ -46,14 +38,14 @@ class WorkingAreaPerceivedState(PerceivedState):
         return super.__eq__(other) and self.area == other.area
 
 
-
 class BlockPerceivedState(PerceivedState):
     def __init__(self, environment, *features):
         super(BlockPerceivedState, self).__init__(environment, *features)
-        self.blocks = copy.deepcopy(environment.blocks)
+        self.blocks = field_to_bitvector(environment.blocks)
 
     def __eq__(self, other):
-        return super.__eq__(other) and self.blocks == other.blocks
+        # return super.__eq__(other) and self.blocks == other.blocks
+        return self.blocks == other.blocks
 
 
 class FirstPerceivedState(PerceivedState):
@@ -63,3 +55,15 @@ class FirstPerceivedState(PerceivedState):
 
     def __eq__(self, other):
         super.__eq__(other)
+
+
+def field_to_bitvector(field):
+    bits = []
+    for col in field:
+        for cell in col:
+            if cell != 0:
+                bits.append(1)
+            else:
+                bits.append(0)
+
+    return BitVector(bitlist=bits)
