@@ -1,7 +1,8 @@
 import math
-from environment import FIELD_HEIGHT, FIELD_WIDTH, Environment
+from settings import FIELD_HEIGHT, FIELD_WIDTH
+from environment import Environment
 
-environment = Environment()
+env = Environment()
 
 
 def max_height(environment):

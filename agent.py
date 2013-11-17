@@ -3,11 +3,14 @@ import random
 
 from environment import Environment
 import features
+import settings
 from state import *
 
 
+
+
 class TDLearningAgent(object):
-    def __init__(self, state_class=WorkingAreaPerceivedState):
+    def __init__(self, state_class=BlockPerceivedState):
         self.iterations = 0
         self.state_class = state_class
         self.environment = Environment()
@@ -20,7 +23,7 @@ class TDLearningAgent(object):
         self.blocks_per_iteration = []
 
     def _initialize_state(self):
-        if self.iterations >= 30000:
+        if self.iterations >= settings.ITERATIONS_BEFORE_ALPHA_CHANGE:
             self.alpha = 0.1
         self.environment.initialize()
         self._update_perceived_state()
@@ -84,4 +87,5 @@ class TDLearningAgent(object):
         return best
 
     def _perceived_state(self):
-        return self.state_class(self.environment, features.individual_height)
+        # return self.state_class(self.environment, features.individual_height)
+        return self.state_class(self.environment)
