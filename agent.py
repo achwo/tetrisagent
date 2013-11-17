@@ -2,11 +2,8 @@ from collections import defaultdict
 import random
 
 from environment import Environment
-import features
 import settings
 from state import *
-
-
 
 
 class TDLearningAgent(object):

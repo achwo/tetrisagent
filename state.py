@@ -1,4 +1,3 @@
-import copy
 from BitVector import BitVector
 
 from features import number_of_holes
@@ -32,7 +31,7 @@ class WorkingAreaPerceivedState(PerceivedState):
         if highest == e.BOTTOM_INDEX:
             highest -= 1
 
-        self.area = [environment.row(highest), environment.row(highest+1)]
+        self.area = [environment.row(highest), environment.row(highest + 1)]
 
     def __eq__(self, other):
         return super.__eq__(other) and self.area == other.area
