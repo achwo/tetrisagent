@@ -21,10 +21,10 @@ MAX_BLOCKS_LABEL = "Maximale Anzahl von Bloecken: {0}"
 AVG_BLOCKS_LABEL = "Platzierte Bloecke im Durchschnitt: {0}"
 ITERATIONS_LABEL = "Anzahl der Durchlaeufe: {0}"
 
-GUI_REFRESH_IN_MS = 100
+GUI_REFRESH_IN_MS = 50
 TOTAL_EPISODES = 60000
 VISUALIZE_EPISODES_COUNT = 500
-STEP_SLOWDOWN_IN_SEC = 0.1
+STEP_SLOWDOWN_IN_SEC = 0.3
 EPISODE_SLOWDOWN_IN_SEC = 0
 
 global tk_root
@@ -241,20 +241,17 @@ class game_controller(object):
         self.board.clear()
         for r in range(len(blocks)):
             for c in range(len(blocks[r])):
-                if blocks[r][c] is "o":
-                    self.board.add_block((r, c), "yellow")
-                if blocks[r][c] is "i":
-                    self.board.add_block((r, c), "cyan")
-                if blocks[r][c] is "z":
-                    self.board.add_block((r, c), "red")
-                if blocks[r][c] is "s":
-                    self.board.add_block((r, c), "green")
-                if blocks[r][c] is "j":
-                    self.board.add_block((r, c), "blue")
-                if blocks[r][c] is "l":
-                    self.board.add_block((r, c), "orange")
-                if blocks[r][c] is "t":
-                    self.board.add_block((r, c), "magenta")
+                def get_color(x):
+                    return {
+                        'o': 'yellow',
+                        'i': 'cyan',
+                        'z': 'red',
+                        's': 'green',
+                        'j': 'blue',
+                        'l': 'orange',
+                        't': 'magenta',
+                        }.get(x)
+                self.board.add_block((r, c), get_color(blocks[r][c]))
 
     def clear_callback(self, event):
         self.board.clear()
@@ -283,12 +280,15 @@ class TDLearningAgentSlow(TDLearningAgent):
         self.blocks_last_iteration = 0
         super(TDLearningAgentSlow, self)._episode()
         self.blocks_per_iteration.append(self.blocks_last_iteration)
+        if EPISODE_SLOWDOWN_IN_SEC > 0:
+            time.sleep(EPISODE_SLOWDOWN_IN_SEC)
 
     def _step(self):
         super(TDLearningAgentSlow, self)._step()
         self.blocks_last_iteration += 1
         self._update_gui()
-        time.sleep(0.2)
+        if STEP_SLOWDOWN_IN_SEC > 0:
+            time.sleep(STEP_SLOWDOWN_IN_SEC)
 
     def _update_gui(self):
         # if self.iterations % VISUALIZE_EPISODES_COUNT == 0:
