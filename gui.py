@@ -27,34 +27,12 @@ VISUALIZE_EPISODES_COUNT = 500
 STEP_SLOWDOWN_IN_SEC = 0.1
 EPISODE_SLOWDOWN_IN_SEC = 0
 
-global agent
 global tk_root
 global controller
 global dataQ
 dataQ = Queue.Queue(maxsize=0)
 
 direction_d = {"left": (-1, 0), "right": (1, 0), "down": (0, 1)}
-
-
-class status_bar(Frame):
-
-    """
-    Status bar to display the score and level
-    """
-
-    def __init__(self, parent):
-        Frame.__init__(self, parent)
-        self.label = Label(self, bd=1, relief=SUNKEN, anchor=W)
-        self.grid(row=0, column=0)
-        # self.label.pack(fill=X)
-
-    def set(self, format, *args):
-        self.label.config(text=format % args)
-        self.label.update_idletasks()
-
-    def clear(self):
-        self.label.config(test="")
-        self.label.update_idletasks()
 
 
 class Board(Frame):
@@ -217,15 +195,6 @@ class game_controller(object):
         self.level = 0
         self.delay = 1    # ms
 
-        self.status_bar = status_bar(parent)
-        #self.status_bar.grid(row=0, columnspan=2)
-        #self.status_bar.pack(side=TOP, fill=X)
-        # print "Status bar width",self.status_bar.cget("width")
-
-        self.status_bar.set("Score: %-7d\t Level: %d " % (
-            self.score, self.level + 1)
-        )
-
         # Label(parent, text="First:").grid(row=1, column=1)
         # Label(parent, text="Second:").grid(row=2, column=1)
         # Label(parent, text="Third:").grid(row=3, column=1)
@@ -297,7 +266,7 @@ class TDLearningAgentSlow(TDLearningAgent):
     """
 
     def __init__(self):
-        TDLearningAgent.__init__(self)
+        super(TDLearningAgentSlow, self).__init__()
         self.blocks_last_iteration = 0
         self.blocks_per_iteration = []
 
@@ -310,14 +279,14 @@ class TDLearningAgentSlow(TDLearningAgent):
             self._update_gui()
 
     def _step(self):
-        TDLearningAgent._step(self)
+        super(TDLearningAgentSlow, self)._step()
         self.blocks_last_iteration += 1
         self._update_gui()
-        time.sleep(0.4)
+        time.sleep(0.2)
 
     def _episode(self):
         self.blocks_last_iteration = 0
-        TDLearningAgent._episode(self)
+        super(TDLearningAgentSlow, self)._episode()
         self.blocks_per_iteration.append(self.blocks_last_iteration)
 
     def _update_gui(self):
@@ -336,20 +305,18 @@ class TDLearningAgentSlow(TDLearningAgent):
         self.dataQ.put(blockcopy)
 
 
-def update_state():
-    while True:
-        try:
-            blocks = dataQ.get(timeout=0.1)
-            if blocks:
-                controller.update_board(blocks)
-        except:
-            break
+def refresh_gui():
+    try:
+        blocks = dataQ.get(timeout=0.1)
+        if blocks:
+            controller.update_board(blocks)
+    except:
+        pass
     # controller.update_board(environment)
-    tk_root.after(GUI_REFRESH_IN_MS, update_state)
+    tk_root.after(GUI_REFRESH_IN_MS, refresh_gui)
 
 
 def run(stop_event):
-    global agent
     agent = TDLearningAgentSlow()
     agent.dataQ = dataQ
     agent.stop_event = stop_event
@@ -366,7 +333,7 @@ if __name__ == "__main__":
     logic_thread = threading.Thread(target=run,
                                     args=(logic_stop_event,))
     logic_thread.start()
-    tk_root.after(GUI_REFRESH_IN_MS, update_state)
+    tk_root.after(GUI_REFRESH_IN_MS, refresh_gui)
     tk_root.mainloop()
     logic_stop_event.set()
     logic_thread.join()
