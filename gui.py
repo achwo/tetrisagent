@@ -18,6 +18,10 @@ LEFT = "left"
 RIGHT = "right"
 DOWN = "down"
 
+MAX_BLOCKS_LABEL = "Maximale Anzahl von Bloecken: {0}"
+AVG_BLOCKS_LABEL = "Platzierte Bloecke im Durchschnitt: {0}"
+ITERATIONS_LABEL = "Anzahl der Durchlaeufe: {0}"
+
 REFRESH_IN_MS = 100
 EPISODE_COUNT = 60000
 EPISODES_PER_OUTPUT = 500
@@ -251,11 +255,11 @@ class game_controller(object):
         global max_label
         global it_label
 
-        max_label = Label(tk_root, text="Maximale Anzahl von Bloecken: 0")
+        max_label = Label(tk_root, text=MAX_BLOCKS_LABEL.format(0))
         max_label.grid(row=2, column=1, sticky=W)
-        avg_label = Label(tk_root, text="Platzierte Bloecke im Durchschnitt: 0")
+        avg_label = Label(tk_root, text=AVG_BLOCKS_LABEL.format(0))
         avg_label.grid(row=1, column=1, sticky=W)
-        it_label = Label(tk_root, text="Anzahl der Durchlaeufe: 0")
+        it_label = Label(tk_root, text=ITERATIONS_LABEL.format(0))
         it_label.grid(row=3, column=1, sticky=W)
 
         quitButton = Button(parent, text="Quit",
@@ -324,9 +328,9 @@ class TDLearningAgentSlow(TDLearningAgent):
                 self.blocks_per_iteration)
             maximum = max(self.blocks_per_iteration)
 
-            max_label["text"] = "Maximale Anzahl von Bloecken: {0}".format(maximum)
-            avg_label["text"] = 'Platzierte Bloecke im Durchschnitt: {0}'.format(avg)
-            it_label["text"] = "Anzahl der Durchlaeufe: {0}".format(self.iterations)
+            max_label["text"] = MAX_BLOCKS_LABEL.format(maximum)
+            avg_label["text"] = AVG_BLOCKS_LABEL.format(avg)
+            it_label["text"] = ITERATIONS_LABEL.format(self.iterations)
 
         #if self.iterations % EPISODES_PER_OUTPUT == 0:
         blockcopy = copy.deepcopy(self.environment.blocks)
