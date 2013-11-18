@@ -7,7 +7,7 @@ import environment as e
 
 class PerceivedState(object):
     def __init__(self, environment, *features):
-        self.shape = environment.current_shape
+        self.shape = environment.current_shape  # todo wird shape geupdated, wenn current_shape sich aendert?
         self.features = []
         for f in features:
             self.features.append(f(environment))
@@ -43,8 +43,7 @@ class BlockPerceivedState(PerceivedState):
         self.blocks = field_to_bitvector(environment.blocks)
 
     def __eq__(self, other):
-        # return super.__eq__(other) and self.blocks == other.blocks
-        return self.blocks == other.blocks
+        return super.__eq__(other) and self.blocks == other.blocks
 
 
 class FirstPerceivedState(PerceivedState):
