@@ -228,9 +228,13 @@ class game_controller(object):
         q_label = Label(tk_root, text=Q_OR_NOT_LABEL.format('-'))
         q_label.grid(row=4, column=1, sticky=W)
 
+        fastForwardButton = Button(parent, text="fast forward",
+                                   command=self.fast_forward_callback)
+        fastForwardButton.grid(row=5, column=2, sticky=E)
+
         quitButton = Button(parent, text="Quit",
                             command=parent.quit)
-        quitButton.grid(row=5, column=2, sticky=E)
+        quitButton.grid(row=5, column=3, sticky=E)
 
         self.board = Board(
             parent,
@@ -241,11 +245,13 @@ class game_controller(object):
         )
         self.parent.bind("a", self.a_callback)
 
+    def fast_forward_callback(self):
+        agent.fast_forward = True
+
     def a_callback(self, event):
         pass
 
     def update_board(self, blocks):
-        self.board.clear()
         def get_color(x):
             return {
                 'o': 'yellow',
@@ -256,9 +262,12 @@ class game_controller(object):
                 'l': 'orange',
                 't': 'magenta',
                 }.get(x)
+                
+        self.board.clear()
         for r in range(len(blocks)):
             for c in range(len(blocks[r])):
-                self.board.add_block((r, c), get_color(blocks[r][c]))
+                color = get_color(blocks[r][c])
+                self.board.add_block((r, c), color)
 
     def clear_callback(self, event):
         self.board.clear()
@@ -274,6 +283,8 @@ class TDLearningAgentSlow(TDLearningAgent):
         super(TDLearningAgentSlow, self).__init__()
         self.blocks_last_iteration = 0
         self.blocks_per_iteration = []
+        self.fast_forward = False
+        self.fast_forward_count = 50
 
     def run(self, episodes):
         for i in range(0, episodes):
@@ -281,21 +292,29 @@ class TDLearningAgentSlow(TDLearningAgent):
                 break
             self._episode()
             self.iterations += 1
-            self._update_gui()
+            if not self.fast_forward:
+                self._update_gui()
 
     def _episode(self):
+        if self.fast_forward and self.fast_forward_count <= 0:
+            self.fast_forward = False
+            self.fast_forward_count = 50
         self.blocks_last_iteration = 0
         super(TDLearningAgentSlow, self)._episode()
         self.blocks_per_iteration.append(self.blocks_last_iteration)
-        if EPISODE_SLOWDOWN_IN_SEC > 0:
+        if self.fast_forward:
+            self.fast_forward_count -= 1
+        if EPISODE_SLOWDOWN_IN_SEC > 0 and not self.fast_forward:
             time.sleep(EPISODE_SLOWDOWN_IN_SEC)
 
     def _step(self):
         super(TDLearningAgentSlow, self)._step()
         self.blocks_last_iteration += 1
-        self._update_gui()
-        if STEP_SLOWDOWN_IN_SEC > 0:
-            time.sleep(STEP_SLOWDOWN_IN_SEC)
+
+        if not self.fast_forward:
+            self._update_gui()
+            if STEP_SLOWDOWN_IN_SEC > 0:
+                time.sleep(STEP_SLOWDOWN_IN_SEC)
 
     def _update_gui(self):
         # if self.iterations % VISUALIZE_EPISODES_COUNT == 0:
