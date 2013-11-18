@@ -23,6 +23,7 @@ class TDLearningAgent(object):
         self.environment.initialize()
         self._update_perceived_state()
 
+
     def _update_perceived_state(self):
         self.current_state = self._perceived_state()
 
@@ -58,22 +59,23 @@ class TDLearningAgent(object):
                 best_actions = [action]
             elif value == best_value:
                 best_actions.append(action)
+
         return set(best_actions)
 
     def _q(self, old_state, action, reward):
         c = (old_state, action)
 
         self.Q[c] = (1 - self.alpha) * self.Q[
-            c] + self.alpha * self._learned_value(reward, self.current_state)
+            c] + self.alpha * self._learned_value(reward)
 
-    def _learned_value(self, reward, new_state):
-        return reward + self.gamma * self._find_best_Q_value(new_state)
+    def _learned_value(self, reward):
+        return reward + self.gamma * self._find_best_Q_value()
 
-    def _find_best_Q_value(self, state):
+    def _find_best_Q_value(self):
         actions = self.environment.possible_actions()
         best = 0
         for action in actions:
-            value = self.Q[(state, action)]
+            value = self.Q[(self.current_state, action)]
             if value > best:
                 best = value
         return best
