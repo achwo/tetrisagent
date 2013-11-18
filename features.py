@@ -90,5 +90,4 @@ def field_to_bitvector(environment):
                 bits.append(1)
             else:
                 bits.append(0)
-
-    return BitVector(bitlist=bits)
+    return BitVector(bitlist=bits).intValue()
