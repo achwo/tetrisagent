@@ -4,15 +4,14 @@ from Tkinter import *
 import Queue
 import threading
 
-import shapes
 from agent import TDLearningAgent
 import time
 import copy
 
-SCALE = 40
-OFFSET = 3
-MAXX = 10
-MAXY = 12
+BLOCK_SIZE_IN_PX = 40
+OFFSET_TO_WINDOW_BORDER_IN_PX = 3
+BOARD_WIDTH_IN_BLOCKS = 10
+BOARD_HEIGHT_IN_BLOCKS = 12
 
 LEFT = "left"
 RIGHT = "right"
@@ -22,9 +21,11 @@ MAX_BLOCKS_LABEL = "Maximale Anzahl von Bloecken: {0}"
 AVG_BLOCKS_LABEL = "Platzierte Bloecke im Durchschnitt: {0}"
 ITERATIONS_LABEL = "Anzahl der Durchlaeufe: {0}"
 
-REFRESH_IN_MS = 100
-EPISODE_COUNT = 60000
-EPISODES_PER_OUTPUT = 500
+GUI_REFRESH_IN_MS = 100
+TOTAL_EPISODES = 60000
+VISUALIZE_EPISODES_COUNT = 500
+STEP_SLOWDOWN_IN_SEC = 0.1
+EPISODE_SLOWDOWN_IN_SEC = 0
 
 global agent
 global tk_root
@@ -36,6 +37,7 @@ direction_d = {"left": (-1, 0), "right": (1, 0), "down": (0, 1)}
 
 
 class status_bar(Frame):
+
     """
     Status bar to display the score and level
     """
@@ -44,7 +46,7 @@ class status_bar(Frame):
         Frame.__init__(self, parent)
         self.label = Label(self, bd=1, relief=SUNKEN, anchor=W)
         self.grid(row=0, column=0)
-        #self.label.pack(fill=X)
+        # self.label.pack(fill=X)
 
     def set(self, format, *args):
         self.label.config(text=format % args)
@@ -56,32 +58,27 @@ class status_bar(Frame):
 
 
 class Board(Frame):
+
     """
     The board represents the tetris playing area. A grid of x by y blocks.
     """
 
-    def __init__(self, parent, scale=20, max_x=10, max_y=20, offset=3):
-        """
-        Init and config the tetris board, default configuration:
-        Scale (block size in pixels) = 20
-        max X (in blocks) = 10
-        max Y (in blocks) = 20
-        offset (in pixels) = 3
-        """
+    def __init__(self, parent, block_size_in_px=20, board_width_in_blocks=10, board_height_in_blocks=20, offset=3):
         Frame.__init__(self, parent)
 
         # blocks are indexed by there corrdinates e.g. (4,5), these are
         self.landed = {}
         self.parent = parent
-        self.scale = scale
-        self.max_x = max_x
-        self.max_y = max_y
-        self.offset = offset
+        self.block_size_in_px = BLOCK_SIZE_IN_PX
+        self.board_width_in_blocks = BOARD_WIDTH_IN_BLOCKS
+        self.board_height_in_blocks = BOARD_HEIGHT_IN_BLOCKS
+        self.offset = OFFSET_TO_WINDOW_BORDER_IN_PX
 
         self.canvas = Canvas(parent,
-                             height=(max_y * scale) + offset,
-                             width=(max_x * scale) + offset)
-        #self.canvas.pack()
+                             height=(
+                                 self.board_height_in_blocks * self.block_size_in_px) + self.offset,
+                             width=(self.board_width_in_blocks * self.block_size_in_px) + self.offset)
+        # self.canvas.pack()
         self.canvas.grid(row=1, column=0, rowspan=5)
 
     def clear(self):
@@ -101,39 +98,38 @@ class Board(Frame):
         empty_row = 0
 
         # find the first empty row
-        for y in xrange(self.max_y - 1, -1, -1):
+        for y in xrange(self.board_height_in_blocks - 1, -1, -1):
             row_is_empty = True
-            for x in xrange(self.max_x):
+            for x in xrange(self.board_width_in_blocks):
                 if self.landed.get((x, y), None):
                     row_is_empty = False
-                    break;
+                    break
             if row_is_empty:
                 empty_row = y
                 break
 
-        # Now scan up and until a complete row is found. 
-        y = self.max_y - 1
+        # Now scan up and until a complete row is found.
+        y = self.board_height_in_blocks - 1
         while y > empty_row:
 
             complete_row = True
-            for x in xrange(self.max_x):
+            for x in xrange(self.board_width_in_blocks):
                 if self.landed.get((x, y), None) is None:
                     complete_row = False
-                    break;
+                    break
 
             if complete_row:
                 rows_deleted += 1
 
-                #delete the completed row
-                for x in xrange(self.max_x):
+                # delete the completed row
+                for x in xrange(self.board_width_in_blocks):
                     block = self.landed.pop((x, y))
                     self.delete_block(block)
                     del block
 
-
                 # move all the rows above it down
                 for ay in xrange(y - 1, empty_row, -1):
-                    for x in xrange(self.max_x):
+                    for x in xrange(self.board_width_in_blocks):
                         block = self.landed.get((x, ay), None)
                         if block:
                             block = self.landed.pop((x, ay))
@@ -149,15 +145,15 @@ class Board(Frame):
             else:
                 y -= 1
 
-        #self.output() # non-gui diagnostic
+        # self.output() # non-gui diagnostic
 
-        # return the score, calculated by the number of rows deleted.        
+        # return the score, calculated by the number of rows deleted.
         return (100 * rows_deleted) * rows_deleted
 
     def output(self):
-        for y in xrange(self.max_y):
+        for y in xrange(self.board_height_in_blocks):
             line = []
-            for x in xrange(self.max_x):
+            for x in xrange(self.board_width_in_blocks):
                 if self.landed.get((x, y), None):
                     line.append("X")
                 else:
@@ -169,11 +165,11 @@ class Board(Frame):
         Create a block by drawing it on the canvas, return
         it's ID to the caller.
         """
-        rx = (x * self.scale) + self.offset
-        ry = (y * self.scale) + self.offset
+        rx = (x * self.block_size_in_px) + self.offset
+        ry = (y * self.block_size_in_px) + self.offset
 
         return self.canvas.create_rectangle(
-            rx, ry, rx + self.scale, ry + self.scale, fill=colour
+            rx, ry, rx + self.block_size_in_px, ry + self.block_size_in_px, fill=colour
         )
 
     def move_block(self, id, coord):
@@ -183,7 +179,8 @@ class Board(Frame):
         10 pixels down NOT move to position 10,10. 
         """
         x, y = coord
-        self.canvas.move(id, x * self.scale, y * self.scale)
+        self.canvas.move(
+            id, x * self.block_size_in_px, y * self.block_size_in_px)
 
     def delete_block(self, id):
         """
@@ -197,7 +194,7 @@ class Board(Frame):
         That is; if there is a 'landed' block there or it is outside the
         board boundary, then return False, otherwise return true.
         """
-        if x < 0 or x >= self.max_x or y < 0 or y >= self.max_y:
+        if x < 0 or x >= self.board_width_in_blocks or y < 0 or y >= self.board_height_in_blocks:
             return False
         elif self.landed.has_key((x, y)):
             return False
@@ -206,6 +203,7 @@ class Board(Frame):
 
 
 class game_controller(object):
+
     """
     Main game loop and receives GUI callback events for keypresses etc...
     """
@@ -219,19 +217,10 @@ class game_controller(object):
         self.level = 0
         self.delay = 1    # ms
 
-        #lookup table
-        self.shapes = [shapes.SquareShape,
-                       shapes.TShape,
-                       shapes.LShape,
-                       shapes.ReverseLShape,
-                       shapes.ZShape,
-                       shapes.SShape,
-                       shapes.IShape]
-
         self.status_bar = status_bar(parent)
         #self.status_bar.grid(row=0, columnspan=2)
         #self.status_bar.pack(side=TOP, fill=X)
-        #print "Status bar width",self.status_bar.cget("width")
+        # print "Status bar width",self.status_bar.cget("width")
 
         self.status_bar.set("Score: %-7d\t Level: %d " % (
             self.score, self.level + 1)
@@ -263,15 +252,15 @@ class game_controller(object):
         it_label.grid(row=3, column=1, sticky=W)
 
         quitButton = Button(parent, text="Quit",
-            command=parent.quit)
+                            command=parent.quit)
         quitButton.grid(row=5, column=2, sticky=E)
 
         self.board = Board(
             parent,
-            scale=SCALE,
-            max_x=MAXX,
-            max_y=MAXY,
-            offset=OFFSET
+            block_size_in_px=BLOCK_SIZE_IN_PX,
+            board_width_in_blocks=BOARD_WIDTH_IN_BLOCKS,
+            board_height_in_blocks=BOARD_HEIGHT_IN_BLOCKS,
+            offset=OFFSET_TO_WINDOW_BORDER_IN_PX
         )
         self.parent.bind("a", self.a_callback)
 
@@ -297,12 +286,12 @@ class game_controller(object):
                 if blocks[r][c] is "t":
                     self.board.add_block((r, c), "magenta")
 
-
     def clear_callback(self, event):
         self.board.clear()
 
 
 class TDLearningAgentSlow(TDLearningAgent):
+
     """
     Special class for GUI representation with slower calculation speed
     """
@@ -320,9 +309,8 @@ class TDLearningAgentSlow(TDLearningAgent):
             self.iterations += 1
             self._update_gui()
 
-
     def _update_gui(self):
-        #if self.iterations % 100 == 0:
+        # if self.iterations % 100 == 0:
         if self.iterations > 0:
             avg = reduce(lambda x, y: x + y, self.blocks_per_iteration) / len(
                 self.blocks_per_iteration)
@@ -332,7 +320,7 @@ class TDLearningAgentSlow(TDLearningAgent):
             avg_label["text"] = AVG_BLOCKS_LABEL.format(avg)
             it_label["text"] = ITERATIONS_LABEL.format(self.iterations)
 
-        #if self.iterations % EPISODES_PER_OUTPUT == 0:
+        # if self.iterations % VISUALIZE_EPISODES_COUNT == 0:
         blockcopy = copy.deepcopy(self.environment.blocks)
         self.dataQ.put(blockcopy)
 
@@ -345,8 +333,8 @@ def update_state():
                 controller.update_board(blocks)
         except:
             break
-    #controller.update_board(environment)
-    tk_root.after(REFRESH_IN_MS, update_state)
+    # controller.update_board(environment)
+    tk_root.after(GUI_REFRESH_IN_MS, update_state)
 
 
 def run(stop_event):
@@ -354,7 +342,7 @@ def run(stop_event):
     agent = TDLearningAgentSlow()
     agent.dataQ = dataQ
     agent.stop_event = stop_event
-    agent.run(EPISODE_COUNT)
+    agent.run(TOTAL_EPISODES)
 
 
 if __name__ == "__main__":
@@ -367,7 +355,7 @@ if __name__ == "__main__":
     logic_thread = threading.Thread(target=run,
                                     args=(logic_stop_event,))
     logic_thread.start()
-    tk_root.after(REFRESH_IN_MS, update_state)
+    tk_root.after(GUI_REFRESH_IN_MS, update_state)
     tk_root.mainloop()
     logic_stop_event.set()
     logic_thread.join()
