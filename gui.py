@@ -21,6 +21,10 @@ MAX_BLOCKS_LABEL = "Maximale Anzahl von Bloecken: {0}"
 AVG_BLOCKS_LABEL = "Platzierte Bloecke im Durchschnitt: {0}"
 ITERATIONS_LABEL = "Anzahl der Durchlaeufe: {0}"
 Q_OR_NOT_LABEL = "Action aus Q: {0}"
+PAUSE_BUTTON_TEXT = "Pause"
+RESUME_BUTTON_TEXT = "Resume"
+QUIT_BUTTON_TEXT = "Quit"
+FAST_FORWARD_BUTTON_TEXT = "Fast Forward"
 
 GUI_REFRESH_IN_MS = 50
 TOTAL_EPISODES = 60000
@@ -205,8 +209,9 @@ class game_controller(object):
         # Label(parent, text="Third:").grid(row=3, column=1)
         # Label(parent, text="Fourth:").grid(row=4, column=1)
         #
-        # input1 = Entry(parent)
-        # input1.grid(row=1, column=2)
+        self.fastForwardInput = Entry(parent)
+        self.fastForwardInput.insert(0, "50")
+        self.fastForwardInput.grid(row=1, column=2)
         # input2 = Entry(parent)
         # input2.grid(row=2, column=2)
         # input3 = Entry(parent)
@@ -214,24 +219,24 @@ class game_controller(object):
         # input4 = Entry(parent)
         # input4.grid(row=4, column=2)
 
-        self.maxLabel = Label(tk_root, text=MAX_BLOCKS_LABEL.format(0))
+        self.maxLabel = Label(parent, text=MAX_BLOCKS_LABEL.format(0))
         self.maxLabel.grid(row=2, column=1, sticky=W)
-        self.avgLabel = Label(tk_root, text=AVG_BLOCKS_LABEL.format(0))
+        self.avgLabel = Label(parent, text=AVG_BLOCKS_LABEL.format(0))
         self.avgLabel.grid(row=1, column=1, sticky=W)
-        self.iterationsLabel = Label(tk_root, text=ITERATIONS_LABEL.format(0))
+        self.iterationsLabel = Label(parent, text=ITERATIONS_LABEL.format(0))
         self.iterationsLabel.grid(row=3, column=1, sticky=W)
-        self.qLabel = Label(tk_root, text=Q_OR_NOT_LABEL.format('-'))
+        self.qLabel = Label(parent, text=Q_OR_NOT_LABEL.format('-'))
         self.qLabel.grid(row=4, column=1, sticky=W)
 
-        self.fastForwardButton = Button(parent, text="fast forward",
+        self.fastForwardButton = Button(parent, text=FAST_FORWARD_BUTTON_TEXT,
                                    command=self.fast_forward_callback)
         self.fastForwardButton.grid(row=5, column=2, sticky=E)
 
-        self.pauseButton = Button(parent, text="Pause",
+        self.pauseButton = Button(parent, text=PAUSE_BUTTON_TEXT,
                                      command=self.pause_callback)
         self.pauseButton.grid(row=5, column=1, sticky=E)
 
-        self.quitButton = Button(parent, text="Quit",
+        self.quitButton = Button(parent, text=QUIT_BUTTON_TEXT,
                             command=self.quit_callback)
         self.quitButton.grid(row=5, column=3, sticky=E)
 
@@ -245,14 +250,17 @@ class game_controller(object):
         self.parent.bind("a", self.a_callback)
 
     def fast_forward_callback(self):
-        agent.fast_forward = True
+        if not agent.fast_forward:
+            agent.fast_forward_total = int(controller.fastForwardInput.get())
+            agent.fast_forward_count = agent.fast_forward_total
+            agent.fast_forward = True
 
     def pause_callback(self):
         if agent.resume_event.is_set():
-            self.pauseButton['text'] = "Resume"
+            self.pauseButton['text'] = RESUME_BUTTON_TEXT
             agent.resume_event.clear()
         else:
-            self.pauseButton['text'] = "Pause"
+            self.pauseButton['text'] = PAUSE_BUTTON_TEXT
             agent.resume_event.set()
 
     def quit_callback(self):
@@ -295,7 +303,8 @@ class TDLearningAgentSlow(TDLearningAgent):
         self.blocks_last_iteration = 0
         self.blocks_per_iteration = []
         self.fast_forward = False
-        self.fast_forward_count = 50
+        self.fast_forward_total = 0
+        self.fast_forward_count = 0
 
     def run(self, episodes):
         for i in range(0, episodes):
@@ -303,13 +312,12 @@ class TDLearningAgentSlow(TDLearningAgent):
                 break
             self._episode()
             self.iterations += 1
-            if not self.fast_forward:
-                self._update_gui()
+            self._update_gui()
 
     def _episode(self):
         if self.fast_forward and self.fast_forward_count <= 0:
             self.fast_forward = False
-            self.fast_forward_count = 50
+            self.fast_forward_count = self.fast_forward_total
         self.blocks_last_iteration = 0
         super(TDLearningAgentSlow, self)._episode()
         self.blocks_per_iteration.append(self.blocks_last_iteration)
@@ -323,15 +331,14 @@ class TDLearningAgentSlow(TDLearningAgent):
         super(TDLearningAgentSlow, self)._step()
         self.blocks_last_iteration += 1
 
-        if not self.fast_forward:
-            self._update_gui()
-            if STEP_SLOWDOWN_IN_SEC > 0:
-                time.sleep(STEP_SLOWDOWN_IN_SEC)
+        self._update_gui()
+        if STEP_SLOWDOWN_IN_SEC > 0 and not self.fast_forward:
+            time.sleep(STEP_SLOWDOWN_IN_SEC)
 
     def _update_gui(self):
-        # if self.iterations % VISUALIZE_EPISODES_COUNT == 0:
-        blockcopy = copy.deepcopy(self.environment.blocks)
-        self.dataQ.put(blockcopy)
+        if not self.fast_forward:
+            blockcopy = copy.deepcopy(self.environment.blocks)
+            self.dataQ.put(blockcopy)
 
 
 def refresh_gui():
@@ -342,7 +349,6 @@ def refresh_gui():
     except:
         pass
 
-    # if agent.iterations % 100 == 0:
     if agent.iterations > 0:
         avg = reduce(lambda x, y: x + y, agent.blocks_per_iteration) / len(
             agent.blocks_per_iteration)
@@ -353,8 +359,6 @@ def refresh_gui():
         controller.iterationsLabel["text"] = ITERATIONS_LABEL.format(agent.iterations)
 
     controller.qLabel["text"] = Q_OR_NOT_LABEL.format(agent.action_from_q)
-
-    # controller.update_board(environment)
     tk_root.after(GUI_REFRESH_IN_MS, refresh_gui)
 
 
@@ -372,7 +376,7 @@ if __name__ == "__main__":
     tk_root = Tk()
     tk_root.title("tetris agent")
     tk_root.minsize(450, 250)
-    tk_root.geometry("750x500")
+    tk_root.geometry("800x500")
     controller = game_controller(tk_root)
     logic_stop_event = threading.Event()
     logic_resume_event = threading.Event()
