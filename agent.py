@@ -2,6 +2,7 @@ from collections import defaultdict
 import random
 
 from environment import Environment
+import features
 import settings
 from state import *
 
@@ -16,10 +17,10 @@ class TDLearningAgent(object):
         self.Q = defaultdict(int)
         self.alpha = 0.9  # lernrate
         self.gamma = 0.8  # discount rate
+        self.epsilon = 0.0 # probability of random action in epsilon greedy policy
+        self.action_from_q = False
 
     def _initialize_state(self):
-        if self.iterations >= settings.ITERATIONS_BEFORE_ALPHA_CHANGE:
-            self.alpha = 0.1
         self.environment.initialize()
         self._update_perceived_state()
 
@@ -45,17 +46,22 @@ class TDLearningAgent(object):
         self._q(old_state, action, reward)
 
     def _choose_action(self):
-        actions = self._find_best_actions_in_q()
+        actions = []
+        if self.random.random() <= self.epsilon:
+            actions = self._find_best_actions_in_q()
+            self.action_from_q = True
+
         if len(actions) == 0:
+            self.action_from_q = False
             actions = self.environment.possible_actions()
 
         return self.random.sample(actions, 1)[0]
 
     def _find_best_actions_in_q(self):
-        actions = self.environment.possible_actions()
+        possible_actions = self.environment.possible_actions()
         best_actions = []
         best_value = 0
-        for action in actions:
+        for action in possible_actions:
             tup = (self.current_state, action)
             if tup in self.Q:
                 value = self.Q[tup]
