@@ -130,6 +130,13 @@ class EnvironmentTests(unittest.TestCase):
 
         self.assertTrue(self.env.is_game_over())
 
+    def test_execute_action_changes_field(self):
+        self.assertEqual(self.empty_blocks, self.env.blocks)
+
+        self.env.execute_action(Action(1))
+        self.assertNotEqual(self.empty_blocks, self.env.blocks)
+
+
 
 class ActionTest(unittest.TestCase):
     def setUp(self):

@@ -50,20 +50,25 @@ class TDLearningAgent(object):
         self.blocks_last_iteration += 1
 
     def _choose_action(self):
-        actions = self._find_best_actions()
+        actions = self._find_best_actions_in_q()
+        if len(actions) == 0:
+            actions = self.environment.possible_actions()
+
         return self.random.sample(actions, 1)[0]
 
-    def _find_best_actions(self):
+    def _find_best_actions_in_q(self):
         actions = self.environment.possible_actions()
-        best_actions = list(actions)
+        best_actions = []
         best_value = 0
         for action in actions:
-            value = self.Q[(self.current_state, action)]
-            if value > best_value:
-                best_value = value
-                best_actions = [action]
-            elif value == best_value:
-                best_actions.append(action)
+            tup = (self.current_state, action)
+            if tup in self.Q:
+                value = self.Q[tup]
+                if value > best_value:
+                    best_value = value
+                    best_actions = [action]
+                elif value == best_value:
+                    best_actions.append(action)
 
         return set(best_actions)
 

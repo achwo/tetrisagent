@@ -73,7 +73,6 @@ class Environment(object):
             self.blocks[coord[0]][coord[1]] = self.current_shape.__repr__()
 
     def _choose_next_shape(self):
-        # possible_shapes = [OShape]
         possible_shapes = [OShape, JShape, IShape, LShape, ZShape, TShape,
                            SShape]
         self.current_shape = self.random.choice(possible_shapes)()

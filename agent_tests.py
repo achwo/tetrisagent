@@ -10,62 +10,62 @@ from environment import Environment, OShape, IShape, Action
 
 class AgentTest(unittest.TestCase):
 
-    def test_givenQisEmpty_whenChoosingAction_thenItShouldBeAnyPossibleAction(self):
-        env = Environment()
-        agent = TDLearningAgent()
+    def setUp(self):
+        self.env = Environment()
+        self.agent = TDLearningAgent()
+        self.agent.environment = self.env
 
-        self.assertEqual(env.possible_actions(), list(agent._find_best_actions()))
+    def test_givenQisEmpty_whenChoosingAction_thenItShouldBeAnyPossibleAction(self):
+        self.assertEqual(self.env.possible_actions(), list(self.agent._find_best_actions_in_q()))
 
     def test_givenQisNotEmptyAndLearningRateIs0_whenChoosingAction_thenItShouldBeTheBestPossibleOne(self):
-        env = Environment()
-        agent = TDLearningAgent()
         shape = OShape()
 
-        state1 = agent.current_state
+        state1 = self.agent.current_state
 
-        env.current_shape = shape
-        agent._update_perceived_state()
+        self.env.current_shape = shape
+        self.agent._update_perceived_state()
 
-        print agent._choose_action()
         # run the rest of the episode
-        agent._step()
+        self.agent._step()
+
+        choose_action = self.agent._choose_action
+        self.agent._choose_action = MagicMock(return_value=Action(3))
+        while not self.env.is_game_over():
+            self.env.current_shape = IShape()
+            self.agent._update_perceived_state()
+            self.agent._step()
+
+        self.agent._choose_action = choose_action
+
+        self.agent._initialize_state()
+
+        state2 = self.agent.current_state
+
+        self.assertEqual(state2, state1)
+        self.assertTrue(len(self.agent.Q) != 0)
+
+        self.env.current_shape = shape
+        self.agent._update_perceived_state()
+
+        self.env._choose_next_shape()
+
+        self.assertNotEqual(self.env.possible_actions(), list(self.agent._find_best_actions_in_q()))
+
+    def all_values(self, state, Q):
+        values = []
+        for key, value in Q.iteritems():
+            if key[0] == state:
+                values.append(value)
+
+        return values
 
 
-        print env.blocks
-        self.fail()
-
-        # choose_action = agent._choose_action
-        # agent._choose_action = MagicMock(return_value=Action(3))
-        # while not env.is_game_over():
-        #     env.current_shape = IShape()
-        #     print agent._choose_action()
-        #
-        #     agent._update_perceived_state()
-        #
-        #     agent._step()
-        #
-        # agent._choose_action = choose_action
-        #
-        #
-        # state2 = agent.current_state
-        #
-        # print state1.blocks
-        # print state2.blocks
-        # self.assertEqual(state2, state1)
-        # self.assertTrue(len(agent.Q) != 0)
-        #
-        # env.current_shape = shape
-        #
-        # # print agent._find_best_actions()
-        #
-        # self.assertNotEqual(env.possible_actions(), list(agent._find_best_actions()))
 
     @unittest.skip("this test is not ready")
     def test_givenLearningRateIs0AndQisEmpty_whenSameState_thenExecuteSameAction(self):
-        env = Environment()
-        agent = TDLearningAgent()
-        agent.alpha = 0.0
+        self.agent.alpha = 0.0
 
-        old_action = agent.Q[(agent.current_state, env.current_shape)]
+        old_action = self.agent.Q[(self.agent.current_state, self.env.current_shape)]
 
-        self.assertEqual(agent._choose_action(), old_action)
+        self.assertEqual(self.agent._choose_action(), old_action)
