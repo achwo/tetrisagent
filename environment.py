@@ -142,6 +142,9 @@ class Action(object):
             return self.column == other.column
         return False
 
+    def __hash__(self):
+        return hash(self.column)
+
     def __repr__(self):
         return "Action({0})".format(self.column)
 

@@ -8,7 +8,7 @@ import features
 
 class PerceivedState(object):
     def __init__(self, environment, *features):
-        self.shape = environment.current_shape  # todo wird shape geupdated, wenn current_shape sich aendert?
+        self.shape = environment.current_shape
         self.features = []
         for f in features:
             self.features.append(f(environment))
@@ -35,7 +35,7 @@ class TDLearningAgent(object):
         self.Q = defaultdict(int)
         self.alpha = 0.9  # lernrate
         self.gamma = 0.8  # discount rate
-        self.epsilon = 0.0 # probability of random action in epsilon greedy policy
+        self.epsilon = 0.3 # probability of random action in epsilon greedy policy
         self.action_from_q = False
 
     def _initialize_state(self):
@@ -65,12 +65,12 @@ class TDLearningAgent(object):
 
     def _choose_action(self):
         actions = []
-        # if self.random.random() <= self.epsilon:
-        actions = self._find_best_actions_in_q()
-        self.action_from_q = True
+        if self.random.random() > self.epsilon:
+            actions = self._find_best_actions_in_q()
+            self.action_from_q = 'Best'
 
         if len(actions) == 0:
-            self.action_from_q = False
+            self.action_from_q = 'Random'
             actions = self.environment.possible_actions()
 
         return self.random.sample(actions, 1)[0]
@@ -81,8 +81,7 @@ class TDLearningAgent(object):
         best_value = -sys.maxint - 1
         for action in possible_actions:
             tup = (self.current_state, action)
-            if tup in self.Q: # TODO does not work because of hash collisions
-                              # solution: need an alternative collection or so..
+            if tup in self.Q:
                 value = self.Q[tup]
                 if value > best_value:
                     best_value = value

@@ -24,7 +24,7 @@ ITERATIONS_LABEL = "Anzahl der Durchlaeufe: {0}"
 Q_OR_NOT_LABEL = "Action aus Q: {0}"
 
 GUI_REFRESH_IN_MS = 50
-TOTAL_EPISODES = 10
+TOTAL_EPISODES = 1000
 VISUALIZE_EPISODES_COUNT = 500
 STEP_SLOWDOWN_IN_SEC = 0.3
 EPISODE_SLOWDOWN_IN_SEC = 0
@@ -39,12 +39,12 @@ direction_d = {"left": (-1, 0), "right": (1, 0), "down": (0, 1)}
 
 
 class Board(Frame):
-
     """
     The board represents the tetris playing area. A grid of x by y blocks.
     """
 
-    def __init__(self, parent, block_size_in_px=20, board_width_in_blocks=10, board_height_in_blocks=20, offset=3):
+    def __init__(self, parent, block_size_in_px=20, board_width_in_blocks=10,
+                 board_height_in_blocks=20, offset=3):
         Frame.__init__(self, parent)
 
         # blocks are indexed by there corrdinates e.g. (4,5), these are
@@ -148,12 +148,13 @@ class Board(Frame):
         """
         if colour == None:
             return
-            
+
         rx = (x * self.block_size_in_px) + self.offset
         ry = (y * self.block_size_in_px) + self.offset
 
         return self.canvas.create_rectangle(
-            rx, ry, rx + self.block_size_in_px, ry + self.block_size_in_px, fill=colour
+            rx, ry, rx + self.block_size_in_px, ry + self.block_size_in_px,
+            fill=colour
         )
 
     def move_block(self, id, coord):
@@ -187,7 +188,6 @@ class Board(Frame):
 
 
 class game_controller(object):
-
     """
     Main game loop and receives GUI callback events for keypresses etc...
     """
@@ -200,20 +200,6 @@ class game_controller(object):
         self.score = 0
         self.level = 0
         self.delay = 1    # ms
-
-        # Label(parent, text="First:").grid(row=1, column=1)
-        # Label(parent, text="Second:").grid(row=2, column=1)
-        # Label(parent, text="Third:").grid(row=3, column=1)
-        # Label(parent, text="Fourth:").grid(row=4, column=1)
-        #
-        # input1 = Entry(parent)
-        # input1.grid(row=1, column=2)
-        # input2 = Entry(parent)
-        # input2.grid(row=2, column=2)
-        # input3 = Entry(parent)
-        # input3.grid(row=3, column=2)
-        # input4 = Entry(parent)
-        # input4.grid(row=4, column=2)
 
         global avg_label
         global max_label
@@ -247,6 +233,7 @@ class game_controller(object):
 
     def update_board(self, blocks):
         self.board.clear()
+
         def get_color(x):
             return {
                 'o': 'yellow',
@@ -256,7 +243,8 @@ class game_controller(object):
                 'j': 'blue',
                 'l': 'orange',
                 't': 'magenta',
-                }.get(x)
+            }.get(x)
+
         for r in range(len(blocks)):
             for c in range(len(blocks[r])):
                 self.board.add_block((r, c), get_color(blocks[r][c]))
@@ -266,7 +254,6 @@ class game_controller(object):
 
 
 class TDLearningAgentSlow(TDLearningAgent):
-
     """
     Special class for GUI representation with slower calculation speed
     """
