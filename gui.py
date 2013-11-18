@@ -296,10 +296,10 @@ class TDLearningAgentSlow(TDLearningAgent):
     Special class for GUI representation with slower calculation speed
     """
 
-    def _step(self):
-        TDLearningAgent._step(self)
-        self._update_gui()
-        time.sleep(0.4)
+    def __init__(self):
+        TDLearningAgent.__init__(self)
+        self.blocks_last_iteration = 0
+        self.blocks_per_iteration = []
 
     def run(self, episodes):
         for i in range(0, episodes):
@@ -308,6 +308,17 @@ class TDLearningAgentSlow(TDLearningAgent):
             self._episode()
             self.iterations += 1
             self._update_gui()
+
+    def _step(self):
+        TDLearningAgent._step(self)
+        self.blocks_last_iteration += 1
+        self._update_gui()
+        time.sleep(0.4)
+
+    def _episode(self):
+        self.blocks_last_iteration = 0
+        TDLearningAgent._episode(self)
+        self.blocks_per_iteration.append(self.blocks_last_iteration)
 
     def _update_gui(self):
         # if self.iterations % 100 == 0:
