@@ -1,5 +1,6 @@
 from collections import defaultdict
 import random
+import sys
 
 from environment import Environment
 import features
@@ -47,9 +48,9 @@ class TDLearningAgent(object):
 
     def _choose_action(self):
         actions = []
-        if self.random.random() <= self.epsilon:
-            actions = self._find_best_actions_in_q()
-            self.action_from_q = True
+        # if self.random.random() <= self.epsilon:
+        actions = self._find_best_actions_in_q()
+        self.action_from_q = True
 
         if len(actions) == 0:
             self.action_from_q = False
@@ -60,7 +61,7 @@ class TDLearningAgent(object):
     def _find_best_actions_in_q(self):
         possible_actions = self.environment.possible_actions()
         best_actions = []
-        best_value = 0
+        best_value = -sys.maxint - 1
         for action in possible_actions:
             tup = (self.current_state, action)
             if tup in self.Q:
@@ -94,3 +95,14 @@ class TDLearningAgent(object):
     def _perceived_state(self):
         # return self.state_class(self.environment, features.individual_height)
         return self.state_class(self.environment)
+
+
+    def all_values(self):
+        state = self.current_state
+        Q = self.Q
+        values = []
+        for key, value in Q.iteritems():
+            if key[0] == state:
+                values.append(value)
+
+        return values

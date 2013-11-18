@@ -18,7 +18,7 @@ class AgentTest(unittest.TestCase):
     def test_givenQisEmpty_whenChoosingAction_thenItShouldBeAnyPossibleAction(self):
         self.assertEqual(self.env.possible_actions(), list(self.agent._find_best_actions_in_q()))
 
-    def test_givenQisNotEmptyAndLearningRateIs0_whenChoosingAction_thenItShouldBeTheBestPossibleOne(self):
+    def test_givenQisNotEmptyAndLearningRateIs0_ShouldChooseBestActionFromQ(self):
         shape = OShape()
 
         state1 = self.agent.current_state
@@ -51,14 +51,6 @@ class AgentTest(unittest.TestCase):
         self.env._choose_next_shape()
 
         self.assertNotEqual(self.env.possible_actions(), list(self.agent._find_best_actions_in_q()))
-
-    def all_values(self, state, Q):
-        values = []
-        for key, value in Q.iteritems():
-            if key[0] == state:
-                values.append(value)
-
-        return values
 
 
 
