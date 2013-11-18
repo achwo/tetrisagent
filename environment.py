@@ -14,6 +14,14 @@ class Environment(object):
             self.blocks = blocks
         self._choose_next_shape()
 
+    def __eq__(self, other):
+        if type(self) == type(other):
+            return self.blocks == other.blocks and \
+                   self.current_shape == other.current_shape
+
+    def __hash__(self):
+        return hash((tuple(self.blocks), self.current_shape))
+
     def initialize(self):
         self.highest = BOTTOM_INDEX  # counted backwards because of indexing
         self.blocks = [[0 for _ in range(FIELD_HEIGHT)] for _ in
@@ -144,6 +152,14 @@ class Shape(object):
         self.rightmost = self.__furthest_right()
         self.name = name
         self._spawn_position = spawn_position
+
+    def __eq__(self, other):
+        if type(self) == type(other):
+            return self.name == other.name
+        return False
+
+    def __hash__(self):
+        return hash((self.name))
 
     def __repr__(self):
         return self.name

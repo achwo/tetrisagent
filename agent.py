@@ -81,7 +81,8 @@ class TDLearningAgent(object):
         best_value = -sys.maxint - 1
         for action in possible_actions:
             tup = (self.current_state, action)
-            if tup in self.Q:
+            if tup in self.Q: # TODO does not work because of hash collisions
+                              # solution: need an alternative collection or so..
                 value = self.Q[tup]
                 if value > best_value:
                     best_value = value

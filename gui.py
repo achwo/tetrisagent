@@ -24,7 +24,7 @@ ITERATIONS_LABEL = "Anzahl der Durchlaeufe: {0}"
 Q_OR_NOT_LABEL = "Action aus Q: {0}"
 
 GUI_REFRESH_IN_MS = 50
-TOTAL_EPISODES = 60000
+TOTAL_EPISODES = 10
 VISUALIZE_EPISODES_COUNT = 500
 STEP_SLOWDOWN_IN_SEC = 0.3
 EPISODE_SLOWDOWN_IN_SEC = 0
@@ -287,7 +287,6 @@ class TDLearningAgentSlow(TDLearningAgent):
     def _episode(self):
         self.blocks_last_iteration = 0
         super(TDLearningAgentSlow, self)._episode()
-        print agent.Q
         self.blocks_per_iteration.append(self.blocks_last_iteration)
         if EPISODE_SLOWDOWN_IN_SEC > 0:
             time.sleep(EPISODE_SLOWDOWN_IN_SEC)
