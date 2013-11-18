@@ -29,6 +29,7 @@ EPISODE_SLOWDOWN_IN_SEC = 0
 
 global tk_root
 global controller
+global agent
 global dataQ
 dataQ = Queue.Queue(maxsize=0)
 
@@ -278,28 +279,18 @@ class TDLearningAgentSlow(TDLearningAgent):
             self.iterations += 1
             self._update_gui()
 
+    def _episode(self):
+        self.blocks_last_iteration = 0
+        super(TDLearningAgentSlow, self)._episode()
+        self.blocks_per_iteration.append(self.blocks_last_iteration)
+
     def _step(self):
         super(TDLearningAgentSlow, self)._step()
         self.blocks_last_iteration += 1
         self._update_gui()
         time.sleep(0.2)
 
-    def _episode(self):
-        self.blocks_last_iteration = 0
-        super(TDLearningAgentSlow, self)._episode()
-        self.blocks_per_iteration.append(self.blocks_last_iteration)
-
     def _update_gui(self):
-        # if self.iterations % 100 == 0:
-        if self.iterations > 0:
-            avg = reduce(lambda x, y: x + y, self.blocks_per_iteration) / len(
-                self.blocks_per_iteration)
-            maximum = max(self.blocks_per_iteration)
-
-            max_label["text"] = MAX_BLOCKS_LABEL.format(maximum)
-            avg_label["text"] = AVG_BLOCKS_LABEL.format(avg)
-            it_label["text"] = ITERATIONS_LABEL.format(self.iterations)
-
         # if self.iterations % VISUALIZE_EPISODES_COUNT == 0:
         blockcopy = copy.deepcopy(self.environment.blocks)
         self.dataQ.put(blockcopy)
@@ -312,11 +303,23 @@ def refresh_gui():
             controller.update_board(blocks)
     except:
         pass
+
+    # if agent.iterations % 100 == 0:
+    if agent.iterations > 0:
+        avg = reduce(lambda x, y: x + y, agent.blocks_per_iteration) / len(
+            agent.blocks_per_iteration)
+        maximum = max(agent.blocks_per_iteration)
+
+        max_label["text"] = MAX_BLOCKS_LABEL.format(maximum)
+        avg_label["text"] = AVG_BLOCKS_LABEL.format(avg)
+        it_label["text"] = ITERATIONS_LABEL.format(agent.iterations)
+
     # controller.update_board(environment)
     tk_root.after(GUI_REFRESH_IN_MS, refresh_gui)
 
 
 def run(stop_event):
+    global agent
     agent = TDLearningAgentSlow()
     agent.dataQ = dataQ
     agent.stop_event = stop_event
