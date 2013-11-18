@@ -144,6 +144,9 @@ class Board(Frame):
         Create a block by drawing it on the canvas, return
         it's ID to the caller.
         """
+        if colour == None:
+            return
+            
         rx = (x * self.block_size_in_px) + self.offset
         ry = (y * self.block_size_in_px) + self.offset
 
@@ -239,18 +242,18 @@ class game_controller(object):
 
     def update_board(self, blocks):
         self.board.clear()
+        def get_color(x):
+            return {
+                'o': 'yellow',
+                'i': 'cyan',
+                'z': 'red',
+                's': 'green',
+                'j': 'blue',
+                'l': 'orange',
+                't': 'magenta',
+                }.get(x)
         for r in range(len(blocks)):
             for c in range(len(blocks[r])):
-                def get_color(x):
-                    return {
-                        'o': 'yellow',
-                        'i': 'cyan',
-                        'z': 'red',
-                        's': 'green',
-                        'j': 'blue',
-                        'l': 'orange',
-                        't': 'magenta',
-                        }.get(x)
                 self.board.add_block((r, c), get_color(blocks[r][c]))
 
     def clear_callback(self, event):
