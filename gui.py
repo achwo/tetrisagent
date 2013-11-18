@@ -9,7 +9,7 @@ from agent import TDLearningAgent
 import time
 import copy
 
-SCALE = 20
+SCALE = 40
 OFFSET = 3
 MAXX = 10
 MAXY = 12
@@ -251,13 +251,12 @@ class game_controller(object):
         global max_label
         global it_label
 
-        avg_label = Label(tk_root, text="avg number blocks: 0")
-        avg_label.grid(row=1, column=1, sticky=W)
-        max_label = Label(tk_root, text="maximum number blocks: 0")
+        max_label = Label(tk_root, text="Maximale Anzahl von Bloecken: 0")
         max_label.grid(row=2, column=1, sticky=W)
-        it_label = Label(tk_root, text="iterations: 0")
+        avg_label = Label(tk_root, text="Platzierte Bloecke im Durchschnitt: 0")
+        avg_label.grid(row=1, column=1, sticky=W)
+        it_label = Label(tk_root, text="Anzahl der Durchlaeufe: 0")
         it_label.grid(row=3, column=1, sticky=W)
-
 
         quitButton = Button(parent, text="Quit",
             command=parent.quit)
@@ -306,6 +305,8 @@ class TDLearningAgentSlow(TDLearningAgent):
 
     def _step(self):
         TDLearningAgent._step(self)
+        self._update_gui()
+        time.sleep(0.4)
 
     def run(self, episodes):
         for i in range(0, episodes):
@@ -317,22 +318,19 @@ class TDLearningAgentSlow(TDLearningAgent):
 
 
     def _update_gui(self):
-        if self.iterations % 100 == 0:
+        #if self.iterations % 100 == 0:
+        if self.iterations > 0:
             avg = reduce(lambda x, y: x + y, self.blocks_per_iteration) / len(
                 self.blocks_per_iteration)
             maximum = max(self.blocks_per_iteration)
 
-            avg_label["text"] = 'avg number blocks: {0}'.format(avg)
-            max_label["text"] = "maximum number blocks: {0}".format(maximum)
-            it_label["text"] = "iterations: {0}".format(self.iterations)
+            max_label["text"] = "Maximale Anzahl von Bloecken: {0}".format(maximum)
+            avg_label["text"] = 'Platzierte Bloecke im Durchschnitt: {0}'.format(avg)
+            it_label["text"] = "Anzahl der Durchlaeufe: {0}".format(self.iterations)
 
-        if self.iterations % EPISODES_PER_OUTPUT == 0:
-            blockcopy = copy.deepcopy(self.environment.blocks)
-            self.dataQ.put(blockcopy)
-
-
-            self.blocks_per_iteration = []
-            time.sleep(0.05)
+        #if self.iterations % EPISODES_PER_OUTPUT == 0:
+        blockcopy = copy.deepcopy(self.environment.blocks)
+        self.dataQ.put(blockcopy)
 
 
 def update_state():
@@ -359,7 +357,7 @@ if __name__ == "__main__":
     tk_root = Tk()
     tk_root.title("tetris agent")
     tk_root.minsize(450, 250)
-    tk_root.geometry("450x250")
+    tk_root.geometry("750x500")
     controller = game_controller(tk_root)
     logic_stop_event = threading.Event()
     logic_thread = threading.Thread(target=run,
