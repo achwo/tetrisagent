@@ -214,27 +214,26 @@ class game_controller(object):
         # input4 = Entry(parent)
         # input4.grid(row=4, column=2)
 
-        global avg_label
-        global max_label
-        global it_label
-        global q_label
+        self.maxLabel = Label(tk_root, text=MAX_BLOCKS_LABEL.format(0))
+        self.maxLabel.grid(row=2, column=1, sticky=W)
+        self.avgLabel = Label(tk_root, text=AVG_BLOCKS_LABEL.format(0))
+        self.avgLabel.grid(row=1, column=1, sticky=W)
+        self.iterationsLabel = Label(tk_root, text=ITERATIONS_LABEL.format(0))
+        self.iterationsLabel.grid(row=3, column=1, sticky=W)
+        self.qLabel = Label(tk_root, text=Q_OR_NOT_LABEL.format('-'))
+        self.qLabel.grid(row=4, column=1, sticky=W)
 
-        max_label = Label(tk_root, text=MAX_BLOCKS_LABEL.format(0))
-        max_label.grid(row=2, column=1, sticky=W)
-        avg_label = Label(tk_root, text=AVG_BLOCKS_LABEL.format(0))
-        avg_label.grid(row=1, column=1, sticky=W)
-        it_label = Label(tk_root, text=ITERATIONS_LABEL.format(0))
-        it_label.grid(row=3, column=1, sticky=W)
-        q_label = Label(tk_root, text=Q_OR_NOT_LABEL.format('-'))
-        q_label.grid(row=4, column=1, sticky=W)
-
-        fastForwardButton = Button(parent, text="fast forward",
+        self.fastForwardButton = Button(parent, text="fast forward",
                                    command=self.fast_forward_callback)
-        fastForwardButton.grid(row=5, column=2, sticky=E)
+        self.fastForwardButton.grid(row=5, column=2, sticky=E)
 
-        quitButton = Button(parent, text="Quit",
-                            command=parent.quit)
-        quitButton.grid(row=5, column=3, sticky=E)
+        self.pauseButton = Button(parent, text="Pause",
+                                     command=self.pause_callback)
+        self.pauseButton.grid(row=5, column=1, sticky=E)
+
+        self.quitButton = Button(parent, text="Quit",
+                            command=self.quit_callback)
+        self.quitButton.grid(row=5, column=3, sticky=E)
 
         self.board = Board(
             parent,
@@ -247,6 +246,18 @@ class game_controller(object):
 
     def fast_forward_callback(self):
         agent.fast_forward = True
+
+    def pause_callback(self):
+        if agent.resume_event.is_set():
+            self.pauseButton['text'] = "Resume"
+            agent.resume_event.clear()
+        else:
+            self.pauseButton['text'] = "Pause"
+            agent.resume_event.set()
+
+    def quit_callback(self):
+        agent.resume_event.set()
+        self.parent.quit()
 
     def a_callback(self, event):
         pass
@@ -308,6 +319,7 @@ class TDLearningAgentSlow(TDLearningAgent):
             time.sleep(EPISODE_SLOWDOWN_IN_SEC)
 
     def _step(self):
+        self.resume_event.wait()
         super(TDLearningAgentSlow, self)._step()
         self.blocks_last_iteration += 1
 
@@ -336,21 +348,23 @@ def refresh_gui():
             agent.blocks_per_iteration)
         maximum = max(agent.blocks_per_iteration)
 
-        max_label["text"] = MAX_BLOCKS_LABEL.format(maximum)
-        avg_label["text"] = AVG_BLOCKS_LABEL.format(avg)
-        it_label["text"] = ITERATIONS_LABEL.format(agent.iterations)
+        controller.maxLabel["text"] = MAX_BLOCKS_LABEL.format(maximum)
+        controller.avgLabel["text"] = AVG_BLOCKS_LABEL.format(avg)
+        controller.iterationsLabel["text"] = ITERATIONS_LABEL.format(agent.iterations)
 
-    q_label["text"] = Q_OR_NOT_LABEL.format(agent.action_from_q)
+    controller.qLabel["text"] = Q_OR_NOT_LABEL.format(agent.action_from_q)
 
     # controller.update_board(environment)
     tk_root.after(GUI_REFRESH_IN_MS, refresh_gui)
 
 
-def run(stop_event):
+def run(stop_event, resume_event):
     global agent
     agent = TDLearningAgentSlow()
     agent.dataQ = dataQ
     agent.stop_event = stop_event
+    agent.resume_event = resume_event
+    agent.resume_event.set()
     agent.run(TOTAL_EPISODES)
 
 
@@ -361,8 +375,10 @@ if __name__ == "__main__":
     tk_root.geometry("750x500")
     controller = game_controller(tk_root)
     logic_stop_event = threading.Event()
+    logic_resume_event = threading.Event()
     logic_thread = threading.Thread(target=run,
-                                    args=(logic_stop_event,))
+                                    args=(logic_stop_event,
+                                          logic_resume_event))
     logic_thread.start()
     tk_root.after(GUI_REFRESH_IN_MS, refresh_gui)
     tk_root.mainloop()
