@@ -7,11 +7,12 @@ import threading
 from agent import TDLearningAgent
 import time
 import copy
+import settings
 
 BLOCK_SIZE_IN_PX = 40
 OFFSET_TO_WINDOW_BORDER_IN_PX = 3
-BOARD_WIDTH_IN_BLOCKS = 10
-BOARD_HEIGHT_IN_BLOCKS = 12
+BOARD_WIDTH_IN_BLOCKS = settings.FIELD_WIDTH
+BOARD_HEIGHT_IN_BLOCKS = settings.FIELD_HEIGHT
 
 LEFT = "left"
 RIGHT = "right"
@@ -286,6 +287,7 @@ class TDLearningAgentSlow(TDLearningAgent):
     def _episode(self):
         self.blocks_last_iteration = 0
         super(TDLearningAgentSlow, self)._episode()
+        print agent.Q
         self.blocks_per_iteration.append(self.blocks_last_iteration)
         if EPISODE_SLOWDOWN_IN_SEC > 0:
             time.sleep(EPISODE_SLOWDOWN_IN_SEC)

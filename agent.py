@@ -4,12 +4,29 @@ import sys
 
 from environment import Environment
 import features
-import settings
-from state import *
+
+
+class PerceivedState(object):
+    def __init__(self, environment, *features):
+        self.shape = environment.current_shape  # todo wird shape geupdated, wenn current_shape sich aendert?
+        self.features = []
+        for f in features:
+            self.features.append(f(environment))
+
+    def __hash__(self):
+        return hash((self.shape, tuple(self.features)))
+
+    def __eq__(self, other):
+        if type(other) is type(self):
+            return self.features == other.features
+        return True
+
+    def __repr__(self):
+        return hash(self).__str__()
 
 
 class TDLearningAgent(object):
-    def __init__(self, state_class=BlockPerceivedState):
+    def __init__(self, state_class=PerceivedState):
         self.iterations = 0
         self.state_class = state_class
         self.environment = Environment()
@@ -94,7 +111,7 @@ class TDLearningAgent(object):
 
     def _perceived_state(self):
         # return self.state_class(self.environment, features.individual_height)
-        return self.state_class(self.environment)
+        return self.state_class(self.environment, features.field_to_bitvector)
 
 
     def all_values(self):
