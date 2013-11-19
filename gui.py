@@ -20,7 +20,6 @@ BOARD_WIDTH_IN_PX = BOARD_WIDTH_IN_BLOCKS * BLOCK_SIZE_IN_PX
 BOARD_HEIGHT_IN_BLOCKS = settings.FIELD_HEIGHT
 BOARD_HEIGHT_IN_PX = BOARD_HEIGHT_IN_BLOCKS * BLOCK_SIZE_IN_PX
 
-
 LEFT = "left"
 RIGHT = "right"
 DOWN = "down"
@@ -44,6 +43,7 @@ STEP_SLOWDOWN_IN_SEC = 0.3
 EPISODE_SLOWDOWN_IN_SEC = 0
 
 global controller
+global layout
 global agent
 global dataQ
 dataQ = Queue.Queue(maxsize=0)
@@ -101,7 +101,7 @@ class Board(Frame):
         )
 
 
-class game_controller(object):
+class Controller(object):
     """
     Main game loop and receives GUI callback events for keypresses etc...
     """
@@ -115,52 +115,20 @@ class game_controller(object):
         self.level = 0
         self.delay = 1
 
-        self.maxLabel = Label(parent, text=MAX_BLOCKS_LABEL.format(0))
-        self.maxLabel.grid(row=2, column=1, sticky=W, columnspan=3)
-        self.avgLabel = Label(parent, text=AVG_BLOCKS_LABEL.format(0))
-        self.avgLabel.grid(row=1, column=1, sticky=W, columnspan=3)
-        self.iterationsLabel = Label(parent, text=ITERATIONS_LABEL.format(0))
-        self.iterationsLabel.grid(row=3, column=1, sticky=W, columnspan=3)
-        self.qLabel = Label(parent, text=Q_OR_NOT_LABEL.format('-'))
-        self.qLabel.grid(row=4, column=1, sticky=W, columnspan=3)
-
-        self.pauseButton = Button(parent, text=PAUSE_BUTTON_TEXT,
-                                  command=self.pause_callback)
-        self.pauseButton.grid(row=FIELD_ROWSPAN - 1, column=1, sticky=W)
-
-        self.fastForwardInput = Entry(parent, width=5)
-        self.fastForwardInput.insert(0, "50")
-        self.fastForwardInput.grid(row=FIELD_ROWSPAN - 1, column=2, sticky=E)
-
-        self.fastForwardButton = Button(parent, text=FAST_FORWARD_BUTTON_TEXT,
-                                        command=self.fast_forward_callback)
-        self.fastForwardButton.grid(row=FIELD_ROWSPAN - 1, column=3, sticky=W)
-
-        self.saveButton = Button(parent, text=SAVE_BUTTON_TEXT,
-                                 command=self.save_callback)
-        self.saveButton.grid(row=FIELD_ROWSPAN, column=1, sticky=E)
-
-        self.loadButton = Button(parent, text=LOAD_BUTTON_TEXT,
-                                 command=self.load_callback)
-        self.loadButton.grid(row=FIELD_ROWSPAN, column=2, sticky=E)
-
-        self.quitButton = Button(parent, text=QUIT_BUTTON_TEXT,
-                                 command=self.quit_callback)
-        self.quitButton.grid(row=FIELD_ROWSPAN, column=4)
-
-        self.options = options = {}
-        options['filetypes'] = [('all files, ', '.*')]
-        # options['initialdir'] = 'C:\\'
-        options['initialfile'] = 'q'
-        options['parent'] = tk_root
-        options['title'] = "this is title"
+        self.options = {}
+        self.options['filetypes'] = [('all files, ', '.*')]
+        # self.options['initialdir'] = 'C:\\'
+        self.options['initialfile'] = 'q'
+        self.options['parent'] = tk_root
+        self.options['title'] = "Choose a File"
 
         self.board = Board(parent)
         self.parent.bind("<Escape>", self.quit_callback)
 
+
     def fast_forward_callback(self):
         if not agent.fast_forward:
-            agent.fast_forward_total = int(controller.fastForwardInput.get())
+            agent.fast_forward_total = int(layout.fastForwardInput.get())
             agent.fast_forward_count = agent.fast_forward_total
             agent.fast_forward = True
 
@@ -178,10 +146,10 @@ class game_controller(object):
 
     def pause_callback(self):
         if is_game_paused():
-            self.pauseButton['text'] = PAUSE_BUTTON_TEXT
+            layout.pauseBtn['text'] = PAUSE_BUTTON_TEXT
             resume_game()
         else:
-            self.pauseButton['text'] = RESUME_BUTTON_TEXT
+            layout.pauseBtn['text'] = RESUME_BUTTON_TEXT
             pause_game()
 
     def quit_callback(self):
@@ -208,6 +176,98 @@ class game_controller(object):
 
     def clear_callback(self):
         self.board.clear()
+
+
+class Layout(object):
+    def __init__(self, parent, controller):
+        self.controller = controller
+        self.parent = parent
+        self.init_components()
+        self.init_grid()
+        self.make_visible(self.assemble_grid())
+
+
+    def init_components(self):
+        self.avgLabel = Label(self.parent, text=AVG_BLOCKS_LABEL.format(0))
+        self.maxLabel = Label(self.parent, text=MAX_BLOCKS_LABEL.format(0))
+        self.itLabel = Label(self.parent, text=ITERATIONS_LABEL.format(0))
+        self.qLabel = Label(self.parent, text=Q_OR_NOT_LABEL.format('-'))
+
+        self.pauseBtn = Button(self.parent, text=PAUSE_BUTTON_TEXT,
+                               command=self.controller.pause_callback)
+
+        self.fastForwardInput = Entry(self.parent, width=5)
+        self.fastForwardInput.insert(0, "50")
+
+        self.fastForwardBtn = Button(self.parent,
+                                     text=FAST_FORWARD_BUTTON_TEXT,
+                                     command=self.controller.fast_forward_callback)
+
+        self.saveBtn = Button(self.parent, text=SAVE_BUTTON_TEXT,
+                              command=self.controller.save_callback)
+
+        self.loadBtn = Button(self.parent, text=LOAD_BUTTON_TEXT,
+                              command=self.controller.load_callback)
+
+        self.quitBtn = Button(self.parent, text=QUIT_BUTTON_TEXT,
+                              command=self.controller.quit_callback)
+
+    def init_grid(self):
+        w_and_colspan_3 = dict(sticky=W, columnspan=3)
+
+        self.rows_from_top = [
+            [(self.avgLabel, w_and_colspan_3)],
+            [(self.maxLabel, w_and_colspan_3)],
+            [(self.itLabel, w_and_colspan_3)],
+            [(self.qLabel, w_and_colspan_3)],
+            # add row from top here
+        ]
+
+        e = {'sticky': E}
+        w = {'sticky': W}
+
+        self.rows_from_bottom = [
+            [(self.pauseBtn, e), (self.fastForwardInput, e),
+             (self.fastForwardBtn, w)],
+            [(self.saveBtn, e), (self.loadBtn, e), None, (self.quitBtn, w)]
+        ]
+
+    def assemble_grid(self):
+        '''
+        In the grid list sublists are rows and columns are sublist elements
+        If you want to add an element, just put it in the row and column
+        you want.
+
+        '''
+        rows_from_top = self.rows_from_top
+        rows_from_bottom = self.rows_from_bottom
+
+        empty_lines = FIELD_ROWSPAN - len(rows_from_top) - len(rows_from_bottom)
+
+        grid = []
+
+        grid.extend(rows_from_top)
+        grid.extend(empty_lines * [[]])
+        grid.extend(rows_from_bottom)
+
+        return grid
+
+
+    def make_visible(self, grid):
+        '''
+        Puts every item in grid to the position in the list.
+        Since list is 0-based and in the canvas we only use positions > 0,
+        list index is added by 1 each time.
+        '''
+
+        for i in range(len(grid)):
+            for j in range(len(grid[i])):
+                if grid[i][j] is not None:
+                    if grid[i][j][1] is None:
+                        grid[i][j][0].grid(column=j + 1, row=i + 1)
+                    else:
+                        grid[i][j][0].grid(column=j + 1, row=i + 1,
+                                           **grid[i][j][1])
 
 
 class TDLearningAgentSlow(TDLearningAgent):
@@ -291,12 +351,12 @@ def refresh_gui():
             agent.blocks_per_iteration)
         maximum = max(agent.blocks_per_iteration)
 
-        controller.maxLabel["text"] = MAX_BLOCKS_LABEL.format(maximum)
-        controller.avgLabel["text"] = AVG_BLOCKS_LABEL.format(avg)
-        controller.iterationsLabel["text"] = ITERATIONS_LABEL.format(
+        layout.maxLabel["text"] = MAX_BLOCKS_LABEL.format(maximum)
+        layout.avgLabel["text"] = AVG_BLOCKS_LABEL.format(avg)
+        layout.itLabel["text"] = ITERATIONS_LABEL.format(
             agent.iterations)
 
-    controller.qLabel["text"] = Q_OR_NOT_LABEL.format(agent.action_from_q)
+    layout.qLabel["text"] = Q_OR_NOT_LABEL.format(agent.action_from_q)
     controller.parent.after(GUI_REFRESH_IN_MS, refresh_gui)
 
 
@@ -315,7 +375,9 @@ if __name__ == "__main__":
     tk_root.title("tetris agent")
     height = BOARD_HEIGHT_IN_PX + OFFSET_TO_WINDOW_BORDER_IN_PX * 2
     tk_root.minsize(450, height)
-    controller = game_controller(tk_root)
+    controller = Controller(tk_root)
+    layout = Layout(tk_root, controller)
+
     logic_stop_event = threading.Event()
     logic_resume_event = threading.Event()
     logic_thread = threading.Thread(target=run,
