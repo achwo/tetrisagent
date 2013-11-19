@@ -3,11 +3,13 @@
 from Tkinter import *
 import Queue
 import threading
+import tkFileDialog, Tkconstants
 
 from agent import TDLearningAgent
 import time
 import copy
 import settings
+import util
 
 BLOCK_SIZE_IN_PX = 30
 OFFSET_TO_WINDOW_BORDER_IN_PX = 3
@@ -26,12 +28,16 @@ PAUSE_BUTTON_TEXT = "Pause"
 RESUME_BUTTON_TEXT = "Resume"
 QUIT_BUTTON_TEXT = "Quit"
 FAST_FORWARD_BUTTON_TEXT = "Fast Forward"
+SAVE_BUTTON_TEXT = "Save Q"
+LOAD_BUTTON_TEXT = "Load Q"
+Q_FILENAME = "q"
 
 GUI_REFRESH_IN_MS = 50
 TOTAL_EPISODES = 5000
 VISUALIZE_EPISODES_COUNT = 500
 STEP_SLOWDOWN_IN_SEC = 0.3
 EPISODE_SLOWDOWN_IN_SEC = 0
+
 
 global controller
 global agent
@@ -126,17 +132,34 @@ class game_controller(object):
         self.qLabel = Label(parent, text=Q_OR_NOT_LABEL.format('-'))
         self.qLabel.grid(row=4, column=1, sticky=W)
 
+        self.saveButton = Button(parent, text=SAVE_BUTTON_TEXT,
+                                 command=self.save_callback)
+        self.saveButton.grid(row=5, column=1, sticky=E)
+
+        self.loadButton = Button(parent, text=LOAD_BUTTON_TEXT,
+                                 command=self.load_callback)
+        self.loadButton.grid(row=5, column=2, sticky=E)
+
         self.fastForwardButton = Button(parent, text=FAST_FORWARD_BUTTON_TEXT,
                                    command=self.fast_forward_callback)
-        self.fastForwardButton.grid(row=5, column=2, sticky=E)
+        self.fastForwardButton.grid(row=6, column=2, sticky=E)
 
         self.pauseButton = Button(parent, text=PAUSE_BUTTON_TEXT,
                                      command=self.pause_callback)
-        self.pauseButton.grid(row=5, column=1, sticky=E)
+        self.pauseButton.grid(row=6, column=1, sticky=E)
 
         self.quitButton = Button(parent, text=QUIT_BUTTON_TEXT,
                             command=self.quit_callback)
-        self.quitButton.grid(row=5, column=3, sticky=E)
+        self.quitButton.grid(row=6, column=3, sticky=E)
+
+
+        self.options = options = {}
+        options['filetypes'] = [('all files, ','.*')]
+        # options['initialdir'] = 'C:\\'
+        options['initialfile'] = 'q'
+        options['parent'] = tk_root
+        options['title'] = "this is title"
+
 
         self.board = Board(
             parent,
@@ -152,6 +175,18 @@ class game_controller(object):
             agent.fast_forward_total = int(controller.fastForwardInput.get())
             agent.fast_forward_count = agent.fast_forward_total
             agent.fast_forward = True
+
+    def save_callback(self):
+        filename = tkFileDialog.asksaveasfilename(**self.options)
+
+        if filename:
+            util.save_to_json_file(agent.Q, filename)
+
+    def load_callback(self):
+        filename = tkFileDialog.askopenfilename(**self.options)
+
+        if filename:
+            agent.Q = util.read_from_json_file(filename)
 
     def pause_callback(self):
         if is_game_paused():
