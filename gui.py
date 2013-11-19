@@ -232,8 +232,8 @@ class Layout(object):
         In the grid list sublists are rows and columns are sublist elements
         If you want to add an element, just put it in the row and column
         you want.
-
         """
+
         rows_from_top = self.rows_from_top
         rows_from_bottom = self.rows_from_bottom
 
@@ -254,14 +254,14 @@ class Layout(object):
         list index is added by 1 each time.
         """
 
-        for i in range(len(grid)):
-            for j in range(len(grid[i])):
-                if grid[i][j] is not None:
-                    if grid[i][j][1] is None:
-                        grid[i][j][0].grid(column=j + 1, row=i + 1)
+        for row in range(len(grid)):
+            for col in range(len(grid[row])):
+                if grid[row][col] is not None:
+                    if grid[row][col][1] is None:
+                        grid[row][col][0].grid(column=col + 1, row=row + 1)
                     else:
-                        grid[i][j][0].grid(column=j + 1, row=i + 1,
-                                           **grid[i][j][1])
+                        grid[row][col][0].grid(column=col + 1, row=row + 1,
+                                               **grid[row][col][1])
 
 
 class TDLearningAgentSlow(TDLearningAgent):
