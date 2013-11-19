@@ -7,11 +7,12 @@ import threading
 from agent import TDLearningAgent
 import time
 import copy
+import settings
 
 BLOCK_SIZE_IN_PX = 40
 OFFSET_TO_WINDOW_BORDER_IN_PX = 3
-BOARD_WIDTH_IN_BLOCKS = 10
-BOARD_HEIGHT_IN_BLOCKS = 12
+BOARD_WIDTH_IN_BLOCKS = settings.FIELD_WIDTH
+BOARD_HEIGHT_IN_BLOCKS = settings.FIELD_HEIGHT
 
 LEFT = "left"
 RIGHT = "right"
@@ -27,7 +28,7 @@ QUIT_BUTTON_TEXT = "Quit"
 FAST_FORWARD_BUTTON_TEXT = "Fast Forward"
 
 GUI_REFRESH_IN_MS = 50
-TOTAL_EPISODES = 60000
+TOTAL_EPISODES = 1000
 VISUALIZE_EPISODES_COUNT = 500
 STEP_SLOWDOWN_IN_SEC = 0.3
 EPISODE_SLOWDOWN_IN_SEC = 0
@@ -47,7 +48,8 @@ class Board(Frame):
     The board represents the tetris playing area. A grid of x by y blocks.
     """
 
-    def __init__(self, parent, block_size_in_px=20, board_width_in_blocks=10, board_height_in_blocks=20, offset=3):
+    def __init__(self, parent, block_size_in_px=20, board_width_in_blocks=10,
+                 board_height_in_blocks=20, offset=3):
         Frame.__init__(self, parent)
 
         # blocks are indexed by there corrdinates e.g. (4,5), these are
@@ -156,7 +158,8 @@ class Board(Frame):
         ry = (y * self.block_size_in_px) + self.offset
 
         return self.canvas.create_rectangle(
-            rx, ry, rx + self.block_size_in_px, ry + self.block_size_in_px, fill=colour
+            rx, ry, rx + self.block_size_in_px, ry + self.block_size_in_px,
+            fill=colour
         )
 
     def move_block(self, id, coord):
@@ -204,20 +207,10 @@ class game_controller(object):
         self.level = 0
         self.delay = 1    # ms
 
-        # Label(parent, text="First:").grid(row=1, column=1)
-        # Label(parent, text="Second:").grid(row=2, column=1)
-        # Label(parent, text="Third:").grid(row=3, column=1)
-        # Label(parent, text="Fourth:").grid(row=4, column=1)
-        #
         self.fastForwardInput = Entry(parent)
         self.fastForwardInput.insert(0, "50")
         self.fastForwardInput.grid(row=1, column=2)
-        # input2 = Entry(parent)
-        # input2.grid(row=2, column=2)
-        # input3 = Entry(parent)
-        # input3.grid(row=3, column=2)
-        # input4 = Entry(parent)
-        # input4.grid(row=4, column=2)
+
 
         self.maxLabel = Label(parent, text=MAX_BLOCKS_LABEL.format(0))
         self.maxLabel.grid(row=2, column=1, sticky=W)
