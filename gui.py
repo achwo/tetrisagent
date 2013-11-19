@@ -66,6 +66,19 @@ class Board(Frame):
 
     def clear(self):
         self.canvas.delete(ALL)
+        x_left = self.offset
+        y_up = self.offset
+        y_bottom = self.board_height_in_blocks * self.block_size_in_px + self.offset
+        x_right = self.board_width_in_blocks * self.block_size_in_px + self.offset
+        vanish_zone_height = 2 * self.block_size_in_px + self.offset
+
+        self.canvas.create_line(x_left, y_up, x_left, y_bottom)
+        self.canvas.create_line(x_right, y_up, x_right, y_bottom)
+        self.canvas.create_line(x_left, y_bottom, x_right, y_bottom)
+        self.canvas.create_line(x_left, y_up, x_right, y_up)
+        self.canvas.create_line(x_left, vanish_zone_height, 
+                                x_right, vanish_zone_height,
+                                fill="red", dash=(4, 4))
 
     def add_block(self, (x, y), colour):
         """
@@ -197,7 +210,7 @@ class TDLearningAgentSlow(TDLearningAgent):
             self._update_gui()
 
     def _episode(self):
-        if self.fast_forward and self.fast_forward_count <= 0:
+        if self._is_fast_forward_finished():
             self.fast_forward = False
             self.fast_forward_count = self.fast_forward_total
         self.blocks_last_iteration = 0
@@ -207,6 +220,9 @@ class TDLearningAgentSlow(TDLearningAgent):
             self.fast_forward_count -= 1
         if EPISODE_SLOWDOWN_IN_SEC > 0 and not self.fast_forward:
             time.sleep(EPISODE_SLOWDOWN_IN_SEC)
+
+    def _is_fast_forward_finished(self):
+        return self.fast_forward and self.fast_forward_count <= 0
 
     def _step(self):
         self.resume_event.wait()
