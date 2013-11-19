@@ -115,16 +115,12 @@ class Controller(object):
         self.level = 0
         self.delay = 1
 
-        self.options = {}
-        self.options['filetypes'] = [('all files, ', '.*')]
-        # self.options['initialdir'] = 'C:\\'
-        self.options['initialfile'] = 'q'
-        self.options['parent'] = tk_root
-        self.options['title'] = "Choose a File"
+        self.options = {'filetypes': [('all files, ', '.*')],
+                        'initialfile': 'q', 'parent': tk_root,
+                        'title': "Choose a File"}
 
         self.board = Board(parent)
         self.parent.bind("<Escape>", self.quit_callback)
-
 
     def fast_forward_callback(self):
         if not agent.fast_forward:
@@ -186,7 +182,6 @@ class Layout(object):
         self.init_grid()
         self.make_visible(self.assemble_grid())
 
-
     def init_components(self):
         self.avgLabel = Label(self.parent, text=AVG_BLOCKS_LABEL.format(0))
         self.maxLabel = Label(self.parent, text=MAX_BLOCKS_LABEL.format(0))
@@ -233,12 +228,12 @@ class Layout(object):
         ]
 
     def assemble_grid(self):
-        '''
+        """
         In the grid list sublists are rows and columns are sublist elements
         If you want to add an element, just put it in the row and column
         you want.
 
-        '''
+        """
         rows_from_top = self.rows_from_top
         rows_from_bottom = self.rows_from_bottom
 
@@ -252,13 +247,12 @@ class Layout(object):
 
         return grid
 
-
     def make_visible(self, grid):
-        '''
+        """
         Puts every item in grid to the position in the list.
         Since list is 0-based and in the canvas we only use positions > 0,
         list index is added by 1 each time.
-        '''
+        """
 
         for i in range(len(grid)):
             for j in range(len(grid[i])):
