@@ -4,29 +4,12 @@ import sys
 
 from environment import Environment
 import features
-
-
-class PerceivedState(object):
-    def __init__(self, environment, *features):
-        self.shape = environment.current_shape
-        self.features = []
-        for f in features:
-            self.features.append(f(environment))
-
-    def __hash__(self):
-        return hash((self.shape, tuple(self.features)))
-
-    def __eq__(self, other):
-        if type(other) is type(self):
-            return self.features == other.features
-        return True
-
-    def __repr__(self):
-        return hash(self).__str__()
+import settings
+from state import *
 
 
 class TDLearningAgent(object):
-    def __init__(self, state_class=PerceivedState):
+    def __init__(self, state_class=BlockPerceivedState):
         self.iterations = 0
         self.state_class = state_class
         self.environment = Environment()
@@ -35,7 +18,7 @@ class TDLearningAgent(object):
         self.Q = defaultdict(int)
         self.alpha = 0.9  # lernrate
         self.gamma = 0.8  # discount rate
-        self.epsilon = 0.3 # probability of random action in epsilon greedy policy
+        self.epsilon = 0.0 # probability of random action in epsilon greedy policy
         self.action_from_q = False
 
     def _initialize_state(self):
@@ -53,7 +36,7 @@ class TDLearningAgent(object):
 
     def _episode(self):
         self._initialize_state()
-        while not self.environment.is_game_over():
+        while not self._is_game_over():
             self._step()
 
     def _step(self):
@@ -63,14 +46,17 @@ class TDLearningAgent(object):
         self._update_perceived_state()
         self._q(old_state, action, reward)
 
+    def _is_game_over(self):
+        return self.environment.is_game_over()
+
     def _choose_action(self):
         actions = []
-        if self.random.random() > self.epsilon:
-            actions = self._find_best_actions_in_q()
-            self.action_from_q = 'Best'
+        # if self.random.random() <= self.epsilon:
+        actions = self._find_best_actions_in_q()
+        self.action_from_q = True
 
         if len(actions) == 0:
-            self.action_from_q = 'Random'
+            self.action_from_q = False
             actions = self.environment.possible_actions()
 
         return self.random.sample(actions, 1)[0]
@@ -111,7 +97,7 @@ class TDLearningAgent(object):
 
     def _perceived_state(self):
         # return self.state_class(self.environment, features.individual_height)
-        return self.state_class(self.environment, features.field_to_bitvector)
+        return self.state_class(self.environment)
 
 
     def all_values(self):
