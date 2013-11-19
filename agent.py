@@ -4,12 +4,29 @@ import sys
 
 from environment import Environment
 import features
-import settings
-from state import *
+
+
+class PerceivedState(object):
+    def __init__(self, environment, *features):
+        self.shape = environment.current_shape
+        self.features = []
+        for f in features:
+            self.features.append(f(environment))
+
+    def __hash__(self):
+        return hash((self.shape, tuple(self.features)))
+
+    def __eq__(self, other):
+        if type(other) is type(self):
+            return self.features == other.features
+        return True
+
+    def __repr__(self):
+        return hash(self).__str__()
 
 
 class TDLearningAgent(object):
-    def __init__(self, state_class=BlockPerceivedState):
+    def __init__(self, state_class=PerceivedState):
         self.iterations = 0
         self.state_class = state_class
         self.environment = Environment()
@@ -18,7 +35,7 @@ class TDLearningAgent(object):
         self.Q = defaultdict(int)
         self.alpha = 0.9  # lernrate
         self.gamma = 0.8  # discount rate
-        self.epsilon = 0.0 # probability of random action in epsilon greedy policy
+        self.epsilon = 0.3 # probability of random action in epsilon greedy policy
         self.action_from_q = False
 
     def _initialize_state(self):
@@ -51,12 +68,12 @@ class TDLearningAgent(object):
 
     def _choose_action(self):
         actions = []
-        # if self.random.random() <= self.epsilon:
-        actions = self._find_best_actions_in_q()
-        self.action_from_q = True
+        if self.random.random() <= self.epsilon:
+            actions, value = self._find_best_actions_in_q()
+            self.action_from_q = 'Best: {0}'.format(value)
 
         if len(actions) == 0:
-            self.action_from_q = False
+            self.action_from_q = 'Random'
             actions = self.environment.possible_actions()
 
         return self.random.sample(actions, 1)[0]
@@ -75,7 +92,7 @@ class TDLearningAgent(object):
                 elif value == best_value:
                     best_actions.append(action)
 
-        return set(best_actions)
+        return set(best_actions), best_value
 
     def _q(self, old_state, action, reward):
         c = (old_state, action)
@@ -96,8 +113,7 @@ class TDLearningAgent(object):
         return best
 
     def _perceived_state(self):
-        # return self.state_class(self.environment, features.individual_height)
-        return self.state_class(self.environment)
+        return self.state_class(self.environment, features.field_to_bitvector)
 
 
     def all_values(self):
