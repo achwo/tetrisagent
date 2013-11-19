@@ -11,6 +11,8 @@ import copy
 import settings
 import util
 
+
+FIELD_ROWSPAN = 20
 BLOCK_SIZE_IN_PX = 30
 OFFSET_TO_WINDOW_BORDER_IN_PX = 3
 BOARD_WIDTH_IN_BLOCKS = settings.FIELD_WIDTH
@@ -68,7 +70,7 @@ class Board(Frame):
                                  self.board_height_in_blocks * self.block_size_in_px) + self.offset,
                              width=(self.board_width_in_blocks * self.block_size_in_px) + self.offset)
         # self.canvas.pack()
-        self.canvas.grid(row=1, column=0, rowspan=5)
+        self.canvas.grid(row=1, column=0, rowspan=FIELD_ROWSPAN)
 
     def clear(self):
         self.canvas.delete(ALL)
@@ -118,39 +120,40 @@ class game_controller(object):
         self.level = 0
         self.delay = 1
 
-        self.fastForwardInput = Entry(parent)
-        self.fastForwardInput.insert(0, "50")
-        self.fastForwardInput.grid(row=1, column=2)
-
 
         self.maxLabel = Label(parent, text=MAX_BLOCKS_LABEL.format(0))
-        self.maxLabel.grid(row=2, column=1, sticky=W)
+        self.maxLabel.grid(row=2, column=1, sticky=W, columnspan=3)
         self.avgLabel = Label(parent, text=AVG_BLOCKS_LABEL.format(0))
-        self.avgLabel.grid(row=1, column=1, sticky=W)
+        self.avgLabel.grid(row=1, column=1, sticky=W, columnspan=3)
         self.iterationsLabel = Label(parent, text=ITERATIONS_LABEL.format(0))
-        self.iterationsLabel.grid(row=3, column=1, sticky=W)
+        self.iterationsLabel.grid(row=3, column=1, sticky=W, columnspan=3)
         self.qLabel = Label(parent, text=Q_OR_NOT_LABEL.format('-'))
-        self.qLabel.grid(row=4, column=1, sticky=W)
+        self.qLabel.grid(row=4, column=1, sticky=W, columnspan=3)
 
-        self.saveButton = Button(parent, text=SAVE_BUTTON_TEXT,
-                                 command=self.save_callback)
-        self.saveButton.grid(row=5, column=1, sticky=E)
+        self.pauseButton = Button(parent, text=PAUSE_BUTTON_TEXT,
+                                  command=self.pause_callback)
+        self.pauseButton.grid(row=FIELD_ROWSPAN-1, column=1, sticky=W)
 
-        self.loadButton = Button(parent, text=LOAD_BUTTON_TEXT,
-                                 command=self.load_callback)
-        self.loadButton.grid(row=5, column=2, sticky=E)
+        self.fastForwardInput = Entry(parent, width=5)
+        self.fastForwardInput.insert(0, "50")
+        self.fastForwardInput.grid(row=FIELD_ROWSPAN-1, column=2, sticky=W)
 
         self.fastForwardButton = Button(parent, text=FAST_FORWARD_BUTTON_TEXT,
                                    command=self.fast_forward_callback)
-        self.fastForwardButton.grid(row=6, column=2, sticky=E)
+        self.fastForwardButton.grid(row=FIELD_ROWSPAN-1, column=3, sticky=W)
 
-        self.pauseButton = Button(parent, text=PAUSE_BUTTON_TEXT,
-                                     command=self.pause_callback)
-        self.pauseButton.grid(row=6, column=1, sticky=E)
+        self.saveButton = Button(parent, text=SAVE_BUTTON_TEXT,
+                                 command=self.save_callback)
+        self.saveButton.grid(row=FIELD_ROWSPAN, column=1, sticky=E)
+
+        self.loadButton = Button(parent, text=LOAD_BUTTON_TEXT,
+                                 command=self.load_callback)
+        self.loadButton.grid(row=FIELD_ROWSPAN, column=2, sticky=E)
+
 
         self.quitButton = Button(parent, text=QUIT_BUTTON_TEXT,
                             command=self.quit_callback)
-        self.quitButton.grid(row=6, column=3, sticky=E)
+        self.quitButton.grid(row=FIELD_ROWSPAN, column=4, sticky=E)
 
 
         self.options = options = {}
