@@ -1,4 +1,5 @@
 import math
+from BitVector import BitVector
 from settings import FIELD_HEIGHT, FIELD_WIDTH
 from environment import Environment
 
@@ -79,3 +80,14 @@ def number_of_holes(environment):
         elif environment.blocks[i][j] is not 0:
             possible_hole = True
     return holes
+
+
+def field_to_bitvector(environment):
+    bits = []
+    for col in environment.blocks:
+        for cell in col:
+            if cell != 0:
+                bits.append(1)
+            else:
+                bits.append(0)
+    return BitVector(bitlist=bits).intValue()

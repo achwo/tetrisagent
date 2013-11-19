@@ -1,10 +1,9 @@
 import copy
 import random
-import settings
+from settings import FIELD_HEIGHT, FIELD_WIDTH, VANISH_ZONE_HEIGHT
 
-
-BOTTOM_INDEX = settings.FIELD_HEIGHT - 1
-RIGHTMOST_INDEX = settings.FIELD_WIDTH - 1
+BOTTOM_INDEX = FIELD_HEIGHT - 1
+RIGHTMOST_INDEX = FIELD_WIDTH - 1
 
 
 class Environment(object):
@@ -15,10 +14,18 @@ class Environment(object):
             self.blocks = blocks
         self._choose_next_shape()
 
+    def __eq__(self, other):
+        if type(self) == type(other):
+            return self.blocks == other.blocks and \
+                   self.current_shape == other.current_shape
+
+    def __hash__(self):
+        return hash((tuple(self.blocks), self.current_shape))
+
     def initialize(self):
         self.highest = BOTTOM_INDEX  # counted backwards because of indexing
-        self.blocks = [[0 for _ in range(settings.FIELD_HEIGHT)] for _ in
-                       range(settings.FIELD_WIDTH)]
+        self.blocks = [[0 for _ in range(FIELD_HEIGHT)] for _ in
+                       range(FIELD_WIDTH)]
         self._choose_next_shape()
 
     def possible_actions(self):
@@ -26,7 +33,7 @@ class Environment(object):
             return []
 
         actions = []
-        for column in range(0, settings.FIELD_WIDTH):
+        for column in range(0, FIELD_WIDTH):
             if self._column_valid(column):
                 actions.append(Action(column))
 
@@ -63,7 +70,7 @@ class Environment(object):
         return False
 
     def _touches_ground(self, coord):
-        return coord[1] + 1 == settings.FIELD_HEIGHT
+        return coord[1] + 1 == FIELD_HEIGHT
 
     def _touches_block(self, coord):
         return self.blocks[coord[0]][coord[1] + 1] is not 0
@@ -83,7 +90,7 @@ class Environment(object):
 
     def _is_block_in_vanish_zone(self):
         for col in self.blocks:
-            for row in range(settings.VANISH_ZONE_HEIGHT):
+            for row in range(VANISH_ZONE_HEIGHT):
                 if col[row] != 0:
                     return True
         return False
@@ -135,6 +142,9 @@ class Action(object):
             return self.column == other.column
         return False
 
+    def __hash__(self):
+        return hash(self.column)
+
     def __repr__(self):
         return "Action({0})".format(self.column)
 
@@ -145,6 +155,14 @@ class Shape(object):
         self.rightmost = self.__furthest_right()
         self.name = name
         self._spawn_position = spawn_position
+
+    def __eq__(self, other):
+        if type(self) == type(other):
+            return self.name == other.name
+        return False
+
+    def __hash__(self):
+        return hash((self.name))
 
     def __repr__(self):
         return self.name
@@ -172,43 +190,43 @@ class Shape(object):
 class OShape(Shape):
     def __init__(self):
         super(OShape, self).__init__([[0, 0], [0, 1], [1, 0], [1, 1]], 'o',
-                                     settings.FIELD_WIDTH / 2)
+                                     FIELD_WIDTH / 2)
 
 
 class IShape(Shape):
     def __init__(self):
         super(IShape, self).__init__([[0, 0], [0, 1], [0, 2], [0, 3]], 'i',
-                                     settings.FIELD_WIDTH / 2)
+                                     FIELD_WIDTH / 2)
 
 
 class LShape(Shape):
     def __init__(self):
         super(LShape, self).__init__([[0, 0], [0, 1], [0, 2], [1, 2]], 'l',
-                                     settings.FIELD_WIDTH / 2 - 1)
+                                     FIELD_WIDTH / 2 - 1)
 
 
 class JShape(Shape):
     def __init__(self):
         super(JShape, self).__init__([[0, 2], [1, 0], [1, 1], [1, 2]], 'j',
-                                     settings.FIELD_WIDTH / 2 - 1)
+                                     FIELD_WIDTH / 2 - 1)
 
 
 class TShape(Shape):
     def __init__(self):
         super(TShape, self).__init__([[0, 1], [1, 0], [1, 1], [2, 1]], 't',
-                                     settings.FIELD_WIDTH / 2 - 1)
+                                     FIELD_WIDTH / 2 - 1)
 
 
 class SShape(Shape):
     def __init__(self):
         super(SShape, self).__init__([[0, 0], [0, 1], [1, 1], [1, 2]], 's',
-                                     settings.FIELD_WIDTH / 2 - 1)
+                                     FIELD_WIDTH / 2 - 1)
 
 
 class ZShape(Shape):
     def __init__(self):
         super(ZShape, self).__init__([[0, 1], [0, 2], [1, 0], [1, 1]], 'z',
-                                     settings.FIELD_WIDTH / 2 - 1)
+                                     FIELD_WIDTH / 2 - 1)
 
 
 class InvalidActionError(RuntimeError):
