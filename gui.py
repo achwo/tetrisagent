@@ -9,7 +9,7 @@ import time
 import copy
 import settings
 
-BLOCK_SIZE_IN_PX = 40
+BLOCK_SIZE_IN_PX = 30
 OFFSET_TO_WINDOW_BORDER_IN_PX = 3
 BOARD_WIDTH_IN_BLOCKS = settings.FIELD_WIDTH
 BOARD_HEIGHT_IN_BLOCKS = settings.FIELD_HEIGHT
@@ -78,7 +78,7 @@ class Board(Frame):
         self.canvas.create_line(x_left, y_up, x_right, y_up)
         self.canvas.create_line(x_left, vanish_zone_height, 
                                 x_right, vanish_zone_height,
-                                fill="red", dash=(4, 4))
+                                fill="red", dash=(4, 2))
 
     def add_block(self, (x, y), colour):
         """
@@ -290,8 +290,8 @@ def run(stop_event, resume_event):
 if __name__ == "__main__":
     tk_root = Tk()
     tk_root.title("tetris agent")
-    tk_root.minsize(450, 250)
-    tk_root.geometry("900x500")
+    height = BOARD_HEIGHT_IN_BLOCKS * BLOCK_SIZE_IN_PX + OFFSET_TO_WINDOW_BORDER_IN_PX * 2
+    tk_root.minsize(450, height)
     controller = game_controller(tk_root)
     logic_stop_event = threading.Event()
     logic_resume_event = threading.Event()
