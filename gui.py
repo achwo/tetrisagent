@@ -10,6 +10,7 @@ import copy
 
 from agent import TDLearningAgent
 import settings
+import util
 
 
 FIELD_ROWSPAN = 20
@@ -66,7 +67,7 @@ class Board(Frame):
                              height=BOARD_HEIGHT_IN_PX + self.offset,
                              width=BOARD_WIDTH_IN_PX + self.offset)
         # self.canvas.pack()
-        self.canvas.grid(row=0, column=0)
+        self.canvas.grid(row=0, column=0, rowspan=FIELD_ROWSPAN)
 
     def clear(self):
         self.canvas.delete(ALL)
@@ -170,13 +171,13 @@ class Controller(object):
         filename = tkFileDialog.asksaveasfilename(**self.options)
 
         if filename:
-            util.save_to_json_file(agent.Q, filename)
+            util.save_to_file(agent.Q, filename)
 
     def load_callback(self):
         filename = tkFileDialog.askopenfilename(**self.options)
 
         if filename:
-            agent.Q = util.read_from_json_file(filename)
+            agent.Q = util.read_from_file(filename)
 
     def pause_callback(self):
         if is_game_paused():
@@ -203,7 +204,7 @@ class Layout(object):
         self.parent = parent
         self.init_components()
         self.init_grid()
-        self.make_visible(self.assemble_grid())
+        self.make_visible(self.grid)
 
     def init_components(self):
         self.avgLabel = Label(self.parent, text=AVG_BLOCKS_LABEL.format(0))
@@ -249,43 +250,27 @@ class Layout(object):
         e = {'sticky': E}
         w = {'sticky': W}
 
-        self.rows_from_top = [
+        emptyLabel = Label(self.parent)
+
+        self.grid = [
             [(self.avgLabel, w_and_colspan_3)],
             [(self.maxLabel, w_and_colspan_3)],
             [(self.iterationsLabel, w_and_colspan_3)],
             [(self.qLabel, w_and_colspan_3)],
+
+            [(emptyLabel, None)],
+
             [(self.alphaLabel, e), (self.alphaInput, w)],
             [(self.gammaLabel, e), (self.gammaInput, w)],
             [(self.epsilonLabel, e), (self.epsilonInput, w)],
-            [(self.fastForwardLabel, w), (self.fastForwardInput, w)],
-            # add row from top here
-        ]
-
-        self.rows_from_bottom = [
+            [(self.fastForwardLabel, e), (self.fastForwardInput, w)],
             [(self.pauseBtn, e),
              (self.fastForwardBtn, w)],
             [(self.saveBtn, e), (self.loadBtn, e), None, (self.quitBtn, w)]
+            # add row from top here
         ]
 
-    def assemble_grid(self):
-        """
-        In the grid list sublists are rows and columns are sublist elements
-        If you want to add an element, just put it in the row and column
-        you want.
-        """
-
-        rows_from_top = self.rows_from_top
-        rows_from_bottom = self.rows_from_bottom
-
-        empty_lines = FIELD_ROWSPAN - len(rows_from_top) - len(rows_from_bottom)
-
-        grid = []
-
-        grid.extend(rows_from_top)
-        grid.extend(empty_lines * [[]])
-        grid.extend(rows_from_bottom)
-
-        return grid
+        emptyLabel['height'] = FIELD_ROWSPAN - len(self.grid)
 
     def make_visible(self, grid):
         """
@@ -297,13 +282,12 @@ class Layout(object):
         for row in range(len(grid)):
             for col in range(len(grid[row])):
                 if grid[row][col] is not None:
+                    print row, col
                     if grid[row][col][1] is None:
-                        grid[row][col][0].grid(column=col + 1, row=row + 1)
+                        grid[row][col][0].grid(column=col, row=row + 1)
                     else:
-                        grid[row][col][0].grid(column=col + 1, row=row + 1,
+                        grid[row][col][0].grid(column=col, row=row + 1,
                                                **grid[row][col][1])
-
-
 
 class TDLearningAgentSlow(TDLearningAgent):
 
