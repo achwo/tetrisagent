@@ -15,7 +15,7 @@ import util
 
 FIELD_ROWSPAN = 20
 BLOCK_SIZE_IN_PX = 30
-OFFSET_TO_WINDOW_BORDER_IN_PX = 3
+OFFSET_TO_WINDOW_BORDER_IN_PX = 5
 BOARD_WIDTH_IN_BLOCKS = settings.FIELD_WIDTH
 BOARD_WIDTH_IN_PX = BOARD_WIDTH_IN_BLOCKS * BLOCK_SIZE_IN_PX
 BOARD_HEIGHT_IN_BLOCKS = settings.FIELD_HEIGHT
@@ -39,12 +39,10 @@ Q_FILENAME = "q"
 
 GUI_REFRESH_IN_MS = 50
 TOTAL_EPISODES = 5000
-VISUALIZE_EPISODES_COUNT = 500
 STEP_SLOWDOWN_IN_SEC = 0.3
 EPISODE_SLOWDOWN_IN_SEC = 0
 
 global controller
-global layout
 global agent
 global dataQ
 dataQ = Queue.Queue(maxsize=0)
@@ -67,10 +65,13 @@ class Board(Frame):
                              height=BOARD_HEIGHT_IN_PX + self.offset,
                              width=BOARD_WIDTH_IN_PX + self.offset)
         # self.canvas.pack()
-        self.canvas.grid(row=0, column=0, rowspan=FIELD_ROWSPAN)
+        self.canvas.grid(row=0, column=0)
 
     def clear(self):
         self.canvas.delete(ALL)
+        self.draw_board_border()
+
+    def draw_board_border(self):
         x_left = self.offset
         y_up = self.offset
         y_bottom = BOARD_HEIGHT_IN_PX + self.offset
@@ -119,6 +120,101 @@ class Board(Frame):
                 color = get_color(blocks[r][c])
                 self.add_block((r, c), color)
 
+class ControlPanel(Frame):
+    def __init__(self, parent, controller):
+        #super(ControlPanel, self).__init__(parent)
+        Frame.__init__(self, parent)
+        self.parent = parent
+        self.controller = controller
+        self.init_components()
+        grid = self.init_grid()
+        self.make_visible(grid)
+
+    def init_components(self):
+        self.avgLabel = Label(self, text=AVG_BLOCKS_LABEL.format(0))
+        self.maxLabel = Label(self, text=MAX_BLOCKS_LABEL.format(0))
+        self.iterationsLabel = Label(self, text=ITERATIONS_LABEL.format(0))
+        self.qLabel = Label(self, text=Q_OR_NOT_LABEL.format('-'))
+
+        self.pauseBtn = Button(self, text=PAUSE_BUTTON_TEXT,
+                               command=self.controller.pause_callback)
+        self.fastForwardInput = Entry(self, width=5)
+        self.fastForwardInput.insert(0, "50")
+        self.fastForwardBtn = Button(self,
+                                     text=FAST_FORWARD_BUTTON_TEXT,
+                                     command=self.controller.fast_forward_callback)
+        self.saveBtn = Button(self, text=SAVE_BUTTON_TEXT,
+                              command=self.controller.save_callback)
+        self.loadBtn = Button(self, text=LOAD_BUTTON_TEXT,
+                              command=self.controller.load_callback)
+        self.quitBtn = Button(self, text=QUIT_BUTTON_TEXT,
+                              command=self.controller.quit_callback)
+
+        input_width = 5
+
+        self.fastForwardLabel = Label(self, text='Fast Forward count: ')
+        self.fastForwardInput = Entry(self, width=input_width)
+        self.fastForwardInput.insert(0, "50")
+
+        self.alphaLabel = Label(self, text='alpha: ')
+        self.alphaInput = Entry(self, width=input_width)
+        self.alphaInput.insert(0, "0.9")
+
+        self.gammaLabel = Label(self, text='gamma: ')
+        self.gammaInput = Entry(self, width=input_width)
+        self.gammaInput.insert(0, "0.8")
+
+        self.epsilonLabel = Label(self, text='epsilon: ')
+        self.epsilonInput = Entry(self, width=input_width)
+        self.epsilonInput.insert(0, "0.3")
+
+    def init_grid(self):
+        w_and_colspan_3 = dict(sticky=W, columnspan=3)
+
+        e = {'sticky': E}
+        w = {'sticky': W}
+
+        emptyLabel = Label(self)
+
+        grid = [
+            [(self.avgLabel, w_and_colspan_3)],
+            [(self.maxLabel, w_and_colspan_3)],
+            [(self.iterationsLabel, w_and_colspan_3)],
+            [(self.qLabel, w_and_colspan_3)],
+
+            [(emptyLabel, None)],
+
+            [(self.alphaLabel, e), (self.alphaInput, w)],
+            [(self.gammaLabel, e), (self.gammaInput, w)],
+            [(self.epsilonLabel, e), (self.epsilonInput, w)],
+            [(self.fastForwardLabel, e), (self.fastForwardInput, w)],
+            [(self.pauseBtn, e),
+             (self.fastForwardBtn, w)],
+            [(self.saveBtn, e), (self.loadBtn, e), None, (self.quitBtn, w)]
+            # add row from top here
+        ]
+
+        emptyLabel['height'] = FIELD_ROWSPAN - len(grid)
+
+        return grid
+
+    def make_visible(self, grid):
+        """
+        Puts every item in grid to the position in the list.
+        Since list is 0-based and in the canvas we only use positions > 0,
+        list index is added by 1 each time.
+        """
+
+        for row in range(len(grid)):
+            for col in range(len(grid[row])):
+                if grid[row][col] is not None:
+                    print row, col
+                    if grid[row][col][1] is None:
+                        grid[row][col][0].grid(column=col, row=row + 1)
+                    else:
+                        grid[row][col][0].grid(column=col, row=row + 1,
+                                               **grid[row][col][1])
+
 
 class Controller(object):
     """
@@ -140,30 +236,29 @@ class Controller(object):
 
         self.board = Board(parent)
 
-        control_frame = Frame(parent)
-        control_frame.grid(row=0, column=1, sticky=N + W)
-        self.layout = Layout(control_frame, self)
+        self.control_panel = ControlPanel(parent, self)
+        self.control_panel.grid(row=0, column=1, sticky=N + W)
 
         self.parent.bind("<Escape>", self.quit_callback)
 
         self._set_agent_inputs_state(DISABLED)
 
     def _set_agent_inputs_state(self, state):
-        self.layout.alphaInput['state'] = state
-        self.layout.gammaInput['state'] = state
-        self.layout.epsilonInput['state'] = state
+        self.control_panel.alphaInput['state'] = state
+        self.control_panel.gammaInput['state'] = state
+        self.control_panel.epsilonInput['state'] = state
 
     def _set_agent_learning_vars(self):
-        alpha = float(self.layout.alphaInput.get())
-        gamma = float(self.layout.gammaInput.get())
-        epsilon = float(self.layout.epsilonInput.get())
+        alpha = float(self.control_panel.alphaInput.get())
+        gamma = float(self.control_panel.gammaInput.get())
+        epsilon = float(self.control_panel.epsilonInput.get())
         agent.alpha = alpha
         agent.gamma = gamma
         agent.epsilon = epsilon
 
     def fast_forward_callback(self):
         if not agent.fast_forward:
-            agent.fast_forward_total = int(self.layout.fastForwardInput.get())
+            agent.fast_forward_total = int(self.control_panel.fastForwardInput.get())
             agent.fast_forward_count = agent.fast_forward_total
             agent.fast_forward = True
 
@@ -181,12 +276,12 @@ class Controller(object):
 
     def pause_callback(self):
         if is_game_paused():
-            self.layout.pauseBtn['text'] = PAUSE_BUTTON_TEXT
+            self.control_panel.pauseBtn['text'] = PAUSE_BUTTON_TEXT
             self._set_agent_inputs_state(DISABLED)
             self._set_agent_learning_vars()
             resume_game()
         else:
-            self.layout.pauseBtn['text'] = RESUME_BUTTON_TEXT
+            self.control_panel.pauseBtn['text'] = RESUME_BUTTON_TEXT
             self._set_agent_inputs_state(NORMAL)
             pause_game()
 
@@ -197,97 +292,6 @@ class Controller(object):
     def clear_callback(self, event):
         self.board.clear()
 
-
-class Layout(object):
-    def __init__(self, parent, controller):
-        self.controller = controller
-        self.parent = parent
-        self.init_components()
-        self.init_grid()
-        self.make_visible(self.grid)
-
-    def init_components(self):
-        self.avgLabel = Label(self.parent, text=AVG_BLOCKS_LABEL.format(0))
-        self.maxLabel = Label(self.parent, text=MAX_BLOCKS_LABEL.format(0))
-        self.iterationsLabel = Label(self.parent, text=ITERATIONS_LABEL.format(0))
-        self.qLabel = Label(self.parent, text=Q_OR_NOT_LABEL.format('-'))
-
-        self.pauseBtn = Button(self.parent, text=PAUSE_BUTTON_TEXT,
-                               command=self.controller.pause_callback)
-        self.fastForwardInput = Entry(self.parent, width=5)
-        self.fastForwardInput.insert(0, "50")
-        self.fastForwardBtn = Button(self.parent,
-                                     text=FAST_FORWARD_BUTTON_TEXT,
-                                     command=self.controller.fast_forward_callback)
-        self.saveBtn = Button(self.parent, text=SAVE_BUTTON_TEXT,
-                              command=self.controller.save_callback)
-        self.loadBtn = Button(self.parent, text=LOAD_BUTTON_TEXT,
-                              command=self.controller.load_callback)
-        self.quitBtn = Button(self.parent, text=QUIT_BUTTON_TEXT,
-                              command=self.controller.quit_callback)
-
-        input_width = 5
-
-        self.fastForwardLabel = Label(self.parent, text='Fast Forward count: ')
-        self.fastForwardInput = Entry(self.parent, width=input_width)
-        self.fastForwardInput.insert(0, "50")
-
-        self.alphaLabel = Label(self.parent, text='alpha: ')
-        self.alphaInput = Entry(self.parent, width=input_width)
-        self.alphaInput.insert(0, "0.9")
-
-        self.gammaLabel = Label(self.parent, text='gamma: ')
-        self.gammaInput = Entry(self.parent, width=input_width)
-        self.gammaInput.insert(0, "0.8")
-
-        self.epsilonLabel = Label(self.parent, text='epsilon: ')
-        self.epsilonInput = Entry(self.parent, width=input_width)
-        self.epsilonInput.insert(0, "0.3")
-
-    def init_grid(self):
-        w_and_colspan_3 = dict(sticky=W, columnspan=3)
-
-        e = {'sticky': E}
-        w = {'sticky': W}
-
-        emptyLabel = Label(self.parent)
-
-        self.grid = [
-            [(self.avgLabel, w_and_colspan_3)],
-            [(self.maxLabel, w_and_colspan_3)],
-            [(self.iterationsLabel, w_and_colspan_3)],
-            [(self.qLabel, w_and_colspan_3)],
-
-            [(emptyLabel, None)],
-
-            [(self.alphaLabel, e), (self.alphaInput, w)],
-            [(self.gammaLabel, e), (self.gammaInput, w)],
-            [(self.epsilonLabel, e), (self.epsilonInput, w)],
-            [(self.fastForwardLabel, e), (self.fastForwardInput, w)],
-            [(self.pauseBtn, e),
-             (self.fastForwardBtn, w)],
-            [(self.saveBtn, e), (self.loadBtn, e), None, (self.quitBtn, w)]
-            # add row from top here
-        ]
-
-        emptyLabel['height'] = FIELD_ROWSPAN - len(self.grid)
-
-    def make_visible(self, grid):
-        """
-        Puts every item in grid to the position in the list.
-        Since list is 0-based and in the canvas we only use positions > 0,
-        list index is added by 1 each time.
-        """
-
-        for row in range(len(grid)):
-            for col in range(len(grid[row])):
-                if grid[row][col] is not None:
-                    print row, col
-                    if grid[row][col][1] is None:
-                        grid[row][col][0].grid(column=col, row=row + 1)
-                    else:
-                        grid[row][col][0].grid(column=col, row=row + 1,
-                                               **grid[row][col][1])
 
 class TDLearningAgentSlow(TDLearningAgent):
 
@@ -371,11 +375,11 @@ def refresh_gui():
             agent.blocks_per_iteration)
         maximum = max(agent.blocks_per_iteration)
 
-        controller.layout.maxLabel["text"] = MAX_BLOCKS_LABEL.format(maximum)
-        controller.layout.avgLabel["text"] = AVG_BLOCKS_LABEL.format(avg)
-        controller.layout.iterationsLabel["text"] = ITERATIONS_LABEL.format(agent.iterations)
+        controller.control_panel.maxLabel["text"] = MAX_BLOCKS_LABEL.format(maximum)
+        controller.control_panel.avgLabel["text"] = AVG_BLOCKS_LABEL.format(avg)
+        controller.control_panel.iterationsLabel["text"] = ITERATIONS_LABEL.format(agent.iterations)
 
-    controller.layout.qLabel["text"] = Q_OR_NOT_LABEL.format(agent.action_from_q)
+    controller.control_panel.qLabel["text"] = Q_OR_NOT_LABEL.format(agent.action_from_q)
     controller.parent.after(GUI_REFRESH_IN_MS, refresh_gui)
 
 
