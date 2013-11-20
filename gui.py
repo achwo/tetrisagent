@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
 from Tkinter import *
 import Queue
@@ -9,7 +10,6 @@ import copy
 
 from agent import TDLearningAgent
 import settings
-import util
 
 
 FIELD_ROWSPAN = 20
@@ -26,12 +26,12 @@ DOWN = "down"
 
 MAX_BLOCKS_LABEL = "Maximale Anzahl von Bloecken: {0}"
 AVG_BLOCKS_LABEL = "Platzierte Bloecke im Durchschnitt: {0}"
-ITERATIONS_LABEL = "Anzahl der Durchlaeufe: {0}"
+ITERATIONS_LABEL = "Anzahl der Durchläufe: {0}"
 Q_OR_NOT_LABEL = "Action aus Q: {0}"
 PAUSE_BUTTON_TEXT = "Pause"
 RESUME_BUTTON_TEXT = "Resume"
 QUIT_BUTTON_TEXT = "Quit"
-FAST_FORWARD_BUTTON_TEXT = "Fast Forward"
+FAST_FORWARD_BUTTON_TEXT = ">>"
 SAVE_BUTTON_TEXT = "Save Q"
 LOAD_BUTTON_TEXT = "Load Q"
 Q_FILENAME = "q"
@@ -66,7 +66,7 @@ class Board(Frame):
                              height=BOARD_HEIGHT_IN_PX + self.offset,
                              width=BOARD_WIDTH_IN_PX + self.offset)
         # self.canvas.pack()
-        self.canvas.grid(row=1, column=0, rowspan=FIELD_ROWSPAN)
+        self.canvas.grid(row=0, column=0)
 
     def clear(self):
         self.canvas.delete(ALL)
@@ -100,6 +100,24 @@ class Board(Frame):
             fill=colour
         )
 
+    def update(self, blocks):
+        def get_color(x):
+            return {
+                'o': 'yellow',
+                'i': 'cyan',
+                'z': 'red',
+                's': 'green',
+                'j': 'blue',
+                'l': 'orange',
+                't': 'magenta',
+                }.get(x)
+                
+        self.clear()
+        for r in range(len(blocks)):
+            for c in range(len(blocks[r])):
+                color = get_color(blocks[r][c])
+                self.add_block((r, c), color)
+
 
 class Controller(object):
     """
@@ -120,11 +138,31 @@ class Controller(object):
                         'title': "Choose a File"}
 
         self.board = Board(parent)
+
+        control_frame = Frame(parent)
+        control_frame.grid(row=0, column=1, sticky=N + W)
+        self.layout = Layout(control_frame, self)
+
         self.parent.bind("<Escape>", self.quit_callback)
+
+        self._set_agent_inputs_state(DISABLED)
+
+    def _set_agent_inputs_state(self, state):
+        self.layout.alphaInput['state'] = state
+        self.layout.gammaInput['state'] = state
+        self.layout.epsilonInput['state'] = state
+
+    def _set_agent_learning_vars(self):
+        alpha = float(self.layout.alphaInput.get())
+        gamma = float(self.layout.gammaInput.get())
+        epsilon = float(self.layout.epsilonInput.get())
+        agent.alpha = alpha
+        agent.gamma = gamma
+        agent.epsilon = epsilon
 
     def fast_forward_callback(self):
         if not agent.fast_forward:
-            agent.fast_forward_total = int(layout.fastForwardInput.get())
+            agent.fast_forward_total = int(self.layout.fastForwardInput.get())
             agent.fast_forward_count = agent.fast_forward_total
             agent.fast_forward = True
 
@@ -142,35 +180,20 @@ class Controller(object):
 
     def pause_callback(self):
         if is_game_paused():
-            layout.pauseBtn['text'] = PAUSE_BUTTON_TEXT
+            self.layout.pauseBtn['text'] = PAUSE_BUTTON_TEXT
+            self._set_agent_inputs_state(DISABLED)
+            self._set_agent_learning_vars()
             resume_game()
         else:
-            layout.pauseBtn['text'] = RESUME_BUTTON_TEXT
+            self.layout.pauseBtn['text'] = RESUME_BUTTON_TEXT
+            self._set_agent_inputs_state(NORMAL)
             pause_game()
 
-    def quit_callback(self):
+    def quit_callback(self, event=None):
         agent.resume_event.set()
         self.parent.quit()
 
-    def update_board(self, blocks):
-        def get_color(x):
-            return {
-                'o': 'yellow',
-                'i': 'cyan',
-                'z': 'red',
-                's': 'green',
-                'j': 'blue',
-                'l': 'orange',
-                't': 'magenta',
-            }.get(x)
-
-        self.board.clear()
-        for r in range(len(blocks)):
-            for c in range(len(blocks[r])):
-                color = get_color(blocks[r][c])
-                self.board.add_block((r, c), color)
-
-    def clear_callback(self):
+    def clear_callback(self, event):
         self.board.clear()
 
 
@@ -185,44 +208,61 @@ class Layout(object):
     def init_components(self):
         self.avgLabel = Label(self.parent, text=AVG_BLOCKS_LABEL.format(0))
         self.maxLabel = Label(self.parent, text=MAX_BLOCKS_LABEL.format(0))
-        self.itLabel = Label(self.parent, text=ITERATIONS_LABEL.format(0))
+        self.iterationsLabel = Label(self.parent, text=ITERATIONS_LABEL.format(0))
         self.qLabel = Label(self.parent, text=Q_OR_NOT_LABEL.format('-'))
 
         self.pauseBtn = Button(self.parent, text=PAUSE_BUTTON_TEXT,
                                command=self.controller.pause_callback)
-
         self.fastForwardInput = Entry(self.parent, width=5)
         self.fastForwardInput.insert(0, "50")
-
         self.fastForwardBtn = Button(self.parent,
                                      text=FAST_FORWARD_BUTTON_TEXT,
                                      command=self.controller.fast_forward_callback)
-
         self.saveBtn = Button(self.parent, text=SAVE_BUTTON_TEXT,
                               command=self.controller.save_callback)
-
         self.loadBtn = Button(self.parent, text=LOAD_BUTTON_TEXT,
                               command=self.controller.load_callback)
-
         self.quitBtn = Button(self.parent, text=QUIT_BUTTON_TEXT,
                               command=self.controller.quit_callback)
+
+        input_width = 5
+
+        self.fastForwardLabel = Label(self.parent, text='Fast Forward count: ')
+        self.fastForwardInput = Entry(self.parent, width=input_width)
+        self.fastForwardInput.insert(0, "50")
+
+        self.alphaLabel = Label(self.parent, text='alpha: ')
+        self.alphaInput = Entry(self.parent, width=input_width)
+        self.alphaInput.insert(0, "0.9")
+
+        self.gammaLabel = Label(self.parent, text='gamma: ')
+        self.gammaInput = Entry(self.parent, width=input_width)
+        self.gammaInput.insert(0, "0.8")
+
+        self.epsilonLabel = Label(self.parent, text='epsilon: ')
+        self.epsilonInput = Entry(self.parent, width=input_width)
+        self.epsilonInput.insert(0, "0.3")
 
     def init_grid(self):
         w_and_colspan_3 = dict(sticky=W, columnspan=3)
 
-        self.rows_from_top = [
-            [(self.avgLabel, w_and_colspan_3)],
-            [(self.maxLabel, w_and_colspan_3)],
-            [(self.itLabel, w_and_colspan_3)],
-            [(self.qLabel, w_and_colspan_3)],
-            # add row from top here
-        ]
-
         e = {'sticky': E}
         w = {'sticky': W}
 
+        self.rows_from_top = [
+            [(self.avgLabel, w_and_colspan_3)],
+            [(self.maxLabel, w_and_colspan_3)],
+            [(self.iterationsLabel, w_and_colspan_3)],
+            [(self.qLabel, w_and_colspan_3)],
+            [(self.alphaLabel, e), (self.alphaInput, w)],
+            [(self.gammaLabel, e), (self.gammaInput, w)],
+            [(self.epsilonLabel, e), (self.epsilonInput, w)],
+            [(self.fastForwardLabel, w), (self.fastForwardInput, w)],
+            # add row from top here
+        ]
+
         self.rows_from_bottom = [
-            [(self.pauseBtn, e), (self.fastForwardInput, e),
+            [(self.pauseBtn, e),
              (self.fastForwardBtn, w)],
             [(self.saveBtn, e), (self.loadBtn, e), None, (self.quitBtn, w)]
         ]
@@ -264,7 +304,9 @@ class Layout(object):
                                                **grid[row][col][1])
 
 
+
 class TDLearningAgentSlow(TDLearningAgent):
+
     """
     Special class for GUI representation with slower calculation speed
     """
@@ -336,7 +378,7 @@ def refresh_gui():
     try:
         blocks = dataQ.get(timeout=0.1)
         if blocks:
-            controller.update_board(blocks)
+            controller.board.update(blocks)
     except:
         pass
 
@@ -345,12 +387,11 @@ def refresh_gui():
             agent.blocks_per_iteration)
         maximum = max(agent.blocks_per_iteration)
 
-        layout.maxLabel["text"] = MAX_BLOCKS_LABEL.format(maximum)
-        layout.avgLabel["text"] = AVG_BLOCKS_LABEL.format(avg)
-        layout.itLabel["text"] = ITERATIONS_LABEL.format(
-            agent.iterations)
+        controller.layout.maxLabel["text"] = MAX_BLOCKS_LABEL.format(maximum)
+        controller.layout.avgLabel["text"] = AVG_BLOCKS_LABEL.format(avg)
+        controller.layout.iterationsLabel["text"] = ITERATIONS_LABEL.format(agent.iterations)
 
-    layout.qLabel["text"] = Q_OR_NOT_LABEL.format(agent.action_from_q)
+    controller.layout.qLabel["text"] = Q_OR_NOT_LABEL.format(agent.action_from_q)
     controller.parent.after(GUI_REFRESH_IN_MS, refresh_gui)
 
 
@@ -370,8 +411,6 @@ if __name__ == "__main__":
     height = BOARD_HEIGHT_IN_PX + OFFSET_TO_WINDOW_BORDER_IN_PX * 2
     tk_root.minsize(450, height)
     controller = Controller(tk_root)
-    layout = Layout(tk_root, controller)
-
     logic_stop_event = threading.Event()
     logic_resume_event = threading.Event()
     logic_thread = threading.Thread(target=run,
