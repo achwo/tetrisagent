@@ -51,14 +51,10 @@ dataQ = Queue.Queue(maxsize=0)
 
 
 class Board(Frame):
-    """
-    The board represents the tetris playing area. A grid of x by y blocks.
-    """
 
     def __init__(self, parent):
         Frame.__init__(self, parent)
 
-        # blocks are indexed by there coordinates e.g. (4,5), these are
         self.landed = {}
         self.parent = parent
         self.offset = OFFSET_TO_WINDOW_BORDER_IN_PX
@@ -66,7 +62,6 @@ class Board(Frame):
         self.canvas = Canvas(parent,
                              height=BOARD_HEIGHT_IN_PX + self.offset,
                              width=BOARD_WIDTH_IN_PX + self.offset)
-        # self.canvas.pack()
         self.canvas.grid(row=0, column=0, rowspan=FIELD_ROWSPAN)
 
     def clear(self):
@@ -121,14 +116,9 @@ class Board(Frame):
 
 
 class Controller(object):
-    """
-    Main game loop and receives GUI callback events for keypresses etc...
-    """
 
     def __init__(self, parent):
-        """
-        Intialise the game...
-        """
+
         self.parent = parent
         self.score = 0
         self.level = 0
@@ -257,9 +247,9 @@ class Layout(object):
             [(self.maxLabel, w_and_colspan_3)],
             [(self.iterationsLabel, w_and_colspan_3)],
             [(self.qLabel, w_and_colspan_3)],
-
+            # put displayed from top here
             [(emptyLabel, None)],
-
+            # from bottom here
             [(self.alphaLabel, e), (self.alphaInput, w)],
             [(self.gammaLabel, e), (self.gammaInput, w)],
             [(self.epsilonLabel, e), (self.epsilonInput, w)],
@@ -267,30 +257,23 @@ class Layout(object):
             [(self.pauseBtn, e),
              (self.fastForwardBtn, w)],
             [(self.saveBtn, e), (self.loadBtn, e), None, (self.quitBtn, w)]
-            # add row from top here
         ]
 
         emptyLabel['height'] = FIELD_ROWSPAN - len(self.grid)
 
     def make_visible(self, grid):
-        """
-        Puts every item in grid to the position in the list.
-        Since list is 0-based and in the canvas we only use positions > 0,
-        list index is added by 1 each time.
-        """
 
         for row in range(len(grid)):
             for col in range(len(grid[row])):
                 if grid[row][col] is not None:
                     print row, col
                     if grid[row][col][1] is None:
-                        grid[row][col][0].grid(column=col, row=row + 1)
+                        grid[row][col][0].grid(column=col, row=row)
                     else:
-                        grid[row][col][0].grid(column=col, row=row + 1,
+                        grid[row][col][0].grid(column=col, row=row,
                                                **grid[row][col][1])
 
 class TDLearningAgentSlow(TDLearningAgent):
-
     """
     Special class for GUI representation with slower calculation speed
     """
