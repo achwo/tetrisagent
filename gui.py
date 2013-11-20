@@ -49,14 +49,10 @@ dataQ = Queue.Queue(maxsize=0)
 
 
 class Board(Frame):
-    """
-    The board represents the tetris playing area. A grid of x by y blocks.
-    """
 
     def __init__(self, parent):
         Frame.__init__(self, parent)
 
-        # blocks are indexed by there coordinates e.g. (4,5), these are
         self.landed = {}
         self.parent = parent
         self.offset = OFFSET_TO_WINDOW_BORDER_IN_PX
@@ -64,7 +60,7 @@ class Board(Frame):
         self.canvas = Canvas(parent,
                              height=BOARD_HEIGHT_IN_PX + self.offset,
                              width=BOARD_WIDTH_IN_PX + self.offset)
-        # self.canvas.pack()
+
         self.canvas.grid(row=0, column=0)
 
     def clear(self):
@@ -208,7 +204,6 @@ class ControlPanel(Frame):
         for row in range(len(grid)):
             for col in range(len(grid[row])):
                 if grid[row][col] is not None:
-                    print row, col
                     if grid[row][col][1] is None:
                         grid[row][col][0].grid(column=col, row=row + 1)
                     else:
@@ -217,14 +212,8 @@ class ControlPanel(Frame):
 
 
 class Controller(object):
-    """
-    Main game loop and receives GUI callback events for keypresses etc...
-    """
 
     def __init__(self, parent):
-        """
-        Intialise the game...
-        """
         self.parent = parent
         self.score = 0
         self.level = 0
@@ -294,7 +283,6 @@ class Controller(object):
 
 
 class TDLearningAgentSlow(TDLearningAgent):
-
     """
     Special class for GUI representation with slower calculation speed
     """
