@@ -11,7 +11,10 @@ class PerceivedState(object):
         self.shape = environment.current_shape
         self.features = []
         for f in features:
-            self.features.append(f(environment))
+            r = f(environment)
+            if isinstance(r, list):
+                r = tuple(r)
+            self.features.append(r)
 
     def __hash__(self):
         return hash((self.shape, tuple(self.features)))
@@ -113,7 +116,8 @@ class TDLearningAgent(object):
         return best
 
     def _perceived_state(self):
-        return self.state_class(self.environment, features.field_to_bitvector)
+        # return self.state_class(self.environment, features.field_to_bitvector)
+        return self.state_class(self.environment, features.individual_height)
 
 
     def all_values(self):
