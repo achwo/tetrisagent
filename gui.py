@@ -277,15 +277,21 @@ class Controller(object):
 
     def pause_callback(self, event=None):
         if is_game_paused():
-            self.control_panel.pauseBtn['text'] = PAUSE_BUTTON_TEXT
-            self._set_agent_inputs_state(DISABLED)
-            self._set_agent_learning_vars()
+            self.set_gui_state_resume()
             self._resume_agent()
         else:
-            self.control_panel.pauseBtn['text'] = RESUME_BUTTON_TEXT
-            self._set_agent_inputs_state(NORMAL)
-            agent.stop_fast_forward()
+            self.set_gui_state_pause()
             self._pause_agent()
+
+    def set_gui_state_resume(self):
+        self.control_panel.pauseBtn['text'] = PAUSE_BUTTON_TEXT
+        self._set_agent_inputs_state(DISABLED)
+        self._set_agent_learning_vars()
+
+    def set_gui_state_pause(self):
+        self.control_panel.pauseBtn['text'] = RESUME_BUTTON_TEXT
+        self._set_agent_inputs_state(NORMAL)
+        agent.stop_fast_forward()
 
     def _pause_agent(self):
         agent.resume_event.clear()
@@ -317,6 +323,7 @@ class TDLearningAgentSlow(TDLearningAgent):
 
     def _episode(self):
         if self._is_fast_forward_finished():
+            print "ff stopped"
             self.stop_fast_forward()
             self.resume_event.clear()
 
@@ -343,8 +350,7 @@ class TDLearningAgentSlow(TDLearningAgent):
         self._update_gui()
 
     def _is_fast_forward_finished(self):
-        return ((self.fast_forward and self.fast_forward_count <= 0) or
-               (self.fast_forward and not self.resume_event.is_set()))
+        return (self.fast_forward and self.fast_forward_count <= 0)
 
     def _is_game_over(self):
         if self.stop_event.is_set():
@@ -362,6 +368,11 @@ def is_game_paused():
 
 
 def refresh_gui():
+    if is_game_paused():
+        controller.set_gui_state_pause()
+    else:
+        controller.set_gui_state_resume()
+
     try:
         blocks = dataQ.get(timeout=0.1)
         if blocks:
@@ -379,6 +390,7 @@ def refresh_gui():
         controller.control_panel.iterationsLabel["text"] = ITERATIONS_LABEL.format(agent.iterations)
 
     controller.control_panel.qLabel["text"] = Q_OR_NOT_LABEL.format(agent.action_from_q)
+
     controller.parent.after(GUI_REFRESH_IN_MS, refresh_gui)
 
 
