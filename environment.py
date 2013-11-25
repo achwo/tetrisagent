@@ -165,12 +165,11 @@ class Field(object):
         return valid
 
     def highest_block_row(self):
-        for row in range(len(self.blocks)):
-            for col in self.blocks[row]:
-                if col != 0:
+        for row in range(FIELD_HEIGHT):
+            for col in self.blocks:
+                if col[row] != 0:
                     return row
         return -1
-
 
 class Action(object):
     def __init__(self, column):
