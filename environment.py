@@ -4,6 +4,7 @@ from settings import FIELD_HEIGHT, FIELD_WIDTH, VANISH_ZONE_HEIGHT
 
 BOTTOM_INDEX = FIELD_HEIGHT - 1
 RIGHTMOST_INDEX = FIELD_WIDTH - 1
+SPAWN_LOCATION = FIELD_WIDTH / 2 - 1
 
 
 class Environment(object):
@@ -11,7 +12,7 @@ class Environment(object):
         self.random = random.Random()
         self.field = Field()
         self.initialize()
-        self.field.init(blocks)
+        self.field.initialize(blocks)
         self._choose_next_shape()
 
     def __eq__(self, other):
@@ -25,8 +26,9 @@ class Environment(object):
 
     def initialize(self):
         self.highest = BOTTOM_INDEX  # counted backwards because of indexing
-        self.field.init()
+        self.field.initialize()
         self._choose_next_shape()
+        self.lines_deleted = 0
 
     def possible_actions(self):
         if self.is_game_over():
@@ -54,9 +56,9 @@ class Environment(object):
         return action in self.possible_actions()
 
     def _choose_next_shape(self):
-        possible_shapes = [OShape, JShape, IShape, LShape, ZShape, TShape,
-                           SShape]
-        # possible_shapes = [OShape]
+        # possible_shapes = [OShape, JShape, IShape, LShape, ZShape, TShape,
+        #                    SShape]
+        possible_shapes = [OShape]
         self.current_shape = self.random.choice(possible_shapes)()
 
     def is_game_over(self):
@@ -78,6 +80,9 @@ class Environment(object):
     def _calculate_reward(self):
         if self.is_game_over():
             return -100
+        if self.lines_deleted < self.field.lines_deleted:
+            self.lines_deleted = self.field.lines_deleted
+            return 100
         return self._height_based_reward()
 
     def _height_based_reward(self):
@@ -103,7 +108,7 @@ class Environment(object):
 
 class Field(object):
     def __init__(self):
-        self.init()
+        self.initialize()
 
     def __eq__(self, other):
         if (type(self) == type(other)):
@@ -113,7 +118,8 @@ class Field(object):
     def __hash__(self):
         return hash(tuple(self.blocks))
 
-    def init(self, blocks=None):
+    def initialize(self, blocks=None):
+        self.lines_deleted = 0
         if blocks is None:
             self.blocks = [[0 for _ in range(FIELD_HEIGHT)] for _ in
                            range(FIELD_WIDTH)]
@@ -128,6 +134,7 @@ class Field(object):
         shape.add_x_offset(column)
         self._drop_shape(shape)
         self._add_shape_to_field(shape)
+        self._delete_lines(self._find_full_lines())
 
     def _drop_shape(self, shape):
         while not self._collision(shape):
@@ -169,6 +176,30 @@ class Field(object):
                     return row
         return -1
 
+    def _find_full_lines(self):
+        full_lines = []
+        for row in range(FIELD_HEIGHT):
+            holes = False
+            for col in range(FIELD_WIDTH):
+                if self.blocks[col][row] == 0:
+                    holes = True
+                    break
+            if not holes:
+                full_lines.append(row)
+
+        return full_lines
+
+    def _delete_lines(self, lines):
+        for line in lines:
+            self._delete_line(line)
+
+        self.lines_deleted += len(lines)
+
+    def _delete_line(self, line):
+        for col in range(FIELD_WIDTH):
+            del self.blocks[col][line]
+            self.blocks[col].insert(0, 0)
+
 
 class Action(object):
     def __init__(self, column):
@@ -187,11 +218,11 @@ class Action(object):
 
 
 class Shape(object):
-    def __init__(self, coords, name, spawn_position):
+    def __init__(self, name, coords, spawn_location=SPAWN_LOCATION):
         self.coords = coords
         self.rightmost = self.__furthest_right()
         self.name = name
-        self._spawn_position = spawn_position
+        self._spawn_location = spawn_location
 
     def __eq__(self, other):
         if type(self) == type(other):
@@ -219,51 +250,45 @@ class Shape(object):
         spawn = copy.deepcopy(self.coords)
 
         for coords in spawn:
-            coords[0] += self._spawn_position
+            coords[0] += self._spawn_location
 
         return spawn
 
 
 class OShape(Shape):
     def __init__(self):
-        super(OShape, self).__init__([[0, 0], [0, 1], [1, 0], [1, 1]], 'o',
-                                     FIELD_WIDTH / 2)
+        super(OShape, self).__init__('o', [[0, 0], [0, 1], [1, 0], [1, 1]],
+                                     SPAWN_LOCATION + 1)
 
 
 class IShape(Shape):
     def __init__(self):
-        super(IShape, self).__init__([[0, 0], [0, 1], [0, 2], [0, 3]], 'i',
-                                     FIELD_WIDTH / 2)
+        super(IShape, self).__init__('i', [[0, 0], [0, 1], [0, 2], [0, 3]])
 
 
 class LShape(Shape):
     def __init__(self):
-        super(LShape, self).__init__([[0, 0], [0, 1], [0, 2], [1, 2]], 'l',
-                                     FIELD_WIDTH / 2 - 1)
+        super(LShape, self).__init__('l', [[0, 0], [0, 1], [0, 2], [1, 2]])
 
 
 class JShape(Shape):
     def __init__(self):
-        super(JShape, self).__init__([[0, 2], [1, 0], [1, 1], [1, 2]], 'j',
-                                     FIELD_WIDTH / 2 - 1)
+        super(JShape, self).__init__('j', [[0, 2], [1, 0], [1, 1], [1, 2]])
 
 
 class TShape(Shape):
     def __init__(self):
-        super(TShape, self).__init__([[0, 1], [1, 0], [1, 1], [2, 1]], 't',
-                                     FIELD_WIDTH / 2 - 1)
+        super(TShape, self).__init__('t', [[0, 1], [1, 0], [1, 1], [2, 1]])
 
 
 class SShape(Shape):
     def __init__(self):
-        super(SShape, self).__init__([[0, 0], [0, 1], [1, 1], [1, 2]], 's',
-                                     FIELD_WIDTH / 2 - 1)
+        super(SShape, self).__init__('s', [[0, 0], [0, 1], [1, 1], [1, 2]])
 
 
 class ZShape(Shape):
     def __init__(self):
-        super(ZShape, self).__init__([[0, 1], [0, 2], [1, 0], [1, 1]], 'z',
-                                     FIELD_WIDTH / 2 - 1)
+        super(ZShape, self).__init__('z', [[0, 1], [0, 2], [1, 0], [1, 1]])
 
 
 class InvalidActionError(RuntimeError):
