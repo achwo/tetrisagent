@@ -224,6 +224,7 @@ class Controller(object):
                         'title': "Choose a File"}
 
         self.board = Board(parent)
+        self.board.clear()
 
         self.control_panel = ControlPanel(parent, self)
         self.control_panel.grid(row=0, column=1, sticky=N + W)
@@ -377,7 +378,6 @@ def run(stop_event, resume_event):
     agent.dataQ = dataQ
     agent.stop_event = stop_event
     agent.resume_event = resume_event
-    agent.resume_event.set()
     agent.run(TOTAL_EPISODES)
 
 
