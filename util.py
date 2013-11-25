@@ -10,6 +10,3 @@ def read_from_file(filename):
         dictionary = pickle.load(f)
 
     return dictionary
-
-def remap_keys(mapping):
-    return [{'key':k, 'value': v} for k, v in mapping.iteritems()]

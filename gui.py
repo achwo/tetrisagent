@@ -30,7 +30,7 @@ AVG_BLOCKS_LABEL = "Platzierte Bloecke im Durchschnitt: {0}"
 ITERATIONS_LABEL = "Anzahl der Durchläufe: {0}"
 Q_OR_NOT_LABEL = "Action aus Q: {0}"
 PAUSE_BUTTON_TEXT = "Pause"
-RESUME_BUTTON_TEXT = "Resume"
+RESUME_BUTTON_TEXT = "Play"
 QUIT_BUTTON_TEXT = "Quit"
 FAST_FORWARD_BUTTON_TEXT = ">>"
 SAVE_BUTTON_TEXT = "Save Q"
@@ -347,7 +347,7 @@ class TDLearningAgentSlow(TDLearningAgent):
 
     def _update_gui(self):
         if not self.fast_forward:
-            blockcopy = copy.deepcopy(self.environment.blocks)
+            blockcopy = copy.deepcopy(self.environment.field.blocks)
             self.dataQ.put(blockcopy)
 
 
