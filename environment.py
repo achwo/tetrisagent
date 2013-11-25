@@ -14,8 +14,6 @@ class Environment(object):
         self.field.init(blocks)
         self._choose_next_shape()
 
-        #todo switch out blocks for field
-
     def __eq__(self, other):
         if type(self) == type(other):
             return self.field == other.field and \
@@ -108,7 +106,7 @@ class Field(object):
         self.init()
 
     def __eq__(self, other):
-        if(type(self) == type(other)):
+        if (type(self) == type(other)):
             return self.blocks == other.blocks
         return False
 
@@ -122,10 +120,10 @@ class Field(object):
         else:
             self.blocks = blocks
 
-
     def place(self, shape, column):
         if not self._is_column_valid(column, shape):
-            raise InvalidActionError("Column {0} is not valid for shape {1}".format(column, shape))
+            raise InvalidActionError(
+                "Column {0} is not valid for shape {1}".format(column, shape))
 
         shape.add_x_offset(column)
         self._drop_shape(shape)
@@ -171,6 +169,7 @@ class Field(object):
                     return row
         return -1
 
+
 class Action(object):
     def __init__(self, column):
         self.column = column
@@ -200,7 +199,7 @@ class Shape(object):
         return False
 
     def __hash__(self):
-        return hash((self.name))
+        return hash(self.name)
 
     def __repr__(self):
         return self.name
@@ -223,8 +222,6 @@ class Shape(object):
             coords[0] += self._spawn_position
 
         return spawn
-
-
 
 
 class OShape(Shape):
