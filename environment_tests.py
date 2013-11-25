@@ -150,8 +150,11 @@ class FieldTest(unittest.TestCase):
 
     def test_highest_block_on_even_floor(self):
         self.fill_row(self.field.blocks, BOTTOM_LINE, 'l')
-        # print self.field.blocks
-        self.assertEqual(0, self.field.highest_block_row())
+        self.assertEqual(BOTTOM_LINE, self.field.highest_block_row())
+
+    def test_highest_block_on_uneven_floor(self):
+        self.field.blocks[5][3] = 'l'
+        self.assertEqual(3, self.field.highest_block_row())
 
 
 class ActionTest(unittest.TestCase):
