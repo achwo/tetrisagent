@@ -40,6 +40,7 @@ class TDLearningAgent(object):
         self.gamma = 0.8  # discount rate
         self.epsilon = 0.3 # probability of random action in epsilon greedy policy
         self.action_from_q = False
+        self.latest_reward = 0
 
     def _initialize_state(self):
         self.environment.initialize()
@@ -61,7 +62,7 @@ class TDLearningAgent(object):
 
     def _step(self):
         action = self._choose_action()
-        reward = self.environment.execute_action(action)
+        self.latest_reward = reward = self.environment.execute_action(action)
         old_state = self.current_state
         self._update_perceived_state()
         self._q(old_state, action, reward)
@@ -99,7 +100,6 @@ class TDLearningAgent(object):
 
     def _q(self, old_state, action, reward):
         c = (old_state, action)
-
         self.Q[c] = (1 - self.alpha) * self.Q[
             c] + self.alpha * self._learned_value(reward)
 
