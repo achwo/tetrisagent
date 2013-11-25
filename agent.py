@@ -119,7 +119,6 @@ class TDLearningAgent(object):
         # return self.state_class(self.environment, features.field_to_bitvector)
         return self.state_class(self.environment, features.individual_height)
 
-
     def all_values(self):
         state = self.current_state
         Q = self.Q

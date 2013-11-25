@@ -333,7 +333,7 @@ class TDLearningAgentSlow(TDLearningAgent):
 
     def _update_gui(self):
         if not self.fast_forward:
-            blockcopy = copy.deepcopy(self.environment.blocks)
+            blockcopy = copy.deepcopy(self.environment.field.blocks)
             self.dataQ.put(blockcopy)
 
 
