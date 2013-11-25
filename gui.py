@@ -42,6 +42,7 @@ TOTAL_EPISODES = 5000
 STEP_SLOWDOWN_IN_SEC = 0.3
 EPISODE_SLOWDOWN_IN_SEC = 0
 NUM_EPISODES_IN_AVG_CALC = 50
+GUI_LAST_STATE_WAS_PAUSE = True
 
 global controller
 global agent
@@ -323,7 +324,6 @@ class TDLearningAgentSlow(TDLearningAgent):
 
     def _episode(self):
         if self._is_fast_forward_finished():
-            print "ff stopped"
             self.stop_fast_forward()
             self.resume_event.clear()
 
@@ -368,10 +368,12 @@ def is_game_paused():
 
 
 def refresh_gui():
-    if is_game_paused():
-        controller.set_gui_state_pause()
-    else:
-        controller.set_gui_state_resume()
+    global GUI_LAST_STATE_WAS_PAUSE
+    if is_game_paused() != GUI_LAST_STATE_WAS_PAUSE:
+        if is_game_paused():
+            controller.set_gui_state_pause()
+        else:
+            controller.set_gui_state_resume()
 
     try:
         blocks = dataQ.get(timeout=0.1)
@@ -391,6 +393,7 @@ def refresh_gui():
 
     controller.control_panel.qLabel["text"] = Q_OR_NOT_LABEL.format(agent.action_from_q)
 
+    GUI_LAST_STATE_WAS_PAUSE = is_game_paused()
     controller.parent.after(GUI_REFRESH_IN_MS, refresh_gui)
 
 
