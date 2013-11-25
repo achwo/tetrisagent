@@ -12,7 +12,7 @@ class Environment(object):
         self.random = random.Random()
         self.field = Field()
         self.initialize()
-        self.field.init(blocks)
+        self.field.initialize(blocks)
         self._choose_next_shape()
 
     def __eq__(self, other):
@@ -26,8 +26,9 @@ class Environment(object):
 
     def initialize(self):
         self.highest = BOTTOM_INDEX  # counted backwards because of indexing
-        self.field.init()
+        self.field.initialize()
         self._choose_next_shape()
+        self.lines_deleted = 0
 
     def possible_actions(self):
         if self.is_game_over():
@@ -55,9 +56,9 @@ class Environment(object):
         return action in self.possible_actions()
 
     def _choose_next_shape(self):
-        possible_shapes = [OShape, JShape, IShape, LShape, ZShape, TShape,
-                           SShape]
-        # possible_shapes = [OShape]
+        # possible_shapes = [OShape, JShape, IShape, LShape, ZShape, TShape,
+        #                    SShape]
+        possible_shapes = [OShape]
         self.current_shape = self.random.choice(possible_shapes)()
 
     def is_game_over(self):
@@ -79,6 +80,9 @@ class Environment(object):
     def _calculate_reward(self):
         if self.is_game_over():
             return -100
+        if self.lines_deleted < self.field.lines_deleted:
+            self.lines_deleted = self.field.lines_deleted
+            return 100
         return self._height_based_reward()
 
     def _height_based_reward(self):
@@ -104,7 +108,7 @@ class Environment(object):
 
 class Field(object):
     def __init__(self):
-        self.init()
+        self.initialize()
 
     def __eq__(self, other):
         if (type(self) == type(other)):
@@ -114,7 +118,8 @@ class Field(object):
     def __hash__(self):
         return hash(tuple(self.blocks))
 
-    def init(self, blocks=None):
+    def initialize(self, blocks=None):
+        self.lines_deleted = 0
         if blocks is None:
             self.blocks = [[0 for _ in range(FIELD_HEIGHT)] for _ in
                            range(FIELD_WIDTH)]
@@ -129,6 +134,7 @@ class Field(object):
         shape.add_x_offset(column)
         self._drop_shape(shape)
         self._add_shape_to_field(shape)
+        self._delete_lines(self._find_full_lines())
 
     def _drop_shape(self, shape):
         while not self._collision(shape):
@@ -170,7 +176,7 @@ class Field(object):
                     return row
         return -1
 
-    def find_full_lines(self):
+    def _find_full_lines(self):
         full_lines = []
         for row in range(FIELD_HEIGHT):
             holes = False
@@ -182,6 +188,17 @@ class Field(object):
                 full_lines.append(row)
 
         return full_lines
+
+    def _delete_lines(self, lines):
+        for line in lines:
+            self._delete_line(line)
+
+        self.lines_deleted += len(lines)
+
+    def _delete_line(self, line):
+        for col in range(FIELD_WIDTH):
+            del self.blocks[col][line]
+            self.blocks[col].insert(0, 0)
 
 
 class Action(object):

@@ -65,9 +65,12 @@ class FieldTest(unittest.TestCase):
         self.assertEqual(result, self.field.blocks)
 
 
-    def fill_row(self, field, row, letter):
+    def fill_row(self, field, row, letter='p'):
         for col in field:
             col[row] = letter
+
+    def fill_field_row(self, row):
+        self.fill_row(self.field.blocks, row)
 
     def test_invalid_action_throws_exception(self):
         with self.assertRaises(InvalidActionError):
@@ -149,7 +152,7 @@ class FieldTest(unittest.TestCase):
         self.assertEqual(-1, self.field.highest_block_row())
 
     def test_highest_block_on_even_floor(self):
-        self.fill_row(self.field.blocks, BOTTOM_LINE, 'l')
+        self.fill_field_row(BOTTOM_LINE)
         self.assertEqual(BOTTOM_LINE, self.field.highest_block_row())
 
     def test_highest_block_on_uneven_floor(self):
@@ -157,18 +160,53 @@ class FieldTest(unittest.TestCase):
         self.assertEqual(3, self.field.highest_block_row())
 
     def test_find_no_full_line_on_field_with_holes(self):
-        self.assertEqual([], self.field.find_full_lines())
-        self.fill_row(self.field.blocks, BOTTOM_LINE, 'l')
-        self.fill_row(self.field.blocks, BOTTOM_LINE-1, 'l')
+        self.assertEqual([], self.field._find_full_lines())
+        self.fill_field_row(BOTTOM_LINE)
+        self.fill_field_row(BOTTOM_LINE-1)
         self.field.blocks[3][BOTTOM_LINE] = 0
         self.field.blocks[FIELD_WIDTH-1][BOTTOM_LINE-1] = 0
 
-        self.assertEqual([], self.field.find_full_lines())
+        self.assertEqual([], self.field._find_full_lines())
 
     def test_find_full_lines(self):
-        self.fill_row(self.field.blocks, BOTTOM_LINE, 'l')
-        self.fill_row(self.field.blocks, BOTTOM_LINE - 1, 'l')
-        self.assertEqual([BOTTOM_LINE-1, BOTTOM_LINE], self.field.find_full_lines())
+        self.fill_field_row(BOTTOM_LINE)
+        self.fill_field_row(BOTTOM_LINE-1)
+        self.assertEqual([BOTTOM_LINE-1, BOTTOM_LINE], self.field._find_full_lines())
+
+    def test_delete_no_lines_on_empty_list(self):
+        result = self.empty_blocks
+
+        self.fill_row(result, BOTTOM_LINE)
+        self.fill_field_row(BOTTOM_LINE)
+        self.field._delete_lines([])
+
+        self.assertEqual(result, self.field.blocks)
+
+    def test_delete_every_line_in_list(self):
+        result = self.empty_blocks
+        self.fill_row(result, BOTTOM_LINE)
+        self.fill_row(result, BOTTOM_LINE-1)
+
+        self.fill_field_row(BOTTOM_LINE)
+        self.fill_field_row(BOTTOM_LINE-1)
+        self.fill_field_row(BOTTOM_LINE-2)
+        self.fill_field_row(BOTTOM_LINE-3)
+
+        self.field._delete_lines([BOTTOM_LINE-2, BOTTOM_LINE-1])
+
+        self.assertEqual(result, self.field.blocks)
+
+    def test_delete_line_drops_a_line(self):
+        result = self.empty_blocks
+        self.fill_row(result, BOTTOM_LINE)
+        self.fill_row(result, BOTTOM_LINE-1)
+        self.fill_field_row(BOTTOM_LINE)
+        self.fill_field_row(BOTTOM_LINE-1)
+        self.fill_field_row(BOTTOM_LINE-2)
+
+        self.field._delete_lines([BOTTOM_LINE-1])
+
+        self.assertEqual(result, self.field.blocks)
 
 
 class ActionTest(unittest.TestCase):
