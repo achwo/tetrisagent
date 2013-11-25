@@ -132,7 +132,7 @@ class ControlPanel(Frame):
         self.iterationsLabel = Label(self, text=ITERATIONS_LABEL.format(0))
         self.qLabel = Label(self, text=Q_OR_NOT_LABEL.format('-'))
 
-        self.pauseBtn = Button(self, text=PAUSE_BUTTON_TEXT,
+        self.pauseBtn = Button(self, text=RESUME_BUTTON_TEXT,
                                command=self.controller.pause_callback)
         self.fastForwardInput = Entry(self, width=5)
         self.fastForwardInput.insert(0, "50")
@@ -230,8 +230,6 @@ class Controller(object):
         self.control_panel.grid(row=0, column=1, sticky=N + W)
 
         self.parent.bind("<Escape>", self.quit_callback)
-
-        self._set_agent_inputs_state(DISABLED)
 
     def _set_agent_inputs_state(self, state):
         self.control_panel.alphaInput['state'] = state
