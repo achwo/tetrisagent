@@ -66,9 +66,9 @@ class Board(Frame):
 
     def clear(self):
         self.canvas.delete(ALL)
-        self.draw_board_border()
+        self.draw_border()
 
-    def draw_board_border(self):
+    def draw_border(self):
         x_left = self.offset
         y_up = self.offset
         y_bottom = BOARD_HEIGHT_IN_PX + self.offset
@@ -249,6 +249,7 @@ class Controller(object):
 
     def fast_forward_callback(self, event=None):
         if not agent.fast_forward:
+            self.board.clear()
             agent.fast_forward_total = int(self.control_panel.fastForwardInput.get())
             agent.fast_forward_count = agent.fast_forward_total
             agent.fast_forward = True
@@ -317,6 +318,8 @@ class TDLearningAgentSlow(TDLearningAgent):
         if self._is_fast_forward_finished():
             self.fast_forward = False
             self.fast_forward_count = self.fast_forward_total
+            self._update_gui()
+            self.resume_event.clear()
         self.step_count = 0
         super(TDLearningAgentSlow, self)._episode()
         self.steps_per_episode.append(self.step_count)
