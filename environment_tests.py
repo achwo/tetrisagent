@@ -156,6 +156,20 @@ class FieldTest(unittest.TestCase):
         self.field.blocks[5][3] = 'l'
         self.assertEqual(3, self.field.highest_block_row())
 
+    def test_find_no_full_line_on_field_with_holes(self):
+        self.assertEqual([], self.field.find_full_lines())
+        self.fill_row(self.field.blocks, BOTTOM_LINE, 'l')
+        self.fill_row(self.field.blocks, BOTTOM_LINE-1, 'l')
+        self.field.blocks[3][BOTTOM_LINE] = 0
+        self.field.blocks[FIELD_WIDTH-1][BOTTOM_LINE-1] = 0
+
+        self.assertEqual([], self.field.find_full_lines())
+
+    def test_find_full_lines(self):
+        self.fill_row(self.field.blocks, BOTTOM_LINE, 'l')
+        self.fill_row(self.field.blocks, BOTTOM_LINE - 1, 'l')
+        self.assertEqual([BOTTOM_LINE-1, BOTTOM_LINE], self.field.find_full_lines())
+
 
 class ActionTest(unittest.TestCase):
     def setUp(self):
