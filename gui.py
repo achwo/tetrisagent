@@ -231,8 +231,8 @@ class Controller(object):
         self.control_panel.grid(row=0, column=1, sticky=N + W)
 
         self.parent.bind("<Escape>", self.quit_callback)
-        self.parent.bind("p", self.pause_callback)
-        self.parent.bind("<space>", self.fast_forward_callback)
+        self.parent.bind("<Control-p>", self.pause_callback)
+        self.parent.bind("<Control-space>", self.fast_forward_callback)
 
     def _set_agent_inputs_state(self, state):
         self.control_panel.alphaInput['state'] = state
@@ -284,6 +284,7 @@ class Controller(object):
         else:
             self.control_panel.pauseBtn['text'] = RESUME_BUTTON_TEXT
             self._set_agent_inputs_state(NORMAL)
+            agent.stop_fast_forward()
             self._pause_agent()
 
     def _pause_agent(self):
@@ -316,10 +317,9 @@ class TDLearningAgentSlow(TDLearningAgent):
 
     def _episode(self):
         if self._is_fast_forward_finished():
-            self.fast_forward = False
-            self.fast_forward_count = self.fast_forward_total
-            self._update_gui()
+            self.stop_fast_forward()
             self.resume_event.clear()
+
         self.step_count = 0
         super(TDLearningAgentSlow, self)._episode()
         self.steps_per_episode.append(self.step_count)
@@ -327,9 +327,6 @@ class TDLearningAgentSlow(TDLearningAgent):
             self.fast_forward_count -= 1
         if EPISODE_SLOWDOWN_IN_SEC > 0 and not self.fast_forward:
             time.sleep(EPISODE_SLOWDOWN_IN_SEC)
-
-    def _is_fast_forward_finished(self):
-        return self.fast_forward and self.fast_forward_count <= 0
 
     def _step(self):
         self.resume_event.wait()
@@ -339,6 +336,15 @@ class TDLearningAgentSlow(TDLearningAgent):
         self._update_gui()
         if STEP_SLOWDOWN_IN_SEC > 0 and not self.fast_forward:
             time.sleep(STEP_SLOWDOWN_IN_SEC)
+
+    def stop_fast_forward(self):
+        self.fast_forward = False
+        self.fast_forward_count = self.fast_forward_total
+        self._update_gui()
+
+    def _is_fast_forward_finished(self):
+        return ((self.fast_forward and self.fast_forward_count <= 0) or
+               (self.fast_forward and not self.resume_event.is_set()))
 
     def _is_game_over(self):
         if self.stop_event.is_set():
