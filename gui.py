@@ -267,23 +267,29 @@ class Controller(object):
         if filename:
             agent.Q = util.read_from_file(filename)
 
+    def quit_callback(self, event=None):
+        self._resume_agent()
+        self.parent.quit()
+
+    def clear_callback(self, event):
+        self.board.clear()
+
     def pause_callback(self, event=None):
         if is_game_paused():
             self.control_panel.pauseBtn['text'] = PAUSE_BUTTON_TEXT
             self._set_agent_inputs_state(DISABLED)
             self._set_agent_learning_vars()
-            resume_game()
+            self._resume_agent()
         else:
             self.control_panel.pauseBtn['text'] = RESUME_BUTTON_TEXT
             self._set_agent_inputs_state(NORMAL)
-            pause_game()
+            self._pause_agent()
 
-    def quit_callback(self, event=None):
+    def _pause_agent(self):
+        agent.resume_event.clear()
+
+    def _resume_agent(self):
         agent.resume_event.set()
-        self.parent.quit()
-
-    def clear_callback(self, event):
-        self.board.clear()
 
 
 class TDLearningAgentSlow(TDLearningAgent):
@@ -344,14 +350,6 @@ class TDLearningAgentSlow(TDLearningAgent):
 
 def is_game_paused():
     return not agent.resume_event.is_set()
-
-
-def pause_game():
-    agent.resume_event.clear()
-
-
-def resume_game():
-    agent.resume_event.set()
 
 
 def refresh_gui():
