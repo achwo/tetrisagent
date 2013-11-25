@@ -41,6 +41,7 @@ GUI_REFRESH_IN_MS = 50
 TOTAL_EPISODES = 5000
 STEP_SLOWDOWN_IN_SEC = 0.3
 EPISODE_SLOWDOWN_IN_SEC = 0
+NUM_EPISODES_IN_AVG_CALC = 50
 
 global controller
 global agent
@@ -230,6 +231,8 @@ class Controller(object):
         self.control_panel.grid(row=0, column=1, sticky=N + W)
 
         self.parent.bind("<Escape>", self.quit_callback)
+        self.parent.bind("p", self.pause_callback)
+        self.parent.bind("<space>", self.fast_forward_callback)
 
     def _set_agent_inputs_state(self, state):
         self.control_panel.alphaInput['state'] = state
@@ -244,11 +247,13 @@ class Controller(object):
         agent.gamma = gamma
         agent.epsilon = epsilon
 
-    def fast_forward_callback(self):
+    def fast_forward_callback(self, event=None):
         if not agent.fast_forward:
             agent.fast_forward_total = int(self.control_panel.fastForwardInput.get())
             agent.fast_forward_count = agent.fast_forward_total
             agent.fast_forward = True
+            if is_game_paused():
+                self.pause_callback()
 
     def save_callback(self):
         filename = tkFileDialog.asksaveasfilename(**self.options)
@@ -262,7 +267,7 @@ class Controller(object):
         if filename:
             agent.Q = util.read_from_file(filename)
 
-    def pause_callback(self):
+    def pause_callback(self, event=None):
         if is_game_paused():
             self.control_panel.pauseBtn['text'] = PAUSE_BUTTON_TEXT
             self._set_agent_inputs_state(DISABLED)
@@ -288,8 +293,8 @@ class TDLearningAgentSlow(TDLearningAgent):
 
     def __init__(self):
         super(TDLearningAgentSlow, self).__init__()
-        self.blocks_last_iteration = 0
-        self.blocks_per_iteration = []
+        self.step_count = 0
+        self.steps_per_episode = []
         self.fast_forward = False
         self.fast_forward_total = 0
         self.fast_forward_count = 0
@@ -306,9 +311,9 @@ class TDLearningAgentSlow(TDLearningAgent):
         if self._is_fast_forward_finished():
             self.fast_forward = False
             self.fast_forward_count = self.fast_forward_total
-        self.blocks_last_iteration = 0
+        self.step_count = 0
         super(TDLearningAgentSlow, self)._episode()
-        self.blocks_per_iteration.append(self.blocks_last_iteration)
+        self.steps_per_episode.append(self.step_count)
         if self.fast_forward:
             self.fast_forward_count -= 1
         if EPISODE_SLOWDOWN_IN_SEC > 0 and not self.fast_forward:
@@ -320,7 +325,7 @@ class TDLearningAgentSlow(TDLearningAgent):
     def _step(self):
         self.resume_event.wait()
         super(TDLearningAgentSlow, self)._step()
-        self.blocks_last_iteration += 1
+        self.step_count += 1
 
         self._update_gui()
         if STEP_SLOWDOWN_IN_SEC > 0 and not self.fast_forward:
@@ -358,9 +363,9 @@ def refresh_gui():
         pass
 
     if agent.iterations > 0:
-        avg = reduce(lambda x, y: x + y, agent.blocks_per_iteration) / len(
-            agent.blocks_per_iteration)
-        maximum = max(agent.blocks_per_iteration)
+        episodes = agent.steps_per_episode[-NUM_EPISODES_IN_AVG_CALC:]
+        avg = reduce(lambda x, y: x + y, episodes) / len(episodes)
+        maximum = max(agent.steps_per_episode)
 
         controller.control_panel.maxLabel["text"] = MAX_BLOCKS_LABEL.format(maximum)
         controller.control_panel.avgLabel["text"] = AVG_BLOCKS_LABEL.format(avg)
