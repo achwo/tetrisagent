@@ -9,11 +9,15 @@ SPAWN_LOCATION = FIELD_WIDTH / 2 - 1
 
 class Environment(object):
     def __init__(self, blocks=None):
+        self.possible_shapes = [OShape]
+        # self.possible_shapes = [OShape, JShape, IShape, LShape, ZShape, TShape,
+        #                    SShape]
         self.random = random.Random()
         self.field = Field()
         self.initialize()
         self.field.initialize(blocks)
         self._choose_next_shape()
+
 
     def __eq__(self, other):
         if type(self) == type(other):
@@ -56,10 +60,7 @@ class Environment(object):
         return action in self.possible_actions()
 
     def _choose_next_shape(self):
-        # possible_shapes = [OShape, JShape, IShape, LShape, ZShape, TShape,
-        #                    SShape]
-        possible_shapes = [OShape]
-        self.current_shape = self.random.choice(possible_shapes)()
+        self.current_shape = self.random.choice(self.possible_shapes)()
 
     def is_game_over(self):
         return self._is_spawn_blocked() or self._is_block_in_vanish_zone()

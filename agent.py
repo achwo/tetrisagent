@@ -30,6 +30,7 @@ class PerceivedState(object):
 
 class TDLearningAgent(object):
     def __init__(self, state_class=PerceivedState):
+        self.features = [features.individual_height]
         self.iterations = 0
         self.state_class = state_class
         self.environment = Environment()
@@ -116,8 +117,7 @@ class TDLearningAgent(object):
         return best
 
     def _perceived_state(self):
-        # return self.state_class(self.environment, features.field_to_bitvector)
-        return self.state_class(self.environment, features.individual_height)
+        return self.state_class(self.environment, *self.features)
 
     def all_values(self):
         state = self.current_state
