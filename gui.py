@@ -307,11 +307,12 @@ class Controller(object):
         x = self.control_panel.line_x
         y = self.control_panel.line_y
         x.append(len(x) + 1)
-        y.append(1)
+        from random import randint
+        y.append(randint(1,30))
         self.control_panel.plot_line.set_data(x, y)
         ax = self.control_panel.plot_canvas.figure.axes[0]
         ax.set_xlim(len(x) - 10, len(x))
-        ax.set_ylim(0, 50)   
+        ax.set_ylim(0, max(y))
         self.control_panel.plot_canvas.draw()
 
     def set_gui_state_resume(self):
