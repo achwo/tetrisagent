@@ -8,6 +8,13 @@ import tkFileDialog
 import time
 import copy
 
+import matplotlib
+matplotlib.use('TkAgg')
+
+from numpy import arange, sin, pi
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2TkAgg
+from matplotlib.figure import Figure
+
 from agent import TDLearningAgent
 import settings
 import util
@@ -166,6 +173,17 @@ class ControlPanel(Frame):
         self.epsilonInput = Entry(self, width=input_width)
         self.epsilonInput.insert(0, "0.3")
 
+        f = Figure(figsize=(5,4), dpi=50)
+        self.subplot = f.add_subplot(111)
+
+        self.line_x = range(20)
+        self.line_y = range(20)
+        self.plot_line, = self.subplot.plot(self.line_x, self.line_y)
+
+        # a tk.DrawingArea
+        self.plot_canvas = FigureCanvasTkAgg(f, master=self)
+        self.plot_canvas.show()
+
     def init_grid(self):
         w_and_colspan_3 = dict(sticky=W, columnspan=3)
 
@@ -185,6 +203,7 @@ class ControlPanel(Frame):
             [(self.alphaLabel, e), (self.alphaInput, w)],
             [(self.gammaLabel, e), (self.gammaInput, w)],
             [(self.epsilonLabel, e), (self.epsilonInput, w)],
+            [(self.plot_canvas.get_tk_widget(), e),],
             [(self.fastForwardLabel, e), (self.fastForwardInput, w)],
             [(self.pauseBtn, e),
              (self.fastForwardBtn, w)],
@@ -272,6 +291,7 @@ class Controller(object):
     def quit_callback(self, event=None):
         self._resume_agent()
         self.parent.quit()
+        self.parent.destroy()
 
     def clear_callback(self, event):
         self.board.clear()
@@ -283,6 +303,16 @@ class Controller(object):
         else:
             self.set_gui_state_pause()
             self._pause_agent()
+        #self.control_panel.plot_line.set_ydata(2 - 0.2 * 5)
+        x = self.control_panel.line_x
+        y = self.control_panel.line_y
+        x.append(len(x) + 1)
+        y.append(1)
+        self.control_panel.plot_line.set_data(x, y)
+        ax = self.control_panel.plot_canvas.figure.axes[0]
+        ax.set_xlim(len(x) - 10, len(x))
+        ax.set_ylim(0, 50)   
+        self.control_panel.plot_canvas.draw()
 
     def set_gui_state_resume(self):
         self.control_panel.pauseBtn['text'] = PAUSE_BUTTON_TEXT
