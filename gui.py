@@ -20,7 +20,7 @@ import settings
 import util
 
 
-FIELD_ROWSPAN = 20
+FIELD_ROWSPAN = 10
 BLOCK_SIZE_IN_PX = 30
 OFFSET_TO_WINDOW_BORDER_IN_PX = 5
 BOARD_WIDTH_IN_BLOCKS = settings.FIELD_WIDTH
@@ -44,7 +44,7 @@ SAVE_BUTTON_TEXT = "Save Q"
 LOAD_BUTTON_TEXT = "Load Q"
 Q_FILENAME = "q"
 
-GUI_REFRESH_IN_MS = 50
+GUI_REFRESH_IN_MS = 100
 TOTAL_EPISODES = 5000
 STEP_SLOWDOWN_IN_SEC = 0.3
 EPISODE_SLOWDOWN_IN_SEC = 0
@@ -173,12 +173,14 @@ class ControlPanel(Frame):
         self.epsilonInput = Entry(self, width=input_width)
         self.epsilonInput.insert(0, "0.3")
 
-        f = Figure(figsize=(5,4), dpi=50)
+        f = Figure(figsize=(7,5), dpi=50)
         self.subplot = f.add_subplot(111)
 
-        self.line_x = range(20)
-        self.line_y = range(20)
+        self.line_x = []
+        self.line_y = []
         self.plot_line, = self.subplot.plot(self.line_x, self.line_y)
+        self.subplot.set_xlabel('episode')
+        self.subplot.set_ylabel('blocks')
 
         # a tk.DrawingArea
         self.plot_canvas = FigureCanvasTkAgg(f, master=self)
@@ -197,13 +199,12 @@ class ControlPanel(Frame):
             [(self.maxLabel, w_and_colspan_3)],
             [(self.iterationsLabel, w_and_colspan_3)],
             [(self.qLabel, w_and_colspan_3)],
-
+            [(self.plot_canvas.get_tk_widget(), e),],
             [(emptyLabel, None)],
 
             [(self.alphaLabel, e), (self.alphaInput, w)],
             [(self.gammaLabel, e), (self.gammaInput, w)],
             [(self.epsilonLabel, e), (self.epsilonInput, w)],
-            [(self.plot_canvas.get_tk_widget(), e),],
             [(self.fastForwardLabel, e), (self.fastForwardInput, w)],
             [(self.pauseBtn, e),
              (self.fastForwardBtn, w)],
@@ -303,17 +304,6 @@ class Controller(object):
         else:
             self.set_gui_state_pause()
             self._pause_agent()
-        #self.control_panel.plot_line.set_ydata(2 - 0.2 * 5)
-        x = self.control_panel.line_x
-        y = self.control_panel.line_y
-        x.append(len(x) + 1)
-        from random import randint
-        y.append(randint(1,30))
-        self.control_panel.plot_line.set_data(x, y)
-        ax = self.control_panel.plot_canvas.figure.axes[0]
-        ax.set_xlim(len(x) - 10, len(x))
-        ax.set_ylim(0, max(y))
-        self.control_panel.plot_canvas.draw()
 
     def set_gui_state_resume(self):
         self.control_panel.pauseBtn['text'] = PAUSE_BUTTON_TEXT
@@ -421,6 +411,22 @@ def refresh_gui():
         controller.control_panel.maxLabel["text"] = MAX_BLOCKS_LABEL.format(maximum)
         controller.control_panel.avgLabel["text"] = AVG_BLOCKS_LABEL.format(avg)
         controller.control_panel.iterationsLabel["text"] = ITERATIONS_LABEL.format(agent.iterations)
+
+        #refresh plot
+        #todo: refactoring
+        if not agent.fast_forward:
+            x = range(len(agent.steps_per_episode))
+            y = agent.steps_per_episode
+            controller.control_panel.plot_line.set_data(x, y)
+            ax = controller.control_panel.plot_canvas.figure.axes[0]
+            XSCALE = 100
+            YSCALE = 35
+            if len(x) > XSCALE:
+                ax.set_xlim(len(x) - XSCALE, len(x))
+            else:
+                ax.set_xlim(0, XSCALE)
+            ax.set_ylim(0, YSCALE)
+            controller.control_panel.plot_canvas.draw()
 
     controller.control_panel.qLabel["text"] = Q_OR_NOT_LABEL.format(agent.action_from_q)
 
