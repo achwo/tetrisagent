@@ -180,6 +180,7 @@ class ControlPanel(Frame):
         self.plot_line, = self.subplot.plot(self.line_x, self.line_y)
         self.subplot.set_xlabel('episode')
         self.subplot.set_ylabel('blocks')
+        self.maxline = self.subplot.axhline(y=-1, color='red', linestyle='--')
 
         # a tk.DrawingArea
         self.plot_canvas = FigureCanvasTkAgg(f, master=self)
@@ -425,6 +426,7 @@ def refresh_gui():
             else:
                 ax.set_xlim(0, XSCALE)
             ax.set_ylim(0, YSCALE)
+            controller.control_panel.maxline.set_ydata(max(y))
             controller.control_panel.plot_canvas.draw()
 
     controller.control_panel.qLabel["text"] = Q_OR_NOT_LABEL.format(agent.action_from_q)
