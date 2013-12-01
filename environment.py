@@ -1,10 +1,12 @@
 import copy
 import random
+import reward_features
 from settings import FIELD_HEIGHT, FIELD_WIDTH, VANISH_ZONE_HEIGHT
 
 BOTTOM_INDEX = FIELD_HEIGHT - 1
 RIGHTMOST_INDEX = FIELD_WIDTH - 1
 SPAWN_LOCATION = FIELD_WIDTH / 2 - 1
+BASE_SCORE_MULTIPLIER = 10
 
 
 class Environment(object):
@@ -12,6 +14,10 @@ class Environment(object):
         self.possible_shapes = [OShape]
         # self.possible_shapes = [OShape, JShape, IShape, LShape, ZShape, TShape,
         #                    SShape]
+
+        self.rewards = {reward_features.game_over_reward: 10,
+                                reward_features.removed_line_reward: 2}
+
         self.random = random.Random()
         self.field = Field()
         self.initialize()
@@ -32,7 +38,7 @@ class Environment(object):
         self.highest = BOTTOM_INDEX  # counted backwards because of indexing
         self.field.initialize()
         self._choose_next_shape()
-        self.lines_deleted = 0
+        self.deleted_lines_last_round = 0
 
     def possible_actions(self):
         if self.is_game_over():
@@ -79,26 +85,18 @@ class Environment(object):
         return False
 
     def _calculate_reward(self):
-        if self.is_game_over():
-            return -100
-        if self.lines_deleted < self.field.lines_deleted:
-            self.lines_deleted = self.field.lines_deleted
-            return 100
-        return self._height_based_reward()
+        reward = 0
 
-    def _height_based_reward(self):
-
-        new_highest = self.field.highest_block_row()
-
-        if new_highest < self.highest:
-            reward = -10
-            self.highest = new_highest
-        elif new_highest > self.highest:
-            reward = 0
-        else:
-            reward = 10
+        for feature, weighting in self.rewards.iteritems():
+            reward += BASE_SCORE_MULTIPLIER * weighting * feature(self)
 
         return reward
+
+    def number_lines_deleted(self):
+        deleted_previously = self.deleted_lines_last_round
+        self.deleted_lines_last_round = self.field.lines_deleted
+
+        return self.field.lines_deleted - deleted_previously
 
     def row(self, row_number):
         row = []

@@ -5,6 +5,7 @@ from mock import MagicMock
 
 from environment import Environment, Action, OShape, IShape, SShape, ZShape, Field
 from environment import InvalidActionError
+import environment
 
 
 FIELD_WIDTH = 10
@@ -23,6 +24,10 @@ class EnvironmentTests(unittest.TestCase):
         for col in field:
             col[row] = letter
 
+    def fill_row_incompletely(self, field, row, letter):
+        self.fill_row(field, row, letter)
+        field[9][row] = 0
+
     def test_initially_game_is_not_over(self):
         self.assertFalse(self.env.is_game_over())
 
@@ -38,7 +43,7 @@ class EnvironmentTests(unittest.TestCase):
 
     def test_lock_out(self):
         self.env.blocks = self.empty_blocks
-        self.fill_row(self.env.field.blocks, 0 + VANISH_ZONE_HEIGHT + 1, 'l')
+        self.fill_row_incompletely(self.env.field.blocks, 0 + VANISH_ZONE_HEIGHT + 1, 'l')
 
         self.env.current_shape = OShape()
         self.assertFalse(self.env.is_game_over())
@@ -51,6 +56,31 @@ class EnvironmentTests(unittest.TestCase):
 
         self.env.execute_action(Action(1))
         self.assertNotEqual(self.empty_blocks, self.env.field.blocks)
+
+    def test_calculate_reward_calls_features(self):
+        feature1 = MagicMock(return_value=1)
+        feature2 = MagicMock(return_value=1)
+        self.env.rewards = {feature1: 1, feature2: 10}
+
+        self.env._calculate_reward()
+
+        feature1.assert_called_once_with(self.env)
+        feature2.assert_called_once_with(self.env)
+
+    def test_calculate_reward_returns_reward_based_on_features(self):
+        feature1 = MagicMock(return_value=1)
+        feature2 = MagicMock(return_value=1)
+        environment.BASE_SCORE_MULTIPLIER = 1
+        self.env.rewards = {feature1: 1, feature2: 10}
+
+        self.assertEquals(11, self.env._calculate_reward())
+
+    def test_calculate_reward_applies_weighting_and_base_multiplier(self):
+        feature = MagicMock(return_value=1)
+        environment.BASE_SCORE_MULTIPLIER = 5
+        self.env.rewards = {feature: 10}
+
+        self.assertEqual(50, self.env._calculate_reward())
 
 
 class FieldTest(unittest.TestCase):
@@ -71,6 +101,11 @@ class FieldTest(unittest.TestCase):
 
     def fill_field_row(self, row):
         self.fill_row(self.field.blocks, row)
+
+
+    def fill_row_incompletely(self, field, row, letter):
+        self.fill_row(field, row, letter)
+        field[9][row] = 0
 
     def test_invalid_action_throws_exception(self):
         with self.assertRaises(InvalidActionError):
@@ -109,7 +144,7 @@ class FieldTest(unittest.TestCase):
 
     def test_shape_is_placed_above_existing_blocks(self):
         result = self.empty_blocks
-        self.fill_row(result, BOTTOM_LINE, 'l')
+        self.fill_row_incompletely(result, BOTTOM_LINE, 'l')
 
         self.field.blocks = copy.deepcopy(result)
 
@@ -122,7 +157,7 @@ class FieldTest(unittest.TestCase):
 
     def test_shape_is_placed_partially_floating(self):
         result = self.empty_blocks
-        self.fill_row(result, BOTTOM_LINE, 'l')
+        self.fill_row_incompletely(result, BOTTOM_LINE, 'l')
         result[0][BOTTOM_LINE - 1] = 'l'
 
         self.field.blocks = copy.deepcopy(result)
@@ -136,7 +171,7 @@ class FieldTest(unittest.TestCase):
 
     def test_shape_is_placed_fitting_with_terrain(self):
         result = self.empty_blocks
-        self.fill_row(result, BOTTOM_LINE, 'l')
+        self.fill_row_incompletely(result, BOTTOM_LINE, 'l')
         result[1][BOTTOM_LINE - 1] = 'l'
 
         self.field.blocks = copy.deepcopy(result)
