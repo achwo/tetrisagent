@@ -255,6 +255,23 @@ class Controller(object):
         self.parent.bind("<Control-f>", self.fast_forward_callback)
         self.parent.bind("<Control-space>", self.pause_callback)
 
+        self._load_config()
+
+    def _load_config(self):
+        config = util.load_gui_config(self)
+
+        if config:
+            a = self.control_panel.alphaInput
+            g = self.control_panel.gammaInput
+            e = self.control_panel.epsilonInput
+
+            a.delete(0, END)
+            a.insert(0, config['alpha'])
+            g.delete(0, END)
+            g.insert(0, config['gamma'])
+            e.delete(0, END)
+            e.insert(0, config['epsilon'])
+
     def _set_agent_inputs_state(self, state):
         self.control_panel.alphaInput['state'] = state
         self.control_panel.gammaInput['state'] = state
@@ -290,6 +307,7 @@ class Controller(object):
             agent.Q = util.read_from_file(filename)
 
     def quit_callback(self, event=None):
+        util.save_gui_config(controller)
         self._resume_agent()
         self.parent.quit()
         self.parent.destroy()
