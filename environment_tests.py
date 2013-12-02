@@ -307,5 +307,17 @@ class ShapeTest(unittest.TestCase):
 
         self.assertEqual(expected, shape.spawn_position())
 
+    def test_eq_false_cases(self):
+        shape1 = OShape()
+        shape2 = IShape()
+
+        self.assertNotEqual(shape1, shape2)
+
+    def test_eq_true_cases(self):
+        shape1 = IShape()
+        shape2 = IShape()
+
+        self.assertEqual(shape1, shape2)
+
 if __name__ == '__main__':
     unittest.main()
