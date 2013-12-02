@@ -11,9 +11,9 @@ BASE_SCORE_MULTIPLIER = 10
 
 class Environment(object):
     def __init__(self, blocks=None):
-        self.possible_shapes = [IShape]
-        # self.possible_shapes = [OShape, JShape, IShape, LShape, ZShape, TShape,
-        #                    SShape]
+        # self.possible_shapes = [TShape]
+        self.possible_shapes = [OShape, JShape, IShape, LShape, ZShape, TShape,
+                           SShape]
 
         self.rewards = {reward_features.game_over_reward: 10,
                                 reward_features.removed_line_reward: 2}
@@ -219,10 +219,9 @@ class Action(object):
 
 
 class Shape(object):
-    def __init__(self, name, coords, spawn_location=SPAWN_LOCATION):
-        self.coords = coords
+    def __init__(self, name, coords, spawn_column=SPAWN_LOCATION):
         self.name = name
-        self._spawn_location = spawn_location
+        self._spawn_column = spawn_column
         self.rotations = [coords]
 
     def __eq__(self, other):
@@ -248,10 +247,10 @@ class Shape(object):
             coord[0] += offset
 
     def spawn_position(self):
-        spawn = copy.deepcopy(self.coords)
+        spawn = copy.deepcopy(self.rotations[0])
 
         for coords in spawn:
-            coords[0] += self._spawn_location
+            coords[0] += self._spawn_column
 
         return spawn
 
@@ -261,40 +260,68 @@ class Shape(object):
 
 class OShape(Shape):
     def __init__(self):
-        super(OShape, self).__init__('o', [[0, 0], [0, 1], [1, 0], [1, 1]],
-                                     SPAWN_LOCATION + 1)
+        super(OShape, self).__init__('o', [[0, 0], [0, 1], [1, 0], [1, 1]], SPAWN_LOCATION + 1)
+        self.rotations = [[[0, 0], [0, 1], [1, 0], [1, 1]]]
 
 
 class IShape(Shape):
     def __init__(self):
         super(IShape, self).__init__('i', [[0, 0], [0, 1], [0, 2], [0, 3]])
-        self.rotations.append([[0, 0], [1, 0], [2, 0], [3, 0]])
+        self.rotations = [
+            [[0, 0], [0, 1], [0, 2], [0, 3]],
+            [[0, 0], [1, 0], [2, 0], [3, 0]]
+        ]
 
 
 class LShape(Shape):
     def __init__(self):
         super(LShape, self).__init__('l', [[0, 0], [0, 1], [0, 2], [1, 2]])
+        self.rotations = [
+            [[0, 0], [0, 1], [0, 2], [1, 2]], 
+            [[0, 0], [0, 1], [1, 0], [2, 0]],
+            [[0, 0], [1, 0], [1, 1], [1, 2]],
+            [[0, 1], [1, 1], [2, 0], [2, 1]]
+        ]
 
 
 class JShape(Shape):
     def __init__(self):
         super(JShape, self).__init__('j', [[0, 2], [1, 0], [1, 1], [1, 2]])
+        self.rotations = [
+            [[0, 2], [1, 0], [1, 1], [1, 2]],
+            [[0, 0], [0, 1], [0, 2], [1, 0]],
+            [[0, 0], [0, 1], [1, 1], [2, 1]],
+            [[0, 0], [1, 0], [2, 0], [2, 1]]
+        ]
 
 
 class TShape(Shape):
     def __init__(self):
         super(TShape, self).__init__('t', [[0, 1], [1, 0], [1, 1], [2, 1]])
+        self.rotations = [
+            [[0, 1], [1, 0], [1, 1], [2, 1]],
+            [[0, 1], [1, 0], [1, 1], [1, 2]],
+            [[0, 0], [1, 0], [1, 1], [2, 0]],
+            [[0, 0], [0, 1], [0, 2], [1, 1]]
+        ]
 
 
 class SShape(Shape):
     def __init__(self):
         super(SShape, self).__init__('s', [[0, 0], [0, 1], [1, 1], [1, 2]])
+        self.rotations = [
+            [[0, 0], [0, 1], [1, 1], [1, 2]],
+            [[0, 1], [1, 0], [1, 1], [2, 0]]
+        ]
 
 
 class ZShape(Shape):
     def __init__(self):
         super(ZShape, self).__init__('z', [[0, 1], [0, 2], [1, 0], [1, 1]])
-
+        self.rotations = [
+            [[0, 1], [0, 2], [1, 0], [1, 1]],
+            [[0, 0], [1, 0], [1, 1], [2, 1]]
+        ]
 
 class InvalidActionError(RuntimeError):
     pass

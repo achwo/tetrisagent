@@ -301,5 +301,11 @@ class ShapeTest(unittest.TestCase):
         shape.set_drop_rotation(1)
         self.assertEqual([[0, 0], [1, 0], [2, 0], [3, 0]], shape.dropping_coords)
 
+    def test_spawn_position(self):
+        shape = OShape()
+        expected = [[5, 0], [5, 1], [6, 0], [6, 1]]
+
+        self.assertEqual(expected, shape.spawn_position())
+
 if __name__ == '__main__':
     unittest.main()
