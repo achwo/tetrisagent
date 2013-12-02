@@ -43,7 +43,7 @@ SAVE_BUTTON_TEXT = "Save Q"
 LOAD_BUTTON_TEXT = "Load Q"
 Q_FILENAME = "q"
 
-GUI_REFRESH_IN_MS = 100
+GUI_REFRESH_IN_MS = 50
 TOTAL_EPISODES = 5000
 STEP_SLOWDOWN_IN_SEC = 0.3
 EPISODE_SLOWDOWN_IN_SEC = 0
@@ -252,8 +252,8 @@ class Controller(object):
         self.control_panel.grid(row=0, column=1, sticky=N + W)
 
         self.parent.bind("<Escape>", self.quit_callback)
-        self.parent.bind("<Control-p>", self.pause_callback)
-        self.parent.bind("<Control-space>", self.fast_forward_callback)
+        self.parent.bind("<Control-f>", self.fast_forward_callback)
+        self.parent.bind("<Control-space>", self.pause_callback)
 
     def _set_agent_inputs_state(self, state):
         self.control_panel.alphaInput['state'] = state
@@ -388,7 +388,7 @@ def is_game_paused():
     return not agent.resume_event.is_set()
 
 
-def refresh_gui():
+def update_input_state():
     global GUI_LAST_STATE_WAS_PAUSE
     if is_game_paused() != GUI_LAST_STATE_WAS_PAUSE:
         if is_game_paused():
@@ -396,6 +396,8 @@ def refresh_gui():
         else:
             controller.set_gui_state_resume()
 
+
+def refresh_block_canvas():
     try:
         blocks = dataQ.get(timeout=0.1)
         if blocks:
@@ -403,31 +405,42 @@ def refresh_gui():
     except:
         pass
 
+
+def refresh_labels():
+    episodes = agent.steps_per_episode[-NUM_EPISODES_IN_AVG_CALC:]
+    avg = reduce(lambda x, y: x + y, episodes) / len(episodes)
+    maximum = max(agent.steps_per_episode)
+
+    controller.control_panel.maxLabel["text"] = MAX_BLOCKS_LABEL.format(maximum)
+    controller.control_panel.avgLabel["text"] = AVG_BLOCKS_LABEL.format(avg)
+    controller.control_panel.iterationsLabel["text"] = ITERATIONS_LABEL.format(agent.iterations)
+
+
+def refresh_plot():
+    if not agent.fast_forward:
+        x = range(len(agent.steps_per_episode))
+        y = agent.steps_per_episode
+        controller.control_panel.plot_line.set_data(x, y)
+        ax = controller.control_panel.plot_canvas.figure.axes[0]
+        XSCALE = 100
+        YSCALE = 35
+        if len(x) > XSCALE:
+            ax.set_xlim(0, len(x))
+        else:
+            ax.set_xlim(0, XSCALE)
+        ax.set_ylim(0, YSCALE)
+        controller.control_panel.maxline.set_ydata(max(y))
+        controller.control_panel.plot_canvas.draw()
+
+
+def refresh_gui():
+    update_input_state()
+    refresh_block_canvas()
+
     if agent.iterations > 0:
-        episodes = agent.steps_per_episode[-NUM_EPISODES_IN_AVG_CALC:]
-        avg = reduce(lambda x, y: x + y, episodes) / len(episodes)
-        maximum = max(agent.steps_per_episode)
+        refresh_labels()
+        refresh_plot()
 
-        controller.control_panel.maxLabel["text"] = MAX_BLOCKS_LABEL.format(maximum)
-        controller.control_panel.avgLabel["text"] = AVG_BLOCKS_LABEL.format(avg)
-        controller.control_panel.iterationsLabel["text"] = ITERATIONS_LABEL.format(agent.iterations)
-
-        #refresh plot
-        #todo: refactoring
-        if not agent.fast_forward:
-            x = range(len(agent.steps_per_episode))
-            y = agent.steps_per_episode
-            controller.control_panel.plot_line.set_data(x, y)
-            ax = controller.control_panel.plot_canvas.figure.axes[0]
-            XSCALE = 100
-            YSCALE = 35
-            if len(x) > XSCALE:
-                ax.set_xlim(len(x) - XSCALE, len(x))
-            else:
-                ax.set_xlim(0, XSCALE)
-            ax.set_ylim(0, YSCALE)
-            controller.control_panel.maxline.set_ydata(max(y))
-            controller.control_panel.plot_canvas.draw()
 
     controller.control_panel.qLabel["text"] = Q_OR_NOT_LABEL.format(agent.action_from_q)
 
