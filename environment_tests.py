@@ -137,9 +137,9 @@ class FieldTest(unittest.TestCase):
     def test_i_shape_is_added_to_empty_state(self):
         result = self.empty_blocks
         result[0][BOTTOM_LINE] = 'i'
-        result[0][BOTTOM_LINE - 1] = 'i'
-        result[0][BOTTOM_LINE - 2] = 'i'
-        result[0][BOTTOM_LINE - 3] = 'i'
+        result[1][BOTTOM_LINE] = 'i'
+        result[2][BOTTOM_LINE] = 'i'
+        result[3][BOTTOM_LINE] = 'i'
 
         self.assert_placed(IShape(), 0, result)
 
@@ -150,7 +150,7 @@ class FieldTest(unittest.TestCase):
         result[2][BOTTOM_LINE - 1] = 's'
         result[2][BOTTOM_LINE - 2] = 's'
 
-        self.assert_placed(SShape(), 2, result)
+        self.assert_placed(SShape(), 2, result, 1)
 
     def test_shape_is_placed_above_existing_blocks(self):
         result = self.empty_blocks
@@ -177,7 +177,7 @@ class FieldTest(unittest.TestCase):
         result[1][BOTTOM_LINE - 3] = 'z'
         result[1][BOTTOM_LINE - 4] = 'z'
 
-        self.assert_placed(ZShape(), 0, result)
+        self.assert_placed(ZShape(), 0, result, 1)
 
     def test_shape_is_placed_fitting_with_terrain(self):
         result = self.empty_blocks
@@ -191,7 +191,7 @@ class FieldTest(unittest.TestCase):
         result[1][BOTTOM_LINE - 2] = 'z'
         result[1][BOTTOM_LINE - 3] = 'z'
 
-        self.assert_placed(ZShape(), 0, result)
+        self.assert_placed(ZShape(), 0, result, 1)
 
     def test_highest_block_row_is_zero_on_empty_field(self):
         self.assertEqual(-1, self.field.highest_block_row())
@@ -256,9 +256,9 @@ class FieldTest(unittest.TestCase):
     def test_drops_the_right_rotation(self):
         result = self.empty_blocks
         result[0][BOTTOM_LINE] = 'i'
-        result[1][BOTTOM_LINE] = 'i'
-        result[2][BOTTOM_LINE] = 'i'
-        result[3][BOTTOM_LINE] = 'i'
+        result[0][BOTTOM_LINE-1] = 'i'
+        result[0][BOTTOM_LINE-2] = 'i'
+        result[0][BOTTOM_LINE-3] = 'i'
 
         self.assert_placed(IShape(), 0, result, 1)
 
@@ -291,15 +291,15 @@ class ShapeTest(unittest.TestCase):
 
     def test_shape_rightmost_works_for_default_rotation(self):
         shape = IShape()
-        self.assertEqual(0, shape.rightmost(0))
-        self.assertEqual(3, shape.rightmost(1))
+        self.assertEqual(3, shape.rightmost(0))
+        self.assertEqual(0, shape.rightmost(1))
 
     def test_set_drop_rotation(self):
         shape = IShape()
         shape.set_drop_rotation(0)
-        self.assertEqual([[0, 0], [0, 1], [0, 2], [0, 3]], shape.dropping_coords)
-        shape.set_drop_rotation(1)
         self.assertEqual([[0, 0], [1, 0], [2, 0], [3, 0]], shape.dropping_coords)
+        shape.set_drop_rotation(1)
+        self.assertEqual([[0, 0], [0, 1], [0, 2], [0, 3]], shape.dropping_coords)
 
     def test_spawn_position(self):
         shape = OShape()
