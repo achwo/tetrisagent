@@ -47,14 +47,13 @@ class EnvironmentTests(unittest.TestCase):
 
         self.env.current_shape = OShape()
         self.assertFalse(self.env.is_game_over())
-        self.env.execute_action(Action(0))
-
+        self.env.execute_action(Action(0, 0)) 
         self.assertTrue(self.env.is_game_over())
-
+    
     def test_execute_action_changes_field(self):
         self.assertEqual(self.empty_blocks, self.env.field.blocks)
 
-        self.env.execute_action(Action(1))
+        self.env.execute_action(Action(1, 0))
         self.assertNotEqual(self.empty_blocks, self.env.field.blocks)
 
     def test_calculate_reward_calls_features(self):
@@ -82,6 +81,17 @@ class EnvironmentTests(unittest.TestCase):
 
         self.assertEqual(50, self.env._calculate_reward())
 
+    def test_possible_actions_has_one_option_with_oshape(self):
+        self.env.current_shape = OShape()
+        possible = self.env.possible_actions()
+
+        self.assertEqual(9, len(possible))
+
+    def test_possible_actions_has_two_options_with_ishape(self):
+        self.env.current_shape = IShape()
+        possible = self.env.possible_actions()
+
+        self.assertEqual(17, len(possible))        
 
 class FieldTest(unittest.TestCase):
     def setUp(self):
@@ -90,8 +100,8 @@ class FieldTest(unittest.TestCase):
 
         self.field = Field()
 
-    def assert_placed(self, shape, column, result):
-        self.field.place(shape, column)
+    def assert_placed(self, shape, column, result, rotation=0):
+        self.field.place(shape, Action(column, rotation))
         self.assertEqual(result, self.field.blocks)
 
 
@@ -109,11 +119,11 @@ class FieldTest(unittest.TestCase):
 
     def test_invalid_action_throws_exception(self):
         with self.assertRaises(InvalidActionError):
-            self.field.place(IShape(), 10)
+            self.field.place(IShape(), Action(10, 0))
 
     def test_invalid_action_on_wide_shape_throws_exception(self):
         with self.assertRaises(InvalidActionError):
-            self.field.place(OShape(), 9)
+            self.field.place(OShape(), Action(9, 0))
 
     def test_o_shape_is_added_to_empty_state(self):
         result = copy.deepcopy(self.empty_blocks)
@@ -243,22 +253,53 @@ class FieldTest(unittest.TestCase):
 
         self.assertEqual(result, self.field.blocks)
 
+    def test_drops_the_right_rotation(self):
+        result = self.empty_blocks
+        result[0][BOTTOM_LINE] = 'i'
+        result[1][BOTTOM_LINE] = 'i'
+        result[2][BOTTOM_LINE] = 'i'
+        result[3][BOTTOM_LINE] = 'i'
+
+        self.assert_placed(IShape(), 0, result, 1)
 
 class ActionTest(unittest.TestCase):
     def setUp(self):
-        self.a = Action(1)
+        self.a = Action(1, 1)
 
     def test_eq_false_cases(self):
         other_type = 1
-        b = Action(2)
+        b = Action(2, 1)
+        c = Action(1, 2)
         self.assertFalse(self.a == other_type)
         self.assertFalse(self.a == b)
+        self.assertFalse(self.a == c)
 
     def test_eq_true_cases(self):
         self.assertTrue(self.a == self.a)
-        b = Action(1)
+        b = Action(1, 1)
         self.assertTrue(self.a == b)
 
+
+class ShapeTest(unittest.TestCase):
+    def test_OShape_has_one_rotation(self):
+        shape = OShape()
+        self.assertEqual(1, len(shape.rotations))
+
+    def test_IShape_has_two_rotations(self):
+        shape = IShape()
+        self.assertEqual(2, len(shape.rotations))
+
+    def test_shape_rightmost_works_for_default_rotation(self):
+        shape = IShape()
+        self.assertEqual(0, shape.rightmost(0))
+        self.assertEqual(3, shape.rightmost(1))
+
+    def test_set_drop_rotation(self):
+        shape = IShape()
+        shape.set_drop_rotation(0)
+        self.assertEqual([[0, 0], [0, 1], [0, 2], [0, 3]], shape.dropping_coords)
+        shape.set_drop_rotation(1)
+        self.assertEqual([[0, 0], [1, 0], [2, 0], [3, 0]], shape.dropping_coords)
 
 if __name__ == '__main__':
     unittest.main()

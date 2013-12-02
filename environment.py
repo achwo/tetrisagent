@@ -11,7 +11,7 @@ BASE_SCORE_MULTIPLIER = 10
 
 class Environment(object):
     def __init__(self, blocks=None):
-        self.possible_shapes = [OShape]
+        self.possible_shapes = [IShape]
         # self.possible_shapes = [OShape, JShape, IShape, LShape, ZShape, TShape,
         #                    SShape]
 
@@ -23,7 +23,6 @@ class Environment(object):
         self.initialize()
         self.field.initialize(blocks)
         self._choose_next_shape()
-
 
     def __eq__(self, other):
         if type(self) == type(other):
@@ -45,20 +44,21 @@ class Environment(object):
             return []
 
         actions = []
-        for column in range(0, FIELD_WIDTH):
-            if self._column_valid(column):
-                actions.append(Action(column))
+        for rotation in range(len(self.current_shape.rotations)):
+            for column in range(0, FIELD_WIDTH):
+                if self._column_valid(column, rotation):
+                    actions.append(Action(column, rotation))
 
         return actions
 
-    def _column_valid(self, column):
-        return column + self.current_shape.rightmost <= RIGHTMOST_INDEX
+    def _column_valid(self, column, rotation):
+        return column + self.current_shape.rightmost(rotation) <= RIGHTMOST_INDEX
 
     def execute_action(self, action):
         if not self._is_action_valid(action):
             raise InvalidActionError()
 
-        self.field.place(self.current_shape, action.column)
+        self.field.place(self.current_shape, action)
         self._choose_next_shape()
         return self._calculate_reward()
 
@@ -125,23 +125,24 @@ class Field(object):
         else:
             self.blocks = blocks
 
-    def place(self, shape, column):
-        if not self._is_column_valid(column, shape):
+    def place(self, shape, action):
+        if not self._is_action_valid(action, shape):
             raise InvalidActionError(
-                "Column {0} is not valid for shape {1}".format(column, shape))
+                "{0} is not valid for shape {1}".format(action, shape))
 
-        shape.add_x_offset(column)
+        shape.set_drop_rotation(action.rotation)
+        shape.add_x_offset(action.column) #TODO not really
         self._drop_shape(shape)
         self._add_shape_to_field(shape)
         self._delete_lines(self._find_full_lines())
 
     def _drop_shape(self, shape):
         while not self._collision(shape):
-            for coord in shape.coords:
+            for coord in shape.dropping_coords:
                 coord[1] += 1
 
     def _collision(self, shape):
-        for coord in shape.coords:
+        for coord in shape.dropping_coords:
             if self._touches_ground(coord) or self._touches_block(coord):
                 return True
         return False
@@ -153,17 +154,17 @@ class Field(object):
         return self.blocks[coord[0]][coord[1] + 1] is not 0
 
     def _add_shape_to_field(self, shape):
-        for coord in shape.coords:
+        for coord in shape.dropping_coords:
             self.blocks[coord[0]][coord[1]] = shape.__repr__()
 
-    def _is_column_valid(self, column, shape):
-        return column in self._valid_columns(shape)
+    def _is_action_valid(self, action, shape):
+        return action.column in self._valid_columns(shape, action.rotation)
 
-    def _valid_columns(self, shape):
+    def _valid_columns(self, shape, rotation):
         valid = []
 
         for column in range(FIELD_WIDTH):
-            if column + shape.rightmost <= RIGHTMOST_INDEX:
+            if column + shape.rightmost(rotation) <= RIGHTMOST_INDEX:
                 valid.append(column)
 
         return valid
@@ -201,27 +202,28 @@ class Field(object):
 
 
 class Action(object):
-    def __init__(self, column):
+    def __init__(self, column, rotation):
         self.column = column
+        self.rotation = rotation
 
     def __eq__(self, other):
         if type(other) is type(self):
-            return self.column == other.column
+            return self.column == other.column and self.rotation == other.rotation
         return False
 
     def __hash__(self):
         return hash(self.column)
 
     def __repr__(self):
-        return "Action({0})".format(self.column)
+        return "Action({0}, {1})".format(self.column, self.rotation)
 
 
 class Shape(object):
     def __init__(self, name, coords, spawn_location=SPAWN_LOCATION):
         self.coords = coords
-        self.rightmost = self.__furthest_right()
         self.name = name
         self._spawn_location = spawn_location
+        self.rotations = [coords]
 
     def __eq__(self, other):
         if type(self) == type(other):
@@ -234,15 +236,15 @@ class Shape(object):
     def __repr__(self):
         return self.name
 
-    def __furthest_right(self):
+    def rightmost(self, rotation):
         maximum = 0
-        for coord in self.coords:
+        for coord in self.rotations[rotation]:
             if coord[0] > maximum:
                 maximum = coord[0]
         return maximum
 
     def add_x_offset(self, offset):
-        for coord in self.coords:
+        for coord in self.dropping_coords:
             coord[0] += offset
 
     def spawn_position(self):
@@ -252,6 +254,9 @@ class Shape(object):
             coords[0] += self._spawn_location
 
         return spawn
+
+    def set_drop_rotation(self, rotation):
+        self.dropping_coords = self.rotations[rotation]
 
 
 class OShape(Shape):
@@ -263,6 +268,7 @@ class OShape(Shape):
 class IShape(Shape):
     def __init__(self):
         super(IShape, self).__init__('i', [[0, 0], [0, 1], [0, 2], [0, 3]])
+        self.rotations.append([[0, 0], [1, 0], [2, 0], [3, 0]])
 
 
 class LShape(Shape):
