@@ -8,7 +8,7 @@ import features
 
 class PerceivedState(object):
     def __init__(self, environment, *features):
-        self.shape = environment.current_shape
+        self.shape = environment.current_shape.__repr__()
         self.features = []
         for f in features:
             r = f(environment)
