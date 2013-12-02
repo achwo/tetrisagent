@@ -397,7 +397,7 @@ def update_input_state():
             controller.set_gui_state_resume()
 
 
-def refresh_block_canvas():
+def update_block_canvas():
     try:
         blocks = dataQ.get(timeout=0.1)
         if blocks:
@@ -406,7 +406,7 @@ def refresh_block_canvas():
         pass
 
 
-def refresh_labels():
+def update_labels():
     episodes = agent.steps_per_episode[-NUM_EPISODES_IN_AVG_CALC:]
     avg = reduce(lambda x, y: x + y, episodes) / len(episodes)
     maximum = max(agent.steps_per_episode)
@@ -416,7 +416,7 @@ def refresh_labels():
     controller.control_panel.iterationsLabel["text"] = ITERATIONS_LABEL.format(agent.iterations)
 
 
-def refresh_plot():
+def update_plot():
     if not agent.fast_forward:
         x = range(len(agent.steps_per_episode))
         y = agent.steps_per_episode
@@ -435,15 +435,13 @@ def refresh_plot():
 
 def refresh_gui():
     update_input_state()
-    refresh_block_canvas()
+    update_block_canvas()
 
     if agent.iterations > 0:
-        refresh_labels()
-        refresh_plot()
-
+        update_labels()
+        update_plot()
 
     controller.control_panel.qLabel["text"] = Q_OR_NOT_LABEL.format(agent.action_from_q)
-
     GUI_LAST_STATE_WAS_PAUSE = is_game_paused()
     controller.parent.after(GUI_REFRESH_IN_MS, refresh_gui)
 
