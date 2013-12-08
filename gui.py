@@ -54,7 +54,6 @@ TOTAL_EPISODES = 5000
 STEP_SLOWDOWN_IN_SEC = 0.3
 EPISODE_SLOWDOWN_IN_SEC = 0
 NUM_EPISODES_IN_AVG_CALC = 50
-GUI_LAST_STATE_WAS_PAUSE = True
 
 global controller
 global agent
@@ -163,9 +162,7 @@ class ControlPanel(Frame):
         self.shapesButton = Button(self, text=SHAPES_BUTTON_TEXT,
                                    command=self.controller.shapes_callback)
         self.rewardsButton = Button(self, text=REWARDS_BUTTON_TEXT,
-                                   command=self.controller.rewards_callback)
-
-
+                                    command=self.controller.rewards_callback)
 
         input_width = 5
 
@@ -194,7 +191,6 @@ class ControlPanel(Frame):
         self.subplot.set_xlabel('episode')
         self.subplot.set_ylabel('blocks')
         self.maxline = self.subplot.axhline(y=-1, color='red', linestyle='--')
-
 
         # a tk.DrawingArea
         self.plot_canvas = FigureCanvasTkAgg(f, master=self)
@@ -262,8 +258,8 @@ class Controller(object):
         self.board = Board(parent)
         self.board.clear()
 
-        self.control_panel = ControlPanel(parent, self)
-        self.control_panel.grid(row=0, column=1, sticky=N + W)
+        self.panel = ControlPanel(parent, self)
+        self.panel.grid(row=0, column=1, sticky=N + W)
 
         self.parent.bind("<Escape>", self.quit_callback)
         self.parent.bind("<Control-f>", self.fast_forward_callback)
@@ -275,9 +271,9 @@ class Controller(object):
         config = util.load_gui_config(self)
 
         if config:
-            a = self.control_panel.alphaInput
-            g = self.control_panel.gammaInput
-            e = self.control_panel.epsilonInput
+            a = self.panel.alphaInput
+            g = self.panel.gammaInput
+            e = self.panel.epsilonInput
 
             a.delete(0, END)
             a.insert(0, config['alpha'])
@@ -287,14 +283,14 @@ class Controller(object):
             e.insert(0, config['epsilon'])
 
     def _set_agent_inputs_state(self, state):
-        self.control_panel.alphaInput['state'] = state
-        self.control_panel.gammaInput['state'] = state
-        self.control_panel.epsilonInput['state'] = state
+        self.panel.alphaInput['state'] = state
+        self.panel.gammaInput['state'] = state
+        self.panel.epsilonInput['state'] = state
 
     def _set_agent_learning_vars(self):
-        alpha = float(self.control_panel.alphaInput.get())
-        gamma = float(self.control_panel.gammaInput.get())
-        epsilon = float(self.control_panel.epsilonInput.get())
+        alpha = float(self.panel.alphaInput.get())
+        gamma = float(self.panel.gammaInput.get())
+        epsilon = float(self.panel.epsilonInput.get())
         agent.alpha = alpha
         agent.gamma = gamma
         agent.epsilon = epsilon
@@ -303,7 +299,7 @@ class Controller(object):
         if not agent.fast_forward:
             self.board.clear()
             agent.fast_forward_total = int(
-                self.control_panel.fastForwardInput.get())
+                self.panel.fastForwardInput.get())
             agent.fast_forward_count = agent.fast_forward_total
             agent.fast_forward = True
             if is_game_paused():
@@ -339,12 +335,12 @@ class Controller(object):
             self._pause_agent()
 
     def set_gui_state_resume(self):
-        self.control_panel.pauseBtn['text'] = PAUSE_BUTTON_TEXT
+        self.panel.pauseBtn['text'] = PAUSE_BUTTON_TEXT
         self._set_agent_inputs_state(DISABLED)
         self._set_agent_learning_vars()
 
     def set_gui_state_pause(self):
-        self.control_panel.pauseBtn['text'] = RESUME_BUTTON_TEXT
+        self.panel.pauseBtn['text'] = RESUME_BUTTON_TEXT
         self._set_agent_inputs_state(NORMAL)
         agent.stop_fast_forward()
 
@@ -506,17 +502,16 @@ class RewardsDialog(Toplevel):
         agent.environment.rewards = rewards
         self.destroy()
 
+
 def is_game_paused():
     return not agent.resume_event.is_set()
 
 
 def update_input_state():
-    global GUI_LAST_STATE_WAS_PAUSE
-    if is_game_paused() != GUI_LAST_STATE_WAS_PAUSE:
-        if is_game_paused():
-            controller.set_gui_state_pause()
-        else:
-            controller.set_gui_state_resume()
+    if is_game_paused():
+        controller.set_gui_state_pause()
+    else:
+        controller.set_gui_state_resume()
 
 
 def update_block_canvas():
@@ -533,9 +528,9 @@ def update_labels():
     avg = reduce(lambda x, y: x + y, episodes) / len(episodes)
     maximum = max(agent.steps_per_episode)
 
-    controller.control_panel.maxLabel["text"] = MAX_BLOCKS_LABEL.format(maximum)
-    controller.control_panel.avgLabel["text"] = AVG_BLOCKS_LABEL.format(avg)
-    controller.control_panel.iterationsLabel["text"] = ITERATIONS_LABEL.format(
+    controller.panel.maxLabel["text"] = MAX_BLOCKS_LABEL.format(maximum)
+    controller.panel.avgLabel["text"] = AVG_BLOCKS_LABEL.format(avg)
+    controller.panel.iterationsLabel["text"] = ITERATIONS_LABEL.format(
         agent.iterations)
 
 
@@ -543,17 +538,22 @@ def update_plot():
     if not agent.fast_forward:
         x = range(len(agent.steps_per_episode))
         y = agent.steps_per_episode
-        controller.control_panel.plot_line.set_data(x, y)
-        ax = controller.control_panel.plot_canvas.figure.axes[0]
+        controller.panel.plot_line.set_data(x, y)
+        ax = controller.panel.plot_canvas.figure.axes[0]
         XSCALE = 100
         YSCALE = 35
         if len(x) > XSCALE:
             ax.set_xlim(0, len(x))
         else:
             ax.set_xlim(0, XSCALE)
-        ax.set_ylim(0, YSCALE)
-        controller.control_panel.maxline.set_ydata(max(y))
-        controller.control_panel.plot_canvas.draw()
+
+        max_y = max(y)
+        if max_y > YSCALE:
+            ax.set_ylim(0, max_y)
+        else:
+            ax.set_ylim(0, YSCALE)
+        controller.panel.maxline.set_ydata(max_y)
+        controller.panel.plot_canvas.draw()
 
 
 def refresh_gui():
@@ -564,9 +564,8 @@ def refresh_gui():
         update_labels()
         update_plot()
 
-    controller.control_panel.qLabel["text"] = Q_OR_NOT_LABEL.format(
+    controller.panel.qLabel["text"] = Q_OR_NOT_LABEL.format(
         agent.action_from_q)
-    GUI_LAST_STATE_WAS_PAUSE = is_game_paused()
     controller.parent.after(GUI_REFRESH_IN_MS, refresh_gui)
 
 
