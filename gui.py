@@ -3,6 +3,7 @@
 
 from Tkinter import *
 import Queue
+import inspect
 import threading
 import tkFileDialog
 import time
@@ -10,6 +11,7 @@ import copy
 
 import matplotlib
 from environment import LShape, TShape, IShape, ZShape, SShape, OShape, JShape
+import reward_features
 
 matplotlib.use('TkAgg')
 
@@ -45,6 +47,7 @@ SAVE_BUTTON_TEXT = "Save Q"
 LOAD_BUTTON_TEXT = "Load Q"
 Q_FILENAME = "q"
 SHAPES_BUTTON_TEXT = 'Shapes auswaehlen'
+REWARDS_BUTTON_TEXT = 'Rewards auswaehlen'
 
 GUI_REFRESH_IN_MS = 50
 TOTAL_EPISODES = 5000
@@ -159,6 +162,10 @@ class ControlPanel(Frame):
 
         self.shapesButton = Button(self, text=SHAPES_BUTTON_TEXT,
                                    command=self.controller.shapes_callback)
+        self.rewardsButton = Button(self, text=REWARDS_BUTTON_TEXT,
+                                   command=self.controller.rewards_callback)
+
+
 
         input_width = 5
 
@@ -210,6 +217,7 @@ class ControlPanel(Frame):
             [(emptyLabel, None)],
 
             [(self.shapesButton, w_and_colspan_3)],
+            [(self.rewardsButton, w_and_colspan_3)],
             [(self.alphaLabel, e), (self.alphaInput, w)],
             [(self.gammaLabel, e), (self.gammaInput, w)],
             [(self.epsilonLabel, e), (self.epsilonInput, w)],
@@ -347,9 +355,14 @@ class Controller(object):
         agent.resume_event.set()
 
     def shapes_callback(self):
-        if hasattr(self, 'dialog'):
-            self.dialog.destroy()
-        self.dialog = ShapeDialog(self)
+        if hasattr(self, 'shapes_dialog'):
+            self.shapes_dialog.destroy()
+        self.shapes_dialog = ShapesDialog()
+
+    def rewards_callback(self):
+        if hasattr(self, 'rewards_dialog'):
+            self.rewards_dialog.destroy()
+        self.rewards_dialog = RewardsDialog()
 
 
 class TDLearningAgentSlow(TDLearningAgent):
@@ -414,27 +427,19 @@ class TDLearningAgentSlow(TDLearningAgent):
             self.dataQ.put(blockcopy)
 
 
-class ShapeDialog(Toplevel):
-    def __init__(self, parent, **kw):
+class ShapesDialog(Toplevel):
+    def __init__(self, **kw):
         Toplevel.__init__(self, **kw)
-        self.parent = parent
 
         self.init_shapes(agent.environment.possible_shapes)
 
-        Checkbutton(self, text='L', variable=self.shapes[LShape]).grid(column=0,
-                                                                       row=1)
-        Checkbutton(self, text='J', variable=self.shapes[JShape]).grid(column=1,
-                                                                       row=1)
-        Checkbutton(self, text='O', variable=self.shapes[OShape]).grid(column=2,
-                                                                       row=1)
-        Checkbutton(self, text='S', variable=self.shapes[SShape]).grid(column=3,
-                                                                       row=1)
-        Checkbutton(self, text='Z', variable=self.shapes[ZShape]).grid(column=0,
-                                                                       row=2)
-        Checkbutton(self, text='I', variable=self.shapes[IShape]).grid(column=1,
-                                                                       row=2)
-        Checkbutton(self, text='T', variable=self.shapes[TShape]).grid(column=2,
-                                                                       row=2)
+        Checkbutton(self, text='L', variable=self.shapes[LShape]).grid(column=0, row=1)
+        Checkbutton(self, text='J', variable=self.shapes[JShape]).grid(column=1, row=1)
+        Checkbutton(self, text='O', variable=self.shapes[OShape]).grid(column=2, row=1)
+        Checkbutton(self, text='S', variable=self.shapes[SShape]).grid(column=3, row=1)
+        Checkbutton(self, text='Z', variable=self.shapes[ZShape]).grid(column=0, row=2)
+        Checkbutton(self, text='I', variable=self.shapes[IShape]).grid(column=1, row=2)
+        Checkbutton(self, text='T', variable=self.shapes[TShape]).grid(column=2, row=2)
 
         Button(self, text="Ok", command=self.on_ok).grid(column=3, row=3)
 
@@ -457,6 +462,49 @@ class ShapeDialog(Toplevel):
         for shape in possible_shapes:
             self.shapes[shape] = BooleanVar(value=True)
 
+
+class RewardsDialog(Toplevel):
+    def __init__(self, **kw):
+        Toplevel.__init__(self, **kw)
+
+        self.init_rewards()
+
+        Button(self, text="Ok", command=self.on_ok).grid(column=4, row=20)
+
+    def init_rewards(self):
+        avail_rewards = inspect.getmembers(reward_features, inspect.isfunction)
+        active_rewards = agent.environment.rewards
+        self.rewards_settings = {}
+
+        r, c = 0, 0
+
+        for reward in avail_rewards:
+            active = BooleanVar()
+            Checkbutton(self, text=reward[0], variable=active).grid(column=c, row=r)
+            textfield = Entry(self, width=5)
+            textfield.grid(column=c+1, row=r)
+
+            if reward[1] in active_rewards:
+                active.set(True)
+                textfield.insert(0, active_rewards[reward[1]])
+
+            self.rewards_settings[reward[1]] = [active, textfield]
+
+            c += 2
+            if c > 4:
+                c = 0
+                r += 1
+
+    def on_ok(self):
+
+        rewards = {}
+
+        for reward, settings in self.rewards_settings.iteritems():
+            if settings[0].get() != 0 and settings[1].get() != '':
+                rewards[reward] = int(settings[1].get())
+
+        agent.environment.rewards = rewards
+        self.destroy()
 
 def is_game_paused():
     return not agent.resume_event.is_set()
