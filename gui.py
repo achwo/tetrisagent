@@ -9,9 +9,11 @@ import time
 import copy
 
 import matplotlib
+from environment import LShape, TShape, IShape, ZShape, SShape, OShape, JShape
+
 matplotlib.use('TkAgg')
 
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2TkAgg
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
 
 from agent import TDLearningAgent
@@ -42,6 +44,7 @@ FAST_FORWARD_BUTTON_TEXT = ">>"
 SAVE_BUTTON_TEXT = "Save Q"
 LOAD_BUTTON_TEXT = "Load Q"
 Q_FILENAME = "q"
+SHAPES_BUTTON_TEXT = 'Shapes auswaehlen'
 
 GUI_REFRESH_IN_MS = 50
 TOTAL_EPISODES = 5000
@@ -57,7 +60,6 @@ dataQ = Queue.Queue(maxsize=0)
 
 
 class Board(Frame):
-
     def __init__(self, parent):
         Frame.__init__(self, parent)
 
@@ -116,13 +118,14 @@ class Board(Frame):
                 'j': 'blue',
                 'l': 'orange',
                 't': 'magenta',
-                }.get(x)
-                
+            }.get(x)
+
         self.clear()
         for r in range(len(blocks)):
             for c in range(len(blocks[r])):
                 color = get_color(blocks[r][c])
                 self.add_block((r, c), color)
+
 
 class ControlPanel(Frame):
     def __init__(self, parent, controller):
@@ -154,6 +157,9 @@ class ControlPanel(Frame):
         self.quitBtn = Button(self, text=QUIT_BUTTON_TEXT,
                               command=self.controller.quit_callback)
 
+        self.shapesButton = Button(self, text=SHAPES_BUTTON_TEXT,
+                                   command=self.controller.shapes_callback)
+
         input_width = 5
 
         self.fastForwardLabel = Label(self, text='Fast Forward count: ')
@@ -172,7 +178,7 @@ class ControlPanel(Frame):
         self.epsilonInput = Entry(self, width=input_width)
         self.epsilonInput.insert(0, "0.3")
 
-        f = Figure(figsize=(7,5), dpi=50)
+        f = Figure(figsize=(7, 5), dpi=50)
         self.subplot = f.add_subplot(111)
 
         self.line_x = []
@@ -181,6 +187,7 @@ class ControlPanel(Frame):
         self.subplot.set_xlabel('episode')
         self.subplot.set_ylabel('blocks')
         self.maxline = self.subplot.axhline(y=-1, color='red', linestyle='--')
+
 
         # a tk.DrawingArea
         self.plot_canvas = FigureCanvasTkAgg(f, master=self)
@@ -199,9 +206,10 @@ class ControlPanel(Frame):
             [(self.maxLabel, w_and_colspan_3)],
             [(self.iterationsLabel, w_and_colspan_3)],
             [(self.qLabel, w_and_colspan_3)],
-            [(self.plot_canvas.get_tk_widget(), e),],
+            [(self.plot_canvas.get_tk_widget(), e), ],
             [(emptyLabel, None)],
 
+            [(self.shapesButton, w_and_colspan_3)],
             [(self.alphaLabel, e), (self.alphaInput, w)],
             [(self.gammaLabel, e), (self.gammaInput, w)],
             [(self.epsilonLabel, e), (self.epsilonInput, w)],
@@ -209,7 +217,6 @@ class ControlPanel(Frame):
             [(self.pauseBtn, e),
              (self.fastForwardBtn, w)],
             [(self.saveBtn, e), (self.loadBtn, e), None, (self.quitBtn, w)]
-            # add row from top here
         ]
 
         emptyLabel['height'] = FIELD_ROWSPAN - len(grid)
@@ -234,7 +241,6 @@ class ControlPanel(Frame):
 
 
 class Controller(object):
-
     def __init__(self, parent):
         self.parent = parent
         self.score = 0
@@ -288,7 +294,8 @@ class Controller(object):
     def fast_forward_callback(self, event=None):
         if not agent.fast_forward:
             self.board.clear()
-            agent.fast_forward_total = int(self.control_panel.fastForwardInput.get())
+            agent.fast_forward_total = int(
+                self.control_panel.fastForwardInput.get())
             agent.fast_forward_count = agent.fast_forward_total
             agent.fast_forward = True
             if is_game_paused():
@@ -338,6 +345,11 @@ class Controller(object):
 
     def _resume_agent(self):
         agent.resume_event.set()
+
+    def shapes_callback(self):
+        if hasattr(self, 'dialog'):
+            self.dialog.destroy()
+        self.dialog = ShapeDialog(self)
 
 
 class TDLearningAgentSlow(TDLearningAgent):
@@ -402,6 +414,50 @@ class TDLearningAgentSlow(TDLearningAgent):
             self.dataQ.put(blockcopy)
 
 
+class ShapeDialog(Toplevel):
+    def __init__(self, parent, **kw):
+        Toplevel.__init__(self, **kw)
+        self.parent = parent
+
+        self.init_shapes(agent.environment.possible_shapes)
+
+        Checkbutton(self, text='L', variable=self.shapes[LShape]).grid(column=0,
+                                                                       row=1)
+        Checkbutton(self, text='J', variable=self.shapes[JShape]).grid(column=1,
+                                                                       row=1)
+        Checkbutton(self, text='O', variable=self.shapes[OShape]).grid(column=2,
+                                                                       row=1)
+        Checkbutton(self, text='S', variable=self.shapes[SShape]).grid(column=3,
+                                                                       row=1)
+        Checkbutton(self, text='Z', variable=self.shapes[ZShape]).grid(column=0,
+                                                                       row=2)
+        Checkbutton(self, text='I', variable=self.shapes[IShape]).grid(column=1,
+                                                                       row=2)
+        Checkbutton(self, text='T', variable=self.shapes[TShape]).grid(column=2,
+                                                                       row=2)
+
+        Button(self, text="Ok", command=self.on_ok).grid(column=3, row=3)
+
+    def on_ok(self):
+        shapes = []
+        for shape, value in self.shapes.iteritems():
+            if value.get() != 0:
+                shapes.append(shape)
+
+        agent.environment.possible_shapes = shapes
+        self.destroy()
+
+    def init_shapes(self, possible_shapes):
+
+        self.shapes = {LShape: BooleanVar(), JShape: BooleanVar(),
+                       OShape: BooleanVar(), SShape: BooleanVar(),
+                       ZShape: BooleanVar(), IShape: BooleanVar(),
+                       TShape: BooleanVar()}
+
+        for shape in possible_shapes:
+            self.shapes[shape] = BooleanVar(value=True)
+
+
 def is_game_paused():
     return not agent.resume_event.is_set()
 
@@ -431,7 +487,8 @@ def update_labels():
 
     controller.control_panel.maxLabel["text"] = MAX_BLOCKS_LABEL.format(maximum)
     controller.control_panel.avgLabel["text"] = AVG_BLOCKS_LABEL.format(avg)
-    controller.control_panel.iterationsLabel["text"] = ITERATIONS_LABEL.format(agent.iterations)
+    controller.control_panel.iterationsLabel["text"] = ITERATIONS_LABEL.format(
+        agent.iterations)
 
 
 def update_plot():
@@ -459,7 +516,8 @@ def refresh_gui():
         update_labels()
         update_plot()
 
-    controller.control_panel.qLabel["text"] = Q_OR_NOT_LABEL.format(agent.action_from_q)
+    controller.control_panel.qLabel["text"] = Q_OR_NOT_LABEL.format(
+        agent.action_from_q)
     GUI_LAST_STATE_WAS_PAUSE = is_game_paused()
     controller.parent.after(GUI_REFRESH_IN_MS, refresh_gui)
 
