@@ -31,7 +31,6 @@ class PerceivedState(object):
 class TDLearningAgent(object):
     def __init__(self, state_class=PerceivedState):
         self.features = [features.individual_height]
-        self.iterations = 0
         self.state_class = state_class
         self.environment = Environment()
         self._initialize_state()
@@ -39,7 +38,7 @@ class TDLearningAgent(object):
         self.Q = defaultdict(int)
         self.alpha = 0.9  # lernrate
         self.gamma = 0.8  # discount rate
-        self.epsilon = 0.3 # probability of random action in epsilon greedy policy
+        self.epsilon = 0.3  # probability of random action in epsilon greedy policy
         self.action_from_q = False
         self.latest_reward = 0
 
@@ -47,14 +46,12 @@ class TDLearningAgent(object):
         self.environment.initialize()
         self._update_perceived_state()
 
-
     def _update_perceived_state(self):
         self.current_state = self._perceived_state()
 
     def run(self, episodes):
         for i in range(0, episodes):
             self._episode()
-            self.iterations += 1
 
     def _episode(self):
         self._initialize_state()
