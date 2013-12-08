@@ -9,7 +9,9 @@ def save_gui_config(controller):
     alpha = float(controller.panel.alphaInput.get())
     gamma = float(controller.panel.gammaInput.get())
     epsilon = float(controller.panel.epsilonInput.get())
-    config = {'alpha': alpha, 'gamma': gamma, 'epsilon': epsilon}
+    fastforward_count = int(controller.panel.fastForwardInput.get())
+    config = {'alpha': alpha, 'gamma': gamma, 'epsilon': epsilon,
+              'fastforward_count': fastforward_count}
     path = os.path.join(os.path.dirname(os.path.realpath(__file__)),
                         CONFIG_FILENAME)
     with open(path, 'w') as f:
@@ -23,7 +25,7 @@ def load_gui_config(controller):
         with open(path, 'r') as f:
             return json.load(f)
     except IOError:
-        pass
+        print 'Error reading config file'
 
 
 def save_to_file(dictionary, filename):
