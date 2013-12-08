@@ -184,12 +184,10 @@ class ControlPanel(Frame):
         self.epsilonInput = Entry(self, width=input_width)
         self.epsilonInput.insert(0, "0.3")
 
-        f = Figure(figsize=(7, 5), dpi=50)
+        f = Figure(figsize=(14, 5), dpi=50)
         self.subplot = f.add_subplot(111)
 
-        self.line_x = []
-        self.line_y = []
-        self.plot_line, = self.subplot.plot(self.line_x, self.line_y)
+        self.plot_line, = self.subplot.plot([], [])
         self.subplot.set_xlabel('episode')
         self.subplot.set_ylabel('blocks')
         self.maxline = self.subplot.axhline(y=-1, color='red', linestyle='--')
@@ -319,12 +317,17 @@ class Controller(object):
 
         if filename:
             util.save_to_file(agent.Q, filename)
+            util.save_statistics(agent.steps_per_episode)
 
     def load_callback(self):
         filename = tkFileDialog.askopenfilename(**self.options)
 
         if filename:
             agent.Q = util.read_from_file(filename)
+            print agent.steps_per_episode
+            stats = util.load_statistics()
+            agent.steps_per_episode = stats['steps_per_episode']
+            print agent.steps_per_episode
 
     def quit_callback(self, event=None):
         util.save_gui_config(controller)
@@ -388,7 +391,6 @@ class TDLearningAgentSlow(TDLearningAgent):
             if self.stop_event.is_set():
                 break
             self._episode()
-            self.iterations += 1
             self._update_gui()
 
     def _episode(self):
@@ -542,7 +544,7 @@ def update_labels():
     controller.panel.maxLabel["text"] = MAX_BLOCKS_LABEL.format(maximum)
     controller.panel.avgLabel["text"] = AVG_BLOCKS_LABEL.format(avg)
     controller.panel.iterationsLabel["text"] = ITERATIONS_LABEL.format(
-        agent.iterations)
+        len(agent.steps_per_episode))
 
 
 def update_plot():
@@ -571,7 +573,7 @@ def refresh_gui():
     update_input_state()
     update_block_canvas()
 
-    if agent.iterations > 0:
+    if len(agent.steps_per_episode) > 0:
         update_labels()
         update_plot()
 
