@@ -277,13 +277,19 @@ class Controller(object):
             a = self.panel.alphaInput
             g = self.panel.gammaInput
             e = self.panel.epsilonInput
+            f = self.panel.fastForwardInput
 
-            a.delete(0, END)
-            a.insert(0, config['alpha'])
-            g.delete(0, END)
-            g.insert(0, config['gamma'])
-            e.delete(0, END)
-            e.insert(0, config['epsilon'])
+            try:
+                a.delete(0, END)
+                a.insert(0, config['alpha'])
+                g.delete(0, END)
+                g.insert(0, config['gamma'])
+                e.delete(0, END)
+                e.insert(0, config['epsilon'])
+                f.delete(0, END)
+                f.insert(0, config['fastforward_count'])
+            except:
+                print 'Error reading config file'
 
     def _set_agent_inputs_state(self, state):
         self.panel.alphaInput['state'] = state
