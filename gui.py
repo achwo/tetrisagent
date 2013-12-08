@@ -39,6 +39,7 @@ MAX_BLOCKS_LABEL = "Maximale Anzahl von Bloecken: {0}"
 AVG_BLOCKS_LABEL = "Platzierte Bloecke im Durchschnitt: {0}"
 ITERATIONS_LABEL = "Anzahl der Durchläufe: {0}"
 Q_OR_NOT_LABEL = "Action aus Q: {0}"
+PLACED_BLOCKS_LABEL = 'Platzierte Blöcke: {0}'
 PAUSE_BUTTON_TEXT = "Pause"
 RESUME_BUTTON_TEXT = "Play"
 QUIT_BUTTON_TEXT = "Quit"
@@ -140,6 +141,7 @@ class ControlPanel(Frame):
         self.make_visible(grid)
 
     def init_components(self):
+        self.blocksLabel = Label(self, text=PLACED_BLOCKS_LABEL.format(0))
         self.avgLabel = Label(self, text=AVG_BLOCKS_LABEL.format(0))
         self.maxLabel = Label(self, text=MAX_BLOCKS_LABEL.format(0))
         self.iterationsLabel = Label(self, text=ITERATIONS_LABEL.format(0))
@@ -205,6 +207,7 @@ class ControlPanel(Frame):
         emptyLabel = Label(self)
 
         grid = [
+            [(self.blocksLabel, w_and_colspan_3)],
             [(self.avgLabel, w_and_colspan_3)],
             [(self.maxLabel, w_and_colspan_3)],
             [(self.iterationsLabel, w_and_colspan_3)],
@@ -528,6 +531,8 @@ def update_labels():
     avg = reduce(lambda x, y: x + y, episodes) / len(episodes)
     maximum = max(agent.steps_per_episode)
 
+    controller.panel.blocksLabel["text"] = PLACED_BLOCKS_LABEL.format(
+        agent.step_count)
     controller.panel.maxLabel["text"] = MAX_BLOCKS_LABEL.format(maximum)
     controller.panel.avgLabel["text"] = AVG_BLOCKS_LABEL.format(avg)
     controller.panel.iterationsLabel["text"] = ITERATIONS_LABEL.format(
