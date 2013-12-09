@@ -1,0 +1,58 @@
+What is it?
+-----------
+
+Simplified Tetris simulator using Q-learning.
+
+Who wrote it?
+-------------
+
+Max Jonas Werner <maxjonas.werner@haw-hamburg.de>
+
+Requirements
+------------
+
+Python 2.7
+
+Usage
+-----
+
+To simply start a game with default parameters run
+
+$ python play.py
+
+To play a specific number N of episodes run
+
+$ python play -e N
+
+To stop learning after N episodes of training run
+
+$ python play -t N
+
+To trace the learning process pass the -i parameter:
+
+$ python play -i
+
+For a more verbose output you may always pass the "-v" parameter.
+
+For generating statistics there's the genstats.py module:
+
+Run the agent with different epsilon values:
+
+$ python genstats.py -o
+
+See how the agent performs for a specific alpha value A:
+
+$ python genstats.py -c A
+
+Module description
+------------------
+
+tetris.py: Contains the game and Q-learning logic. The main interface to this 
+           module is the play() function that gets all relevant Q-learning
+           parameters passed as arguments.
+
+play.py: This module is a simple frontend to the simulator in tetris.py.
+
+utils.py: Contains some convenience functions for output of the game state etc.
+
+genstats.py: Module for generating statistics.
