@@ -50,10 +50,8 @@ Q_FILENAME = "q"
 SHAPES_BUTTON_TEXT = 'Shapes auswaehlen'
 REWARDS_BUTTON_TEXT = 'Rewards auswaehlen'
 
-GUI_REFRESH_IN_MS = 50
+GUI_REFRESH_IN_MS = 1000
 TOTAL_EPISODES = 5000
-STEP_SLOWDOWN_IN_SEC = 0.3
-EPISODE_SLOWDOWN_IN_SEC = 0
 NUM_EPISODES_IN_AVG_CALC = 50
 
 global controller
@@ -302,13 +300,15 @@ class Controller(object):
         try:
             blocks = dataQ.get(timeout=0.1)
             if blocks:
+                print 'updating board'
                 self.board.update(blocks)
         except:
             pass
 
     def refresh_gui(self):
-        self._update_input_state()
+        agent.wait_for_update_event.set()
         self._update_block_canvas()
+        self._update_input_state()
 
         if len(agent.steps_per_episode) > 0:
             self._update_labels()
@@ -332,8 +332,9 @@ class Controller(object):
 
     def _update_plot(self):
         if not agent.fast_forward:
-            x = range(len(agent.steps_per_episode))
-            y = agent.steps_per_episode
+            steps_per_episode = copy.deepcopy(agent.steps_per_episode)
+            x = range(len(steps_per_episode))
+            y = steps_per_episode
             self.panel.plot_line.set_data(x, y)
             ax = self.panel.plot_canvas.figure.axes[0]
             XSCALE = 100
@@ -392,6 +393,8 @@ class Controller(object):
             print agent.steps_per_episode
 
     def quit_callback(self, event=None):
+        print 'quit callback'
+        agent.stop_event.set()
         util.save_gui_config(controller)
         self._resume_agent()
         self.parent.quit()
@@ -401,10 +404,13 @@ class Controller(object):
         self.board.clear()
 
     def pause_callback(self, event=None):
+        print "pause callback"
         if self.is_game_paused():
+            print 'resuming game'
             self.set_gui_state_resume()
             self._resume_agent()
         else:
+            print 'pausing game'
             self.set_gui_state_pause()
             self._pause_agent()
 
@@ -448,12 +454,20 @@ class MeasuredAgent(Agent):
         self.fast_forward_total = 0
         self.fast_forward_count = 0
 
+    def _wait_for_update(self):
+        if self.resume_event.is_set() and not self.stop_event.is_set():
+            print 'push state and wait'
+            self._push_state()
+            self.wait_for_update_event.wait()
+            print 'wait over'
+            self.wait_for_update_event.clear()
+
     def run(self, episodes):
         for i in range(0, episodes):
             if self.stop_event.is_set():
                 break
             self._episode()
-            self._push_state()
+            #self._wait_for_update()
 
     def _episode(self):
         if self._is_fast_forward_finished():
@@ -465,22 +479,25 @@ class MeasuredAgent(Agent):
         self.steps_per_episode.append(self.step_count)
         if self.fast_forward:
             self.fast_forward_count -= 1
-        if EPISODE_SLOWDOWN_IN_SEC > 0 and not self.fast_forward:
-            time.sleep(EPISODE_SLOWDOWN_IN_SEC)
 
     def _step(self):
         self.resume_event.wait()
-        super(MeasuredAgent, self)._step()
-        self.step_count += 1
+        if not self.fast_forward:
+            self._wait_for_update()
+            #time.sleep(STEP_SLOWDOWN_IN_SEC)
 
-        self._push_state()
-        if STEP_SLOWDOWN_IN_SEC > 0 and not self.fast_forward:
-            time.sleep(STEP_SLOWDOWN_IN_SEC)
+        if self.stop_event.is_set():
+            print 'step aborted due to stop event'
+            return
+        super(MeasuredAgent, self)._step()
+        print 'step'
+        self.step_count += 1
 
     def stop_fast_forward(self):
         self.fast_forward = False
         self.fast_forward_count = self.fast_forward_total
-        self._push_state()
+
+        #self._wait_for_update()
 
     def _is_fast_forward_finished(self):
         return (self.fast_forward and self.fast_forward_count <= 0)
@@ -492,6 +509,7 @@ class MeasuredAgent(Agent):
 
     def _push_state(self):
         if not self.fast_forward:
+            print 'pushing state'
             blockcopy = copy.deepcopy(self.environment.field.blocks)
             self.dataQ.put(blockcopy)
 
@@ -541,7 +559,7 @@ class RewardsDialog(Toplevel):
         Button(self, text="Ok", command=self.on_ok).grid(column=4, row=20)
 
     def init_rewards(self):
-        avail_rewards = inspect.getmembers(reward_features, inspect.isfunction)
+        avail_rewards = inspect.getmembers(reward_features, lambda member: inspect.isfunction(member) and member.__module__ == 'reward_features')
         active_rewards = agent.environment.rewards
         self.rewards_settings = {}
 
@@ -565,7 +583,6 @@ class RewardsDialog(Toplevel):
                 r += 1
 
     def on_ok(self):
-
         rewards = {}
 
         for reward, settings in self.rewards_settings.iteritems():
@@ -577,12 +594,13 @@ class RewardsDialog(Toplevel):
 
 
 #TODO: umbenennen
-def run(stop_event, resume_event):
+def run(stop_event, resume_event, wait_for_update_event):
     global agent
     agent = MeasuredAgent()
     agent.dataQ = dataQ
     agent.stop_event = stop_event
     agent.resume_event = resume_event
+    agent.wait_for_update_event = wait_for_update_event
     agent.run(TOTAL_EPISODES)
 
 
@@ -594,9 +612,11 @@ if __name__ == "__main__":
     controller = Controller(tk_root)
     logic_stop_event = threading.Event()
     logic_resume_event = threading.Event()
+    logic_wait_for_update_event = threading.Event()
     logic_thread = threading.Thread(target=run,
                                     args=(logic_stop_event,
-                                          logic_resume_event))
+                                          logic_resume_event,
+                                          logic_wait_for_update_event,))
     logic_thread.start()
     tk_root.after(GUI_REFRESH_IN_MS, controller.refresh_gui)
     tk_root.mainloop()
