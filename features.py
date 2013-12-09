@@ -1,9 +1,9 @@
 import math
 from BitVector import BitVector
 from settings import FIELD_HEIGHT, FIELD_WIDTH
-from environment import Environment
+#from environment import Environment
 
-env = Environment()
+#env = Environment()
 
 
 def max_height(environment):
@@ -16,7 +16,7 @@ def max_height(environment):
                 break
             elif environment.field.blocks[i][j] is not 0:
                 break
-    return max_height
+    return float(max_height)
 
 #the lowest column
 #return value is the height not the row
@@ -48,26 +48,35 @@ def individual_height(environment):
 
     return stack
 
+def sum_of_individual_height(environment):
+    indi_height = individual_height(environment)
+    sum = 0
+    for i in range(FIELD_WIDTH):
+        sum += indi_height[i]
+    return sum
+
 #Hoehenunterschiede zwischen den Spalten
 def column_height_differences(environment):
-    ind_height = individual_height(environment)
+    indi_height = individual_height(environment)
     stack = []
     for i in range(FIELD_WIDTH - 1):
-        stack.append(ind_height[i + 1] - ind_height[i])
+        stack.append(indi_height[i + 1] - indi_height[i])
     return stack
 
 #Summe der Hoehenunterschiede zwischen den Spalten
-def sum_of_column_height_differences(environment, column_height_differences):
+def sum_of_column_height_differences(environment):
+    col_height = column_height_differences(environment)
     sum = 0
     for i in range(FIELD_WIDTH - 1):
-        sum += math.fabs(column_height_differences[i])
+        sum += math.fabs(col_height[i])
     return sum
 
 #durchschnittliche Hoehe der Spalten    
-def mean_height(environment, individual_height):
+def mean_height(environment):
+    indi_height = individual_height(environment)
     sum = 0.0
     for i in range(FIELD_WIDTH):
-        sum += individual_height[i]
+        sum += indi_height[i]
     return sum / FIELD_WIDTH
 
 #Anzahl der Loecher
@@ -75,12 +84,40 @@ def number_of_holes(environment):
     holes = 0
     for i in range(FIELD_WIDTH):
         possible_hole = False
-    for j in range(FIELD_HEIGHT):
-        if possible_hole == True and environment.field.blocks[i][j] is 0:
-            holes += 1
-        elif environment.field.blocks[i][j] is not 0:
-            possible_hole = True
+        for j in range(FIELD_HEIGHT):
+            if possible_hole == True and environment.field.blocks[i][j] is 0:
+                holes += 1
+            elif environment.field.blocks[i][j] is not 0:
+                possible_hole = True
     return holes
+
+def number_of_covers(environment):
+	covers = 0
+	for i in range(FIELD_WIDTH):
+		possible_cover = False
+		for j in reversed(range(FIELD_HEIGHT)):
+			if possible_cover == True and environment.field.blocks[i][j] is not 0:
+				covers += 1
+			elif environment.field.blocks[i][j] is 0:
+				possible_cover = True
+	return covers
+			    
+		
+def number_of_blocks(environment):
+    blocks = 0
+    for i in range(FIELD_WIDTH):
+        for j in range(FIELD_HEIGHT):
+            if environment.field.blocks[i][j] is not 0:
+                blocks += 1
+    return float(blocks)
+
+def weighted_number_of_blocks(environment):
+    blocks = 0
+    for i in range(FIELD_WIDTH):
+        for j in range(FIELD_HEIGHT):
+            if environment.field.blocks[i][j] is not 0:
+                blocks += (FIELD_HEIGHT - j)
+    return float(blocks)
 
 
 def field_to_bitvector(environment):
