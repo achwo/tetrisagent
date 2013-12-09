@@ -28,7 +28,7 @@ class PerceivedState(object):
         return hash(self).__str__()
 
 
-class TDLearningAgent(object):
+class Agent(object):
     def __init__(self, state_class=PerceivedState):
         self.features = [features.individual_height]
         self.state_class = state_class
