@@ -18,7 +18,7 @@ matplotlib.use('TkAgg')
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
 
-from agent import TDLearningAgent
+from agent import Agent
 import settings
 import util
 
@@ -289,6 +289,68 @@ class Controller(object):
             except:
                 print 'Error reading config file'
 
+    def is_game_paused(self):
+        return not agent.resume_event.is_set()
+
+    def _update_input_state(self):
+        if self.is_game_paused():
+            self.set_gui_state_pause()
+        else:
+            self.set_gui_state_resume()
+
+    def _update_block_canvas(self):
+        try:
+            blocks = dataQ.get(timeout=0.1)
+            if blocks:
+                self.board.update(blocks)
+        except:
+            pass
+
+    def refresh_gui(self):
+        self._update_input_state()
+        self._update_block_canvas()
+
+        if len(agent.steps_per_episode) > 0:
+            self._update_labels()
+            self._update_plot()
+
+        self.panel.qLabel["text"] = Q_OR_NOT_LABEL.format(
+            agent.action_from_q)
+        self.parent.after(GUI_REFRESH_IN_MS, self.refresh_gui)
+
+    def _update_labels(self):
+        episodes = agent.steps_per_episode[-NUM_EPISODES_IN_AVG_CALC:]
+        avg = reduce(lambda x, y: x + y, episodes) / len(episodes)
+        maximum = max(agent.steps_per_episode)
+
+        self.panel.blocksLabel["text"] = PLACED_BLOCKS_LABEL.format(
+            agent.step_count)
+        self.panel.maxLabel["text"] = MAX_BLOCKS_LABEL.format(maximum)
+        self.panel.avgLabel["text"] = AVG_BLOCKS_LABEL.format(avg)
+        self.panel.iterationsLabel["text"] = ITERATIONS_LABEL.format(
+            len(agent.steps_per_episode))
+
+    def _update_plot(self):
+        if not agent.fast_forward:
+            x = range(len(agent.steps_per_episode))
+            y = agent.steps_per_episode
+            self.panel.plot_line.set_data(x, y)
+            ax = self.panel.plot_canvas.figure.axes[0]
+            XSCALE = 100
+            YSCALE = 35
+            if len(x) > XSCALE:
+                ax.set_xlim(0, len(x))
+            else:
+                ax.set_xlim(0, XSCALE)
+
+            max_y = max(y)
+            if max_y > YSCALE:
+                ax.set_ylim(0, max_y)
+            else:
+                ax.set_ylim(0, YSCALE)
+            self.panel.maxline.set_ydata(max_y)
+            self.panel.plot_canvas.draw()
+
     def _set_agent_inputs_state(self, state):
         self.panel.alphaInput['state'] = state
         self.panel.gammaInput['state'] = state
@@ -309,7 +371,7 @@ class Controller(object):
                 self.panel.fastForwardInput.get())
             agent.fast_forward_count = agent.fast_forward_total
             agent.fast_forward = True
-            if is_game_paused():
+            if self.is_game_paused():
                 self.pause_callback()
 
     def save_callback(self):
@@ -339,7 +401,7 @@ class Controller(object):
         self.board.clear()
 
     def pause_callback(self, event=None):
-        if is_game_paused():
+        if self.is_game_paused():
             self.set_gui_state_resume()
             self._resume_agent()
         else:
@@ -373,13 +435,13 @@ class Controller(object):
         self.rewards_dialog = RewardsDialog()
 
 
-class TDLearningAgentSlow(TDLearningAgent):
+class MeasuredAgent(Agent):
     """
     Special class for GUI representation with slower calculation speed
     """
 
     def __init__(self):
-        super(TDLearningAgentSlow, self).__init__()
+        super(MeasuredAgent, self).__init__()
         self.step_count = 0
         self.steps_per_episode = []
         self.fast_forward = False
@@ -391,7 +453,7 @@ class TDLearningAgentSlow(TDLearningAgent):
             if self.stop_event.is_set():
                 break
             self._episode()
-            self._update_gui()
+            self._push_state()
 
     def _episode(self):
         if self._is_fast_forward_finished():
@@ -399,7 +461,7 @@ class TDLearningAgentSlow(TDLearningAgent):
             self.resume_event.clear()
 
         self.step_count = 0
-        super(TDLearningAgentSlow, self)._episode()
+        super(MeasuredAgent, self)._episode()
         self.steps_per_episode.append(self.step_count)
         if self.fast_forward:
             self.fast_forward_count -= 1
@@ -408,17 +470,17 @@ class TDLearningAgentSlow(TDLearningAgent):
 
     def _step(self):
         self.resume_event.wait()
-        super(TDLearningAgentSlow, self)._step()
+        super(MeasuredAgent, self)._step()
         self.step_count += 1
 
-        self._update_gui()
+        self._push_state()
         if STEP_SLOWDOWN_IN_SEC > 0 and not self.fast_forward:
             time.sleep(STEP_SLOWDOWN_IN_SEC)
 
     def stop_fast_forward(self):
         self.fast_forward = False
         self.fast_forward_count = self.fast_forward_total
-        self._update_gui()
+        self._push_state()
 
     def _is_fast_forward_finished(self):
         return (self.fast_forward and self.fast_forward_count <= 0)
@@ -426,9 +488,9 @@ class TDLearningAgentSlow(TDLearningAgent):
     def _is_game_over(self):
         if self.stop_event.is_set():
             return True
-        return super(TDLearningAgentSlow, self)._is_game_over()
+        return super(MeasuredAgent, self)._is_game_over()
 
-    def _update_gui(self):
+    def _push_state(self):
         if not self.fast_forward:
             blockcopy = copy.deepcopy(self.environment.field.blocks)
             self.dataQ.put(blockcopy)
@@ -514,77 +576,10 @@ class RewardsDialog(Toplevel):
         self.destroy()
 
 
-def is_game_paused():
-    return not agent.resume_event.is_set()
-
-
-def update_input_state():
-    if is_game_paused():
-        controller.set_gui_state_pause()
-    else:
-        controller.set_gui_state_resume()
-
-
-def update_block_canvas():
-    try:
-        blocks = dataQ.get(timeout=0.1)
-        if blocks:
-            controller.board.update(blocks)
-    except:
-        pass
-
-
-def update_labels():
-    episodes = agent.steps_per_episode[-NUM_EPISODES_IN_AVG_CALC:]
-    avg = reduce(lambda x, y: x + y, episodes) / len(episodes)
-    maximum = max(agent.steps_per_episode)
-
-    controller.panel.blocksLabel["text"] = PLACED_BLOCKS_LABEL.format(
-        agent.step_count)
-    controller.panel.maxLabel["text"] = MAX_BLOCKS_LABEL.format(maximum)
-    controller.panel.avgLabel["text"] = AVG_BLOCKS_LABEL.format(avg)
-    controller.panel.iterationsLabel["text"] = ITERATIONS_LABEL.format(
-        len(agent.steps_per_episode))
-
-
-def update_plot():
-    if not agent.fast_forward:
-        x = range(len(agent.steps_per_episode))
-        y = agent.steps_per_episode
-        controller.panel.plot_line.set_data(x, y)
-        ax = controller.panel.plot_canvas.figure.axes[0]
-        XSCALE = 100
-        YSCALE = 35
-        if len(x) > XSCALE:
-            ax.set_xlim(0, len(x))
-        else:
-            ax.set_xlim(0, XSCALE)
-
-        max_y = max(y)
-        if max_y > YSCALE:
-            ax.set_ylim(0, max_y)
-        else:
-            ax.set_ylim(0, YSCALE)
-        controller.panel.maxline.set_ydata(max_y)
-        controller.panel.plot_canvas.draw()
-
-
-def refresh_gui():
-    update_input_state()
-    update_block_canvas()
-
-    if len(agent.steps_per_episode) > 0:
-        update_labels()
-        update_plot()
-
-    controller.panel.qLabel["text"] = Q_OR_NOT_LABEL.format(
-        agent.action_from_q)
-    controller.parent.after(GUI_REFRESH_IN_MS, refresh_gui)
-
-
+#TODO: umbenennen
 def run(stop_event, resume_event):
     global agent
-    agent = TDLearningAgentSlow()
+    agent = MeasuredAgent()
     agent.dataQ = dataQ
     agent.stop_event = stop_event
     agent.resume_event = resume_event
@@ -603,7 +598,7 @@ if __name__ == "__main__":
                                     args=(logic_stop_event,
                                           logic_resume_event))
     logic_thread.start()
-    tk_root.after(GUI_REFRESH_IN_MS, refresh_gui)
+    tk_root.after(GUI_REFRESH_IN_MS, controller.refresh_gui)
     tk_root.mainloop()
     logic_stop_event.set()
     logic_thread.join()
