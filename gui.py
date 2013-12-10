@@ -340,7 +340,7 @@ class Controller(object):
             if episode_count == 0:
                 return
 
-            x = range(len(steps_per_episode))
+            x = range(episode_count)
             y = steps_per_episode
             self.panel.plot_line.set_data(x, y)
             ax = self.panel.plot_canvas.figure.axes[0]
