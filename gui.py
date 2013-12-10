@@ -50,7 +50,7 @@ Q_FILENAME = "q"
 SHAPES_BUTTON_TEXT = 'Shapes auswaehlen'
 REWARDS_BUTTON_TEXT = 'Rewards auswaehlen'
 
-GUI_REFRESH_IN_MS = 1000
+GUI_REFRESH_IN_MS = 200
 TOTAL_EPISODES = 5000
 NUM_EPISODES_IN_AVG_CALC = 50
 
@@ -260,6 +260,7 @@ class Controller(object):
         self.panel = ControlPanel(parent, self)
         self.panel.grid(row=0, column=1, sticky=N + W)
 
+        self.parent.protocol("WM_DELETE_WINDOW", self.quit_callback)
         self.parent.bind("<Escape>", self.quit_callback)
         self.parent.bind("<Control-f>", self.fast_forward_callback)
         self.parent.bind("<Control-space>", self.pause_callback)
@@ -300,7 +301,6 @@ class Controller(object):
         try:
             blocks = dataQ.get(timeout=0.1)
             if blocks:
-                print 'updating board'
                 self.board.update(blocks)
         except:
             pass
@@ -310,29 +310,36 @@ class Controller(object):
         self._update_block_canvas()
         self._update_input_state()
 
-        if len(agent.steps_per_episode) > 0:
-            self._update_labels()
-            self._update_plot()
+        self._update_labels()
+        self._update_plot()
 
         self.panel.qLabel["text"] = Q_OR_NOT_LABEL.format(
             agent.action_from_q)
         self.parent.after(GUI_REFRESH_IN_MS, self.refresh_gui)
 
     def _update_labels(self):
-        episodes = agent.steps_per_episode[-NUM_EPISODES_IN_AVG_CALC:]
-        avg = reduce(lambda x, y: x + y, episodes) / len(episodes)
-        maximum = max(agent.steps_per_episode)
-
         self.panel.blocksLabel["text"] = PLACED_BLOCKS_LABEL.format(
             agent.step_count)
-        self.panel.maxLabel["text"] = MAX_BLOCKS_LABEL.format(maximum)
-        self.panel.avgLabel["text"] = AVG_BLOCKS_LABEL.format(avg)
-        self.panel.iterationsLabel["text"] = ITERATIONS_LABEL.format(
-            len(agent.steps_per_episode))
+
+        episode_count = len(agent.steps_per_episode)
+        if episode_count > 0:
+            maximum = max(agent.steps_per_episode)
+            self.panel.maxLabel["text"] = MAX_BLOCKS_LABEL.format(maximum)
+
+            episodes = agent.steps_per_episode[-NUM_EPISODES_IN_AVG_CALC:]
+            avg = reduce(lambda x, y: x + y, episodes) / len(episodes)
+            self.panel.avgLabel["text"] = AVG_BLOCKS_LABEL.format(avg)
+
+            self.panel.iterationsLabel["text"] = ITERATIONS_LABEL.format(
+                episode_count)
 
     def _update_plot(self):
         if not agent.fast_forward:
             steps_per_episode = copy.deepcopy(agent.steps_per_episode)
+            episode_count = len(steps_per_episode)
+            if episode_count == 0:
+                return
+
             x = range(len(steps_per_episode))
             y = steps_per_episode
             self.panel.plot_line.set_data(x, y)
@@ -387,16 +394,14 @@ class Controller(object):
 
         if filename:
             agent.Q = util.read_from_file(filename)
-            print agent.steps_per_episode
             stats = util.load_statistics()
             agent.steps_per_episode = stats['steps_per_episode']
-            print agent.steps_per_episode
 
     def quit_callback(self, event=None):
-        print 'quit callback'
         agent.stop_event.set()
         util.save_gui_config(controller)
         self._resume_agent()
+        agent.wait_for_update_event.set()
         self.parent.quit()
         self.parent.destroy()
 
@@ -404,13 +409,10 @@ class Controller(object):
         self.board.clear()
 
     def pause_callback(self, event=None):
-        print "pause callback"
         if self.is_game_paused():
-            print 'resuming game'
             self.set_gui_state_resume()
             self._resume_agent()
         else:
-            print 'pausing game'
             self.set_gui_state_pause()
             self._pause_agent()
 
@@ -456,11 +458,9 @@ class MeasuredAgent(Agent):
 
     def _wait_for_update(self):
         if self.resume_event.is_set() and not self.stop_event.is_set():
-            print 'push state and wait'
             self._push_state()
-            self.wait_for_update_event.wait()
-            print 'wait over'
             self.wait_for_update_event.clear()
+            self.wait_for_update_event.wait()
 
     def run(self, episodes):
         for i in range(0, episodes):
@@ -482,16 +482,14 @@ class MeasuredAgent(Agent):
 
     def _step(self):
         self.resume_event.wait()
+
+        if self.stop_event.is_set():
+            return
+        super(MeasuredAgent, self)._step()
+        self.step_count += 1
         if not self.fast_forward:
             self._wait_for_update()
             #time.sleep(STEP_SLOWDOWN_IN_SEC)
-
-        if self.stop_event.is_set():
-            print 'step aborted due to stop event'
-            return
-        super(MeasuredAgent, self)._step()
-        print 'step'
-        self.step_count += 1
 
     def stop_fast_forward(self):
         self.fast_forward = False
@@ -509,7 +507,6 @@ class MeasuredAgent(Agent):
 
     def _push_state(self):
         if not self.fast_forward:
-            print 'pushing state'
             blockcopy = copy.deepcopy(self.environment.field.blocks)
             self.dataQ.put(blockcopy)
 
@@ -593,8 +590,7 @@ class RewardsDialog(Toplevel):
         self.destroy()
 
 
-#TODO: umbenennen
-def run(stop_event, resume_event, wait_for_update_event):
+def start_agent(stop_event, resume_event, wait_for_update_event):
     global agent
     agent = MeasuredAgent()
     agent.dataQ = dataQ
@@ -613,7 +609,7 @@ if __name__ == "__main__":
     logic_stop_event = threading.Event()
     logic_resume_event = threading.Event()
     logic_wait_for_update_event = threading.Event()
-    logic_thread = threading.Thread(target=run,
+    logic_thread = threading.Thread(target=start_agent,
                                     args=(logic_stop_event,
                                           logic_resume_event,
                                           logic_wait_for_update_event,))
