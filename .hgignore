@@ -7,3 +7,4 @@ syntax: glob
 *-project
 *-workspace
 *.orig
+config.json
