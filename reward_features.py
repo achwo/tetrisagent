@@ -27,7 +27,7 @@ def number_of_holes_reward(environment):
 
 def number_of_blocks_reward(environment):
     if number_of_blocks(environment) > 0:
-        return -(number_of_blocks(environment)/FIELD_HEIGHT/FIELD_WIDTH)
+        return -(number_of_blocks(environment)/4)
     return 0
 
 def weighted_number_of_blocks_reward(environment):
@@ -40,3 +40,7 @@ def number_of_covers_reward(environment):
 	if number_of_covers(environment) > 0:
 		return -(number_of_covers(environment))
 	return 0
+
+def sum_of_column_height_differences_reward(environment):
+    return -(sum_of_column_height_differences(environment))
+

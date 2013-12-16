@@ -15,9 +15,16 @@ class Environment(object):
         self.possible_shapes = [OShape, JShape, IShape, LShape, ZShape, TShape,
                            SShape]
 
-        self.rewards = {reward_features.game_over_reward: 10,
-                                reward_features.removed_line_reward: 2}
+#        self.rewards = {reward_features.game_over_reward: 10,
+#                                reward_features.removed_line_reward: 2}
 
+	self.rewards = {reward_features.game_over_reward: 25,
+                        reward_features.removed_line_reward: 10,
+                        reward_features.number_of_holes_reward: 1,
+                        reward_features.number_of_covers_reward: 1,
+                        reward_features.max_height_reward: 0.5,
+                        reward_features.sum_of_column_height_differences_reward: 0.7,
+                        reward_features.number_of_blocks_reward: 0.5}
         self.random = random.Random()
         self.field = Field()
         self.initialize()
