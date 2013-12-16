@@ -335,10 +335,11 @@ class Controller(object):
             maximum = max(agent_state['steps_per_episode'])
             self.panel.maxLabel["text"] = MAX_BLOCKS_LABEL.format(maximum)
 
-            episodes = agent_state['steps_per_episode'][-NUM_EPISODES_IN_AVG_CALC:]
-            avg = reduce(lambda x, y: x + y, episodes) / len(episodes)
+            steps_per_episode = agent_state['steps_per_episode']
+            latest_episodes = steps_per_episode[-NUM_EPISODES_IN_AVG_CALC:]
+            avg = (reduce(lambda x, y: x + y, latest_episodes) /
+                   len(latest_episodes))
             self.panel.avgLabel["text"] = AVG_BLOCKS_LABEL.format(avg)
-
             self.panel.iterationsLabel["text"] = ITERATIONS_LABEL.format(
                 episode_count)
 
