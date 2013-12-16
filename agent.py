@@ -30,7 +30,7 @@ class PerceivedState(object):
 
 class Agent(object):
     def __init__(self, state_class=PerceivedState):
-        self.features = [features.individual_height]
+        self.features = [features.column_height_differences]
         self.state_class = state_class
         self.environment = Environment()
         self._initialize_state()
