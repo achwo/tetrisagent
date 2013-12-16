@@ -130,7 +130,6 @@ class Board(Frame):
 
 class ControlPanel(Frame):
     def __init__(self, parent, controller):
-        #super(ControlPanel, self).__init__(parent)
         Frame.__init__(self, parent)
         self.parent = parent
         self.controller = controller
@@ -297,45 +296,55 @@ class Controller(object):
         else:
             self.set_gui_state_resume()
 
-    def _update_block_canvas(self):
+    def refresh_gui(self):
+        agent_state = self._get_agent_state()
+        self._update_input_state()
+        if agent_state:
+            self.board.update(agent_state['blocks'])
+            self._update_labels(agent_state)
+            self._update_plot(agent_state)
+
+        agent.wait_for_update_event.set()
+        self.parent.after(GUI_REFRESH_IN_MS, self.refresh_gui)
+
+    def _get_agent_state(self):
+        blocks = None
         try:
             blocks = dataQ.get(timeout=0.1)
-            if blocks:
-                self.board.update(blocks)
         except:
             pass
 
-    def refresh_gui(self):
-        agent.wait_for_update_event.set()
-        self._update_block_canvas()
-        self._update_input_state()
+        if blocks:
+            steps_per_episode = copy.deepcopy(agent.steps_per_episode)
+            return {
+                'steps_per_episode': steps_per_episode,
+                'episode_count': len(steps_per_episode),
+                'blocks': blocks,
+                'step_count': agent.step_count,
+                'q_value': agent.action_from_q
+                }
 
-        self._update_labels()
-        self._update_plot()
-
-        self.panel.qLabel["text"] = Q_OR_NOT_LABEL.format(
-            agent.action_from_q)
-        self.parent.after(GUI_REFRESH_IN_MS, self.refresh_gui)
-
-    def _update_labels(self):
+    def _update_labels(self, agent_state):
         self.panel.blocksLabel["text"] = PLACED_BLOCKS_LABEL.format(
-            agent.step_count)
+            agent_state['step_count'])
 
-        episode_count = len(agent.steps_per_episode)
+        episode_count = agent_state['episode_count']
+        self.panel.qLabel["text"] = Q_OR_NOT_LABEL.format(
+            agent_state['q_value'])
         if episode_count > 0:
-            maximum = max(agent.steps_per_episode)
+            maximum = max(agent_state['steps_per_episode'])
             self.panel.maxLabel["text"] = MAX_BLOCKS_LABEL.format(maximum)
 
-            episodes = agent.steps_per_episode[-NUM_EPISODES_IN_AVG_CALC:]
+            episodes = agent_state['steps_per_episode'][-NUM_EPISODES_IN_AVG_CALC:]
             avg = reduce(lambda x, y: x + y, episodes) / len(episodes)
             self.panel.avgLabel["text"] = AVG_BLOCKS_LABEL.format(avg)
 
             self.panel.iterationsLabel["text"] = ITERATIONS_LABEL.format(
                 episode_count)
 
-    def _update_plot(self):
+    def _update_plot(self, agent_state):
         if not agent.fast_forward:
-            steps_per_episode = copy.deepcopy(agent.steps_per_episode)
+            steps_per_episode = agent_state['steps_per_episode']
             episode_count = len(steps_per_episode)
             if episode_count == 0:
                 return
@@ -410,11 +419,11 @@ class Controller(object):
 
     def pause_callback(self, event=None):
         if self.is_game_paused():
-            self.set_gui_state_resume()
             self._resume_agent()
+            self.set_gui_state_resume()
         else:
-            self.set_gui_state_pause()
             self._pause_agent()
+            self.set_gui_state_pause()
 
     def set_gui_state_resume(self):
         self.panel.pauseBtn['text'] = PAUSE_BUTTON_TEXT
