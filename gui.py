@@ -60,7 +60,7 @@ global dataQ
 dataQ = Queue.Queue(maxsize=0)
 
 
-class Board(Frame):
+class BoardFrame(Frame):
     def __init__(self, parent):
         Frame.__init__(self, parent)
 
@@ -128,7 +128,7 @@ class Board(Frame):
                 self.add_block((r, c), color)
 
 
-class ControlPanel(Frame):
+class ControlFrame(Frame):
     def __init__(self, parent, controller):
         Frame.__init__(self, parent)
         self.parent = parent
@@ -181,18 +181,6 @@ class ControlPanel(Frame):
         self.epsilonInput = Entry(self, width=input_width)
         self.epsilonInput.insert(0, "0.3")
 
-        f = Figure(figsize=(14, 5), dpi=50)
-        self.subplot = f.add_subplot(111)
-
-        self.plot_line, = self.subplot.plot([], [])
-        self.subplot.set_xlabel('episode')
-        self.subplot.set_ylabel('blocks')
-        self.maxline = self.subplot.axhline(y=-1, color='red', linestyle='--')
-
-        # a tk.DrawingArea
-        self.plot_canvas = FigureCanvasTkAgg(f, master=self)
-        self.plot_canvas.show()
-
     def init_grid(self):
         w_and_colspan_3 = dict(sticky=W, columnspan=3)
 
@@ -207,7 +195,6 @@ class ControlPanel(Frame):
             [(self.maxLabel, w_and_colspan_3)],
             [(self.iterationsLabel, w_and_colspan_3)],
             [(self.qLabel, w_and_colspan_3)],
-            [(self.plot_canvas.get_tk_widget(), e), ],
             [(emptyLabel, None)],
 
             [(self.shapesButton, w_and_colspan_3)],
@@ -242,7 +229,7 @@ class ControlPanel(Frame):
                                                **grid[row][col][1])
 
 
-class Controller(object):
+class MainController(object):
     def __init__(self, parent):
         self.parent = parent
         self.score = 0
@@ -253,11 +240,13 @@ class Controller(object):
                         'initialfile': 'q', 'parent': tk_root,
                         'title': "Choose a File"}
 
-        self.board = Board(parent)
+        self.board = BoardFrame(parent)
         self.board.clear()
 
-        self.panel = ControlPanel(parent, self)
+        self.panel = ControlFrame(parent, self)
         self.panel.grid(row=0, column=1, sticky=N + W)
+
+        self.plot_controller = PlotController(parent)
 
         self.parent.protocol("WM_DELETE_WINDOW", self.quit_callback)
         self.parent.bind("<Escape>", self.quit_callback)
@@ -302,7 +291,7 @@ class Controller(object):
         if agent_state:
             self.board.update(agent_state['blocks'])
             self._update_labels(agent_state)
-            self._update_plot(agent_state)
+            self.plot_controller.update(agent_state)
 
         agent.wait_for_update_event.set()
         self.parent.after(GUI_REFRESH_IN_MS, self.refresh_gui)
@@ -342,32 +331,6 @@ class Controller(object):
             self.panel.avgLabel["text"] = AVG_BLOCKS_LABEL.format(avg)
             self.panel.iterationsLabel["text"] = ITERATIONS_LABEL.format(
                 episode_count)
-
-    def _update_plot(self, agent_state):
-        if not agent.fast_forward:
-            steps_per_episode = agent_state['steps_per_episode']
-            episode_count = len(steps_per_episode)
-            if episode_count == 0:
-                return
-
-            x = range(episode_count)
-            y = steps_per_episode
-            self.panel.plot_line.set_data(x, y)
-            ax = self.panel.plot_canvas.figure.axes[0]
-            XSCALE = 100
-            YSCALE = 35
-            if len(x) > XSCALE:
-                ax.set_xlim(0, len(x))
-            else:
-                ax.set_xlim(0, XSCALE)
-
-            max_y = max(y)
-            if max_y > YSCALE:
-                ax.set_ylim(0, max_y)
-            else:
-                ax.set_ylim(0, YSCALE)
-            self.panel.maxline.set_ydata(max_y)
-            self.panel.plot_canvas.draw()
 
     def _set_agent_inputs_state(self, state):
         self.panel.alphaInput['state'] = state
@@ -451,6 +414,47 @@ class Controller(object):
         if hasattr(self, 'rewards_dialog'):
             self.rewards_dialog.destroy()
         self.rewards_dialog = RewardsDialog()
+
+
+class PlotController(object):
+    def __init__(self, parent):
+        f = Figure(figsize=(14, 5), dpi=50)
+        self.subplot = f.add_subplot(111)
+
+        self.plot_line, = self.subplot.plot([], [])
+        self.subplot.set_xlabel('episode')
+        self.subplot.set_ylabel('blocks')
+        self.maxline = self.subplot.axhline(y=-1, color='red', linestyle='--')
+
+        # a tk.DrawingArea
+        self.plot_canvas = FigureCanvasTkAgg(f, master=parent)
+        self.plot_canvas.show()
+
+    def update(self, agent_state):
+        if not agent.fast_forward:
+            steps_per_episode = agent_state['steps_per_episode']
+            episode_count = len(steps_per_episode)
+            if episode_count == 0:
+                return
+
+            x = range(episode_count)
+            y = steps_per_episode
+            self.plot_line.set_data(x, y)
+            ax = self.plot_canvas.figure.axes[0]
+            XSCALE = 100
+            YSCALE = 35
+            if len(x) > XSCALE:
+                ax.set_xlim(0, len(x))
+            else:
+                ax.set_xlim(0, XSCALE)
+
+            max_y = max(y)
+            if max_y > YSCALE:
+                ax.set_ylim(0, max_y)
+            else:
+                ax.set_ylim(0, YSCALE)
+            self.maxline.set_ydata(max_y)
+            self.plot_canvas.draw()
 
 
 class MeasuredAgent(Agent):
@@ -615,7 +619,7 @@ if __name__ == "__main__":
     tk_root.title("tetris agent")
     height = BOARD_HEIGHT_IN_PX + OFFSET_TO_WINDOW_BORDER_IN_PX * 2
     tk_root.minsize(450, height)
-    controller = Controller(tk_root)
+    controller = MainController(tk_root)
     logic_stop_event = threading.Event()
     logic_resume_event = threading.Event()
     logic_wait_for_update_event = threading.Event()
