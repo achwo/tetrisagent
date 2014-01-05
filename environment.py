@@ -11,14 +11,13 @@ BASE_SCORE_MULTIPLIER = 10
 
 class Environment(object):
     def __init__(self, blocks=None):
-        # self.possible_shapes = [TShape]
+
+        # can be set from gui, therefore maybe default is not used
         self.possible_shapes = [OShape, JShape, IShape, LShape, ZShape, TShape,
                            SShape]
 
-#        self.rewards = {reward_features.game_over_reward: 10,
-#                                reward_features.removed_line_reward: 2}
-
-	self.rewards = {reward_features.game_over_reward: 25,
+        # can be set from gui, therefore maybe default is not used
+        self.rewards = {reward_features.game_over_reward: 25,
                         reward_features.removed_line_reward: 10,
                         reward_features.number_of_holes_reward: 1,
                         reward_features.number_of_covers_reward: 1,
@@ -47,6 +46,13 @@ class Environment(object):
         self.deleted_lines_last_round = 0
 
     def possible_actions(self):
+        """
+        Calculates which actions are possible for the current shape.
+        Since some shapes are very wide in certain rotations, the last few
+        columns would often be out of bounds otherwise.
+
+        :return: list of possible actions
+        """
         if self.is_game_over():
             return []
 
@@ -62,6 +68,12 @@ class Environment(object):
         return column + self.current_shape.rightmost(rotation) <= RIGHTMOST_INDEX
 
     def execute_action(self, action):
+        """
+        Executes the given action, if valid and calculates the reward for this action.
+        :param action: Action object
+        :return: the reward for the action
+        :raise: InvalidActionError if action is invalid
+        """
         if not self._is_action_valid(action):
             raise InvalidActionError()
 
@@ -79,6 +91,11 @@ class Environment(object):
         return self._is_spawn_blocked() or self._is_block_in_vanish_zone()
 
     def _is_block_in_vanish_zone(self):
+        """
+        Vanish zone is the invisible zone of the field above the screen.
+        According to the official Tetris standard, there may be no block placed
+        inside of the vanish zone.
+        """
         for col in self.field.blocks:
             for row in range(VANISH_ZONE_HEIGHT):
                 if col[row] != 0:
@@ -138,7 +155,7 @@ class Field(object):
                 "{0} is not valid for shape {1}".format(action, shape))
 
         shape.set_drop_rotation(action.rotation)
-        shape.add_x_offset(action.column) #TODO not really
+        shape.add_x_offset(action.column)
         self._drop_shape(shape)
         self._add_shape_to_field(shape)
         self._delete_lines(self._find_full_lines())
@@ -242,6 +259,11 @@ class Shape(object):
         return self.name
 
     def rightmost(self, rotation):
+        """
+        The rightmost position in which the shape can be placed in the given
+        rotation.
+        :return: column number
+        """
         maximum = 0
         for coord in self.rotations[rotation]:
             if coord[0] > maximum:
