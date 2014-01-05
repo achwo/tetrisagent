@@ -18,9 +18,10 @@ def max_height(environment):
                 break
     return float(max_height)
 
-#the lowest column
-#return value is the height not the row
+
 def min_height(environment):
+    #the lowest column
+    #return value is the height not the row
     min_height = FIELD_HEIGHT
     for i in range(FIELD_WIDTH):
         for j in range(FIELD_HEIGHT):
@@ -35,8 +36,8 @@ def min_height(environment):
     return min_height
 
 
-#the height of every column     
 def individual_height(environment):
+    #the height of every column
     stack = []
     for i in range(FIELD_WIDTH):
         for j in range(FIELD_HEIGHT):
@@ -48,6 +49,7 @@ def individual_height(environment):
 
     return stack
 
+
 def sum_of_individual_height(environment):
     indi_height = individual_height(environment)
     sum = 0
@@ -55,32 +57,36 @@ def sum_of_individual_height(environment):
         sum += indi_height[i]
     return sum
 
-#Hoehenunterschiede zwischen den Spalten
+
 def column_height_differences(environment):
+    #Hoehenunterschiede zwischen den Spalten
     indi_height = individual_height(environment)
     stack = []
     for i in range(FIELD_WIDTH - 1):
         stack.append(indi_height[i + 1] - indi_height[i])
     return stack
 
-#Summe der Hoehenunterschiede zwischen den Spalten
+
 def sum_of_column_height_differences(environment):
+    #Summe der Hoehenunterschiede zwischen den Spalten
     col_height = column_height_differences(environment)
     sum = 0
     for i in range(FIELD_WIDTH - 1):
         sum += math.fabs(col_height[i])
     return sum
 
-#durchschnittliche Hoehe der Spalten    
+
 def mean_height(environment):
+    #durchschnittliche Hoehe der Spalten
     indi_height = individual_height(environment)
     sum = 0.0
     for i in range(FIELD_WIDTH):
         sum += indi_height[i]
     return sum / FIELD_WIDTH
 
-#Anzahl der Loecher
+
 def number_of_holes(environment):
+    #Anzahl der Loecher
     holes = 0
     for i in range(FIELD_WIDTH):
         possible_hole = False
@@ -91,18 +97,20 @@ def number_of_holes(environment):
                 possible_hole = True
     return holes
 
+
 def number_of_covers(environment):
-	covers = 0
-	for i in range(FIELD_WIDTH):
-		possible_cover = False
-		for j in reversed(range(FIELD_HEIGHT)):
-			if possible_cover == True and environment.field.blocks[i][j] is not 0:
-				covers += 1
-			elif environment.field.blocks[i][j] is 0:
-				possible_cover = True
-	return covers
-			    
-		
+    covers = 0
+    for i in range(FIELD_WIDTH):
+        possible_cover = False
+        for j in reversed(range(FIELD_HEIGHT)):
+            if possible_cover == True and environment.field.blocks[i][
+                j] is not 0:
+                covers += 1
+            elif environment.field.blocks[i][j] is 0:
+                possible_cover = True
+    return covers
+
+
 def number_of_blocks(environment):
     blocks = 0
     for i in range(FIELD_WIDTH):
@@ -110,6 +118,7 @@ def number_of_blocks(environment):
             if environment.field.blocks[i][j] is not 0:
                 blocks += 1
     return float(blocks)
+
 
 def weighted_number_of_blocks(environment):
     blocks = 0
