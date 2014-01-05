@@ -6,11 +6,11 @@ import Queue
 import inspect
 import threading
 import tkFileDialog
-import time
 import copy
 
 import matplotlib
 from environment import LShape, TShape, IShape, ZShape, SShape, OShape, JShape
+import features
 import reward_features
 
 matplotlib.use('TkAgg')
@@ -49,6 +49,7 @@ LOAD_BUTTON_TEXT = "Load Q"
 Q_FILENAME = "q"
 SHAPES_BUTTON_TEXT = 'Shapes auswaehlen'
 REWARDS_BUTTON_TEXT = 'Rewards auswaehlen'
+FEATURES_BUTTON_TEXT = 'State Features auswaehlen'
 
 GUI_REFRESH_IN_MS = 200
 TOTAL_EPISODES = 500000
@@ -150,7 +151,7 @@ class ControlFrame(Frame):
         self.fastForwardInput.insert(0, "50")
         self.fastForwardBtn = Button(self,
                                      text=FAST_FORWARD_BUTTON_TEXT,
-                                     command=self.controller.fast_forward_callback)
+                                     command=self.controller.ff_callback)
         self.saveBtn = Button(self, text=SAVE_BUTTON_TEXT,
                               command=self.controller.save_callback)
         self.loadBtn = Button(self, text=LOAD_BUTTON_TEXT,
@@ -162,6 +163,8 @@ class ControlFrame(Frame):
                                    command=self.controller.shapes_callback)
         self.rewardsButton = Button(self, text=REWARDS_BUTTON_TEXT,
                                     command=self.controller.rewards_callback)
+        self.featuresButton = Button(self, text=FEATURES_BUTTON_TEXT,
+                                     command=self.controller.features_callback)
 
         input_width = 5
 
@@ -199,6 +202,7 @@ class ControlFrame(Frame):
 
             [(self.shapesButton, w_and_colspan_3)],
             [(self.rewardsButton, w_and_colspan_3)],
+            [(self.featuresButton, w_and_colspan_3)],
             [(self.alphaLabel, e), (self.alphaInput, w)],
             [(self.gammaLabel, e), (self.gammaInput, w)],
             [(self.epsilonLabel, e), (self.epsilonInput, w)],
@@ -250,7 +254,7 @@ class MainController(object):
 
         self.parent.protocol("WM_DELETE_WINDOW", self.quit_callback)
         self.parent.bind("<Escape>", self.quit_callback)
-        self.parent.bind("<Control-f>", self.fast_forward_callback)
+        self.parent.bind("<Control-f>", self.ff_callback)
         self.parent.bind("<Control-space>", self.pause_callback)
 
         self._load_config()
@@ -311,7 +315,7 @@ class MainController(object):
                 'blocks': blocks,
                 'step_count': agent.step_count,
                 'q_value': agent.action_from_q
-                }
+            }
 
     def _update_labels(self, agent_state):
         self.panel.blocksLabel["text"] = PLACED_BLOCKS_LABEL.format(
@@ -345,7 +349,7 @@ class MainController(object):
         agent.gamma = gamma
         agent.epsilon = epsilon
 
-    def fast_forward_callback(self, event=None):
+    def ff_callback(self, event=None):
         if not agent.fast_forward:
             self.board.clear()
             agent.fast_forward_total = int(
@@ -415,6 +419,11 @@ class MainController(object):
             self.rewards_dialog.destroy()
         self.rewards_dialog = RewardsDialog()
 
+    def features_callback(self):
+        if hasattr(self, 'features_dialog'):
+            self.features_dialog.destroy()
+        self.features_dialog = StateFeatureDialog()
+
 
 class PlotController(object):
     def __init__(self, parent):
@@ -459,7 +468,7 @@ class PlotController(object):
 
 class MeasuredAgent(Agent):
     """
-    Special class for GUI representation with slower calculation speed
+    Special class for GUI representation with measurements and event handling
     """
 
     def __init__(self):
@@ -570,7 +579,9 @@ class RewardsDialog(Toplevel):
         Button(self, text="Ok", command=self.on_ok).grid(column=4, row=20)
 
     def init_rewards(self):
-        avail_rewards = inspect.getmembers(reward_features, lambda member: inspect.isfunction(member) and member.__module__ == 'reward_features')
+        avail_rewards = inspect.getmembers(reward_features,
+                                           lambda member: inspect.isfunction(
+                                               member) and member.__module__ == 'reward_features')
         active_rewards = agent.environment.rewards
         self.rewards_settings = {}
 
@@ -578,9 +589,10 @@ class RewardsDialog(Toplevel):
 
         for reward in avail_rewards:
             active = BooleanVar()
-            Checkbutton(self, text=reward[0], variable=active).grid(column=c, row=r)
+            Checkbutton(self, text=reward[0], variable=active).grid(column=c,
+                                                                    row=r)
             textfield = Entry(self, width=5)
-            textfield.grid(column=c+1, row=r)
+            textfield.grid(column=c + 1, row=r)
 
             if reward[1] in active_rewards:
                 active.set(True)
@@ -598,9 +610,53 @@ class RewardsDialog(Toplevel):
 
         for reward, settings in self.rewards_settings.iteritems():
             if settings[0].get() != 0 and settings[1].get() != '':
-                rewards[reward] = int(settings[1].get())
+                rewards[reward] = float(settings[1].get())
 
         agent.environment.rewards = rewards
+        self.destroy()
+
+
+class StateFeatureDialog(Toplevel):
+    def __init__(self, **kw):
+        Toplevel.__init__(self, **kw)
+
+        self.init_features()
+
+        Button(self, text="Ok", command=self.on_ok).grid(column=4, row=20)
+
+    def init_features(self):
+        avail_features = inspect.getmembers(features,
+                                            lambda member: inspect.isfunction(
+                                                member) and member.__module__ == 'features')
+        active_features = agent.features
+        self.feature_settings = {}
+
+        r, c = 0, 0
+
+        for reward in avail_features:
+            active = BooleanVar()
+            Checkbutton(self, text=reward[0], variable=active).grid(column=c,
+                                                                    row=r)
+
+            if reward[1] in active_features:
+                active.set(True)
+
+            self.feature_settings[reward[1]] = active
+
+            # these are for 3 features per line
+            c += 2
+            if c > 4:
+                c = 0
+                r += 1
+
+    def on_ok(self):
+        features = []
+
+        for feature, setting in self.feature_settings.iteritems():
+            if setting.get() != 0:
+                features.append(feature)
+
+        agent.features = features
         self.destroy()
 
 
