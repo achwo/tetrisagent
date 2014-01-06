@@ -3,7 +3,8 @@ import json
 import os
 
 CONFIG_FILENAME = 'config.json'
-STATISTICS_FILENAME = 'statistics.json'
+STATISTICS_FILENAME = 'q-statistics.json'
+Q_FILENAME = 'q-table.bin'
 
 
 def save_gui_config(controller):
@@ -19,17 +20,6 @@ def save_gui_config(controller):
         json.dump(config, f)
 
 
-def load_gui_config(controller):
-    path = os.path.join(os.path.dirname(os.path.realpath(__file__)),
-                        CONFIG_FILENAME)
-    try:
-        with open(path, 'r') as f:
-            return json.load(f)
-    except IOError:
-        print 'Error reading config file'
-
-
-# TODO: refactoring
 def save_statistics(array):
     path = os.path.join(os.path.dirname(os.path.realpath(__file__)),
                         STATISTICS_FILENAME)
@@ -38,10 +28,9 @@ def save_statistics(array):
         json.dump(config, f)
 
 
-# TODO: refactoring
-def load_statistics():
+def load_json(filename):
     path = os.path.join(os.path.dirname(os.path.realpath(__file__)),
-                        STATISTICS_FILENAME)
+                        filename)
     try:
         with open(path, 'r') as f:
             return json.load(f)
@@ -49,13 +38,16 @@ def load_statistics():
         print 'Error reading config file'
 
 
-def save_to_file(dictionary, filename):
-    with open(filename, 'wb') as f:
+def save_q_table(dictionary):
+    path = os.path.join(os.path.dirname(os.path.realpath(__file__)),
+                        Q_FILENAME)
+    with open(path, 'wb') as f:
         pickle.dump(dictionary, f)
 
 
-def read_from_file(filename):
-    with open(filename) as f:
+def load_q_table():
+    path = os.path.join(os.path.dirname(os.path.realpath(__file__)),
+                        Q_FILENAME)
+    with open(path) as f:
         dictionary = pickle.load(f)
-
     return dictionary

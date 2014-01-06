@@ -6,6 +6,7 @@ import Queue
 import inspect
 import threading
 import tkFileDialog
+import tkMessageBox
 import copy
 
 import matplotlib
@@ -260,7 +261,7 @@ class MainController(object):
         self._load_config()
 
     def _load_config(self):
-        config = util.load_gui_config(self)
+        config = util.load_json(util.CONFIG_FILENAME)
 
         if config:
             a = self.panel.alphaInput
@@ -360,19 +361,16 @@ class MainController(object):
                 self.pause_callback()
 
     def save_callback(self):
-        filename = tkFileDialog.asksaveasfilename(**self.options)
-
-        if filename:
-            util.save_to_file(agent.Q, filename)
-            util.save_statistics(agent.steps_per_episode)
+        util.save_q_table(agent.Q)
+        util.save_statistics(agent.steps_per_episode)
+        tkMessageBox.showinfo('Gratulation!', 'Die Q-Tabelle wurde erfolgreich gespeichert')
 
     def load_callback(self):
-        filename = tkFileDialog.askopenfilename(**self.options)
-
-        if filename:
-            agent.Q = util.read_from_file(filename)
-            stats = util.load_statistics()
-            agent.steps_per_episode = stats['steps_per_episode']
+        agent.Q = util.load_q_table()
+        stats = util.load_json(util.STATISTICS_FILENAME)
+        agent.steps_per_episode = stats['steps_per_episode']
+        agent.push_state()
+        tkMessageBox.showinfo('Heureka!', 'Die Q-Tabelle wurde erfolgreich geladen')
 
     def quit_callback(self, event=None):
         agent.stop_event.set()
@@ -478,6 +476,9 @@ class MeasuredAgent(Agent):
         self.fast_forward_total = 0
         self.fast_forward_count = 0
 
+    def push_state(self):
+        self._push_state()
+
     def _wait_for_update(self):
         if self.resume_event.is_set() and not self.stop_event.is_set():
             self._push_state()
@@ -511,7 +512,6 @@ class MeasuredAgent(Agent):
         self.step_count += 1
         if not self.fast_forward:
             self._wait_for_update()
-            #time.sleep(STEP_SLOWDOWN_IN_SEC)
 
     def stop_fast_forward(self):
         self.fast_forward = False
@@ -592,7 +592,6 @@ class RewardsController(object):
 
         agent.environment.rewards = rewards
         self.dialog.destroy()
-        
 
 
 class RewardsDialog(Toplevel):
@@ -620,6 +619,7 @@ class RewardsDialog(Toplevel):
                 c = 0
                 r += 1
 
+
 class StateFeatureController():
     def __init__(self):
         self.feature_settings = {}
@@ -630,7 +630,6 @@ class StateFeatureController():
         self.active_features = agent.features
 
         self.dialog = StateFeatureDialog(self)
-
 
     def on_ok(self):
         features = []
