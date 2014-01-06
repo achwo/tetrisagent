@@ -1,6 +1,6 @@
 # Ausblick
-
-TODO: Einleitung
+Im Folgenden sind einige Vorschlaege fuer weitere Features, die hinzugefuegt werden koennten.
+Ausserdem sind unten weitere moegliche Experimente aufgelistet, die vielversprechend sein koennten.
 
 ## Tetrisfeatures
 - Spielen gegen den Bot

@@ -79,10 +79,18 @@ Die verschiedenen Shapes werden in den jeweiligen Unterklassen festgehalten. Die
 enthalten die Form des Shapes in den verschiedenen moeglichen Rotationen als Listen.
 
 ## features.py
-TODO features..
+In dem features.py enthalten sind Features, die den State beschreiben. Alle Funktionen
+in diesem Modul werden automatisch im State-Features-Fenster aufgelistet.
+
+TODO weitere infos zu den features..
 
 ## reward_features.py
-TODO reward features..
+Im reward_features-Modul sind Features zu finden, die zur Berechnung der Reward 
+verwendet werden koennen. Jede reward Funktion erhaelt beim Aufruf das Environment-Objekt, 
+von dem es Daten abrufen kann. Alle Funktionen in diesem Modul werden automatisch im
+Reward-Features-Fenster aufgelistet.
+ 
+TODO mehr infos zu den rewards..
 
 ## util.py
 TODO utils.. vllt ins gui-modul?
