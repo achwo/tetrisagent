@@ -415,14 +415,13 @@ class MainController(object):
         self.shapes_dialog = ShapesDialog()
 
     def rewards_callback(self):
-        if hasattr(self, 'rewards_dialog'):
-            self.rewards_dialog.destroy()
-        self.rewards_dialog = RewardsDialog()
+        RewardsController()
 
     def features_callback(self):
-        if hasattr(self, 'features_dialog'):
-            self.features_dialog.destroy()
-        self.features_dialog = StateFeatureDialog()
+        StateFeatureController()
+        #if hasattr(self, 'features_dialog'):
+        #    self.features_dialog.destroy()
+        #self.features_dialog = StateFeatureDialog()
 
 
 class PlotController(object):
@@ -570,40 +569,20 @@ class ShapesDialog(Toplevel):
             self.shapes[shape] = BooleanVar(value=True)
 
 
-class RewardsDialog(Toplevel):
-    def __init__(self, **kw):
-        Toplevel.__init__(self, **kw)
-
+class RewardsController(object):
+    def __init__(self):
         self.init_rewards()
+        self.rewards_settings = {}
+        self.dialog = RewardsDialog(self)
 
-        Button(self, text="Ok", command=self.on_ok).grid(column=4, row=20)
+    def destroy():
+        self.dialog.destroy()
 
     def init_rewards(self):
-        avail_rewards = inspect.getmembers(reward_features,
-                                           lambda member: inspect.isfunction(
-                                               member) and member.__module__ == 'reward_features')
-        active_rewards = agent.environment.rewards
-        self.rewards_settings = {}
-
-        r, c = 0, 0
-
-        for reward in avail_rewards:
-            active = BooleanVar()
-            Checkbutton(self, text=reward[0], variable=active).grid(column=c,
-                                                                    row=r)
-            textfield = Entry(self, width=5)
-            textfield.grid(column=c + 1, row=r)
-
-            if reward[1] in active_rewards:
-                active.set(True)
-                textfield.insert(0, active_rewards[reward[1]])
-
-            self.rewards_settings[reward[1]] = [active, textfield]
-
-            c += 2
-            if c > 4:
-                c = 0
-                r += 1
+        self.avail_rewards = inspect.getmembers(reward_features,
+                            lambda member: inspect.isfunction(
+                            member) and member.__module__ == 'reward_features')
+        self.active_rewards = agent.environment.rewards
 
     def on_ok(self):
         rewards = {}
@@ -613,41 +592,46 @@ class RewardsDialog(Toplevel):
                 rewards[reward] = float(settings[1].get())
 
         agent.environment.rewards = rewards
-        self.destroy()
+        self.dialog.destroy()
+        
 
 
-class StateFeatureDialog(Toplevel):
-    def __init__(self, **kw):
+class RewardsDialog(Toplevel):
+    def __init__(self, controller, **kw):
         Toplevel.__init__(self, **kw)
 
-        self.init_features()
-
-        Button(self, text="Ok", command=self.on_ok).grid(column=4, row=20)
-
-    def init_features(self):
-        avail_features = inspect.getmembers(features,
-                                            lambda member: inspect.isfunction(
-                                                member) and member.__module__ == 'features')
-        active_features = agent.features
-        self.feature_settings = {}
+        Button(self, text="Ok", command=controller.on_ok).grid(column=4, row=20)
 
         r, c = 0, 0
 
-        for reward in avail_features:
+        for reward in controller.avail_rewards:
             active = BooleanVar()
-            Checkbutton(self, text=reward[0], variable=active).grid(column=c,
-                                                                    row=r)
+            Checkbutton(self, text=reward[0], variable=active).grid(column=c, row=r)
+            textfield = Entry(self, width=5)
+            textfield.grid(column=c + 1, row=r)
 
-            if reward[1] in active_features:
+            if reward[1] in controller.active_rewards:
                 active.set(True)
+                textfield.insert(0, controller.active_rewards[reward[1]])
 
-            self.feature_settings[reward[1]] = active
+            controller.rewards_settings[reward[1]] = [active, textfield]
 
-            # these are for 3 features per line
             c += 2
             if c > 4:
                 c = 0
                 r += 1
+
+class StateFeatureController():
+    def __init__(self):
+        self.feature_settings = {}
+
+        self.avail_features = inspect.getmembers(features,
+                                lambda member: inspect.isfunction(
+                                member) and member.__module__ == 'features')
+        self.active_features = agent.features
+
+        self.dialog = StateFeatureDialog(self)
+
 
     def on_ok(self):
         features = []
@@ -657,7 +641,32 @@ class StateFeatureDialog(Toplevel):
                 features.append(feature)
 
         agent.features = features
-        self.destroy()
+        self.dialog.destroy()
+
+
+class StateFeatureDialog(Toplevel):
+    def __init__(self, controller, **kw):
+        Toplevel.__init__(self, **kw)
+
+        Button(self, text="Ok", command=controller.on_ok).grid(column=4, row=20)
+
+        r, c = 0, 0
+
+        for reward in controller.avail_features:
+            active = BooleanVar()
+            Checkbutton(self, text=reward[0], variable=active).grid(column=c,
+                                                                    row=r)
+
+            if reward[1] in controller.active_features:
+                active.set(True)
+
+            controller.feature_settings[reward[1]] = active
+
+            # these are for 3 features per line
+            c += 2
+            if c > 4:
+                c = 0
+                r += 1
 
 
 def start_agent(stop_event, resume_event, wait_for_update_event):
