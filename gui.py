@@ -556,7 +556,6 @@ class ShapesController(object):
         agent.environment.choose_next_shape()
         self.dialog.destroy()
 
-    def init_shapes(self, possible_shapes):
 
 class ShapesDialog(Toplevel):
     def __init__(self, controller, **kw):
@@ -577,14 +576,8 @@ class ShapesDialog(Toplevel):
 
 class RewardsController(object):
     def __init__(self):
-        self.init_rewards()
         self.rewards_settings = {}
-        self.dialog = RewardsDialog(self)
 
-    def destroy():
-        self.dialog.destroy()
-
-    def init_rewards(self):
         self.avail_rewards = inspect.getmembers(reward_features,
                             lambda member: inspect.isfunction(
                             member) and member.__module__ == 'reward_features')
