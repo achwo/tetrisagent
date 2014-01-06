@@ -27,5 +27,8 @@ Der Tetrisagent verfuegt ueber folgende wesentliche Features.
 
 # Keyboard Shortcuts
 Play/Pause: strg+leer
+
 Fast Forward: strg+f
+
 Quit: Esc
+
