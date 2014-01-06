@@ -1,0 +1,10 @@
+syntax: glob
+
+*.pyc
+*.pyo
+*.swp
+*~
+*-project
+*-workspace
+*.orig
+config.json
