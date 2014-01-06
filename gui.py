@@ -160,11 +160,11 @@ class ControlFrame(Frame):
                               command=self.controller.quit_callback)
 
         self.shapesButton = Button(self, text=SHAPES_BUTTON_TEXT,
-                                   command=self.controller.shapes_callback)
+                                   command=ShapesController)
         self.rewardsButton = Button(self, text=REWARDS_BUTTON_TEXT,
-                                    command=self.controller.rewards_callback)
+                                    command=RewardsController)
         self.featuresButton = Button(self, text=FEATURES_BUTTON_TEXT,
-                                     command=self.controller.features_callback)
+                                     command=StateFeatureController)
 
         input_width = 5
 
@@ -409,20 +409,6 @@ class MainController(object):
     def _resume_agent(self):
         agent.resume_event.set()
 
-    def shapes_callback(self):
-        if hasattr(self, 'shapes_dialog'):
-            self.shapes_dialog.destroy()
-        self.shapes_dialog = ShapesDialog()
-
-    def rewards_callback(self):
-        RewardsController()
-
-    def features_callback(self):
-        StateFeatureController()
-        #if hasattr(self, 'features_dialog'):
-        #    self.features_dialog.destroy()
-        #self.features_dialog = StateFeatureDialog()
-
 
 class PlotController(object):
     def __init__(self, parent):
@@ -532,32 +518,9 @@ class MeasuredAgent(Agent):
             self.dataQ.put(blockcopy)
 
 
-class ShapesDialog(Toplevel):
-    def __init__(self, **kw):
-        Toplevel.__init__(self, **kw)
-
-        self.init_shapes(agent.environment.possible_shapes)
-
-        Checkbutton(self, text='L', variable=self.shapes[LShape]).grid(column=0, row=1)
-        Checkbutton(self, text='J', variable=self.shapes[JShape]).grid(column=1, row=1)
-        Checkbutton(self, text='O', variable=self.shapes[OShape]).grid(column=2, row=1)
-        Checkbutton(self, text='S', variable=self.shapes[SShape]).grid(column=3, row=1)
-        Checkbutton(self, text='Z', variable=self.shapes[ZShape]).grid(column=0, row=2)
-        Checkbutton(self, text='I', variable=self.shapes[IShape]).grid(column=1, row=2)
-        Checkbutton(self, text='T', variable=self.shapes[TShape]).grid(column=2, row=2)
-
-        Button(self, text="Ok", command=self.on_ok).grid(column=3, row=3)
-
-    def on_ok(self):
-        shapes = []
-        for shape, value in self.shapes.iteritems():
-            if value.get() != 0:
-                shapes.append(shape)
-
-        agent.environment.possible_shapes = shapes
-        self.destroy()
-
-    def init_shapes(self, possible_shapes):
+class ShapesController(object):
+    def __init__(self):
+        possible_shapes = agent.environment.possible_shapes
 
         self.shapes = {LShape: BooleanVar(), JShape: BooleanVar(),
                        OShape: BooleanVar(), SShape: BooleanVar(),
@@ -567,21 +530,45 @@ class ShapesDialog(Toplevel):
         for shape in possible_shapes:
             self.shapes[shape] = BooleanVar(value=True)
 
+        self.dialog = ShapesDialog(self)
+
+    def on_ok(self):
+        shapes = []
+        for shape, value in self.shapes.iteritems():
+            if value.get() != 0:
+                shapes.append(shape)
+
+        agent.environment.possible_shapes = shapes
+        agent.environment.choose_next_shape()
+        self.dialog.destroy()
+
+
+class ShapesDialog(Toplevel):
+    def __init__(self, controller, **kw):
+        Toplevel.__init__(self, **kw)
+
+        shapes = controller.shapes
+
+        Checkbutton(self, text='L', variable=shapes[LShape]).grid(column=0, row=1)
+        Checkbutton(self, text='J', variable=shapes[JShape]).grid(column=1, row=1)
+        Checkbutton(self, text='O', variable=shapes[OShape]).grid(column=2, row=1)
+        Checkbutton(self, text='S', variable=shapes[SShape]).grid(column=3, row=1)
+        Checkbutton(self, text='Z', variable=shapes[ZShape]).grid(column=0, row=2)
+        Checkbutton(self, text='I', variable=shapes[IShape]).grid(column=1, row=2)
+        Checkbutton(self, text='T', variable=shapes[TShape]).grid(column=2, row=2)
+
+        Button(self, text="Ok", command=controller.on_ok).grid(column=3, row=3)
+
 
 class RewardsController(object):
     def __init__(self):
-        self.init_rewards()
         self.rewards_settings = {}
-        self.dialog = RewardsDialog(self)
 
-    def destroy():
-        self.dialog.destroy()
-
-    def init_rewards(self):
         self.avail_rewards = inspect.getmembers(reward_features,
                             lambda member: inspect.isfunction(
                             member) and member.__module__ == 'reward_features')
         self.active_rewards = agent.environment.rewards
+        self.dialog = RewardsDialog(self)
 
     def on_ok(self):
         rewards = {}
@@ -592,7 +579,6 @@ class RewardsController(object):
 
         agent.environment.rewards = rewards
         self.dialog.destroy()
-        
 
 
 class RewardsDialog(Toplevel):
@@ -620,7 +606,8 @@ class RewardsDialog(Toplevel):
                 c = 0
                 r += 1
 
-class StateFeatureController():
+
+class StateFeatureController(object):
     def __init__(self):
         self.feature_settings = {}
 
@@ -630,7 +617,6 @@ class StateFeatureController():
         self.active_features = agent.features
 
         self.dialog = StateFeatureDialog(self)
-
 
     def on_ok(self):
         features = []
@@ -661,7 +647,7 @@ class StateFeatureDialog(Toplevel):
 
             controller.feature_settings[reward[1]] = active
 
-            # these are for 3 features per line
+            # 3 features per line
             c += 2
             if c > 4:
                 c = 0
