@@ -25,12 +25,9 @@ holen sie die relevanten Daten fuer die Fenster.
 
 Im PlotController wird die Logik fuer den Graphen gehalten.
 
-TODO der OptionsController existiert noch nicht in der Form.....
-Das dritte Fenster ist das Options-Fenster. Hier kann man einstellen, welche
-State- und Reward-Features verwendet werden sollen. Es wird vom OptionsController
-verwaltet und vom OptionsDialog dargestellt. Das besondere hier ist, dass die
-verfuegbaren Features anhand der Methoden in den jeweiligen Modulen (reward_features.py
-und features.py) geparsed und befuellt werden.
+Ausserdem gibt es noch RewardsController, ShapesController und StateFeatureController.
+Bei diesen handelt es sich um die Auswahl der aktivierten Funktionen bzw. Shapes.
+Das besondere hier ist, dass die verfuegbaren Features anhand der Methoden in den jeweiligen Modulen (reward_features.py und features.py) geparsed und befuellt werden.
 
 ### Zusammenspiel zwischen der GUI und dem Agenten
 Die Oberflaeche und der Agent laufen jeweils in einem eigenen Thread. Wobei die
@@ -79,10 +76,18 @@ Die verschiedenen Shapes werden in den jeweiligen Unterklassen festgehalten. Die
 enthalten die Form des Shapes in den verschiedenen moeglichen Rotationen als Listen.
 
 ## features.py
-TODO features..
+In dem features.py enthalten sind Features, die den State beschreiben. Alle Funktionen
+in diesem Modul werden automatisch im State-Features-Fenster aufgelistet.
+
+TODO weitere infos zu den features..
 
 ## reward_features.py
-TODO reward features..
+Im reward_features-Modul sind Features zu finden, die zur Berechnung der Reward 
+verwendet werden koennen. Jede reward Funktion erhaelt beim Aufruf das Environment-Objekt, 
+von dem es Daten abrufen kann. Alle Funktionen in diesem Modul werden automatisch im
+Reward-Features-Fenster aufgelistet.
+
+TODO mehr infos zu den rewards..
 
 ## util.py
 TODO utils.. vllt ins gui-modul?
