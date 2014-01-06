@@ -25,13 +25,27 @@ holen sie die relevanten Daten fuer die Fenster.
 
 Im PlotController wird die Logik fuer den Graphen gehalten.
 
-TODO wie funktioniert die Zusammenarbeit zw. gui und Agent :)
 TODO der OptionsController existiert noch nicht in der Form.....
 Das dritte Fenster ist das Options-Fenster. Hier kann man einstellen, welche
 State- und Reward-Features verwendet werden sollen. Es wird vom OptionsController
 verwaltet und vom OptionsDialog dargestellt. Das besondere hier ist, dass die
 verfuegbaren Features anhand der Methoden in den jeweiligen Modulen (reward_features.py
 und features.py) geparsed und befuellt werden.
+
+### Zusammenspiel zwischen der GUI und dem Agenten
+Die Oberflaeche und der Agent laufen jeweils in einem eigenen Thread. Wobei die
+GUI als Haupt-Thread gestartet wird und anschließend eine Instanz des Agenten
+in einem weiteren Thread startet.
+Die Kommunikation zwischen den Threads findet mittels Events statt. Wird
+beispielsweise in der GUI der Pause-Button gedrueckt, wird das resume_event auf
+'unset' gesetzt und der Agent haelt seine Ausfuehrung an bis das Event erneut
+ausgeloest wird. Neben dem resume_event gibt es noch das stop_event um die
+Anwendung zu beenden und das wait_for_update_event. Das letztere sorgt in der
+Schritt-fuer-Schritt Anzeige dafuer, dass der Agent nach jedem Schritt anhaelt
+und auf die Aktualisierung der GUI wartet. Erst wenn die GUI meldet, das der
+naechste Schritt erfolgen soll, wird fortgefahren.
+Die GUI wird mittels einer Refreshfunktion 'after()' des TKInter Frameworks in
+regelmaessigen Abstaenden aktualisiert.
 
 ## agent.py
 Im agent-Modul werden die Klassen Agent und PerceivedState gehalten. Die Agent-Klasse

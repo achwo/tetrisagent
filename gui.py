@@ -517,8 +517,7 @@ class MeasuredAgent(Agent):
     def stop_fast_forward(self):
         self.fast_forward = False
         self.fast_forward_count = self.fast_forward_total
-
-        #self._wait_for_update()
+        self._wait_for_update()
 
     def _is_fast_forward_finished(self):
         return (self.fast_forward and self.fast_forward_count <= 0)
