@@ -13,6 +13,7 @@ TODO: Einleitung
 ## Algorithmus
 - andere Algorithmen verwenden (z.B. Q-Lambda)
 - moeglicherweise weitere zustandsmodellierende und Reward-Features implementieren
+- neuronales Netz
 
 ## Testing
 - Verbesserung der Testmoeglichkeiten (z.B. mehrmaliges laufen bei gleichen Settings, automatisiertes Testen von mehreren Szenarien)
