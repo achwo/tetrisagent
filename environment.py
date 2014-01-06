@@ -45,6 +45,9 @@ class Environment(object):
         self._choose_next_shape()
         self.deleted_lines_last_round = 0
 
+    def choose_next_shape(self):
+        self._choose_next_shape()
+
     def possible_actions(self):
         """
         Calculates which actions are possible for the current shape.
