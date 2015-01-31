@@ -10,6 +10,28 @@
                                                          \_/__/                    
 
 ```
+# Installation
+
+## Mac OSX
+Schritte:
+1. brew install python
+2. brew install hg
+3. hg clone ssh://hg@bitbucket.org/timsn/tetrisagent
+4. cd tetrisagent
+5. sudo easy_install pip (might be unnecessary depending on python installation)
+6. sudo pip install -r requirements.txt --allow-external BitVector --allow-unverified BitVector
+
+## Anmerkung
+Wir wollen eigentlich ein Docker file verwenden, um die Installation zu erleichtern.# Ausführung
+python gui.py
+
+# Keyboard Shortcuts
+Play/Pause: strg+leer
+
+Fast Forward: strg+f
+
+Quit: Esc
+
 # Featureumfang der Anwendung
 Bei Tetrisagent handelt es sich um eine Anwendung, in der ein Agent mittels Techniken des Reinforcement Learnings bei einer vereinfachten Form eines Tetrisspiels Aktionen auswaehlen und ausfuehren kann und so selbststaendig besser werden soll. Mittels der graphischen Oberflaeche kann man diesen Lernfortschritt ueberwachen und viele Einstellungen veraendern.
 Der Agent arbeitet mit dem Q-Learning-Algorithmus. Mittels Features werden die Zustaende modelliert und die Rewards berechnet. 	
@@ -36,13 +58,6 @@ Der Tetrisagent verfuegt ueber folgende wesentliche Features.
 
 ### Agent
 - Q-Learning mit eigener PerceivedState-Klasse, die mittels Features den Zustand modelliert.
-
-# Keyboard Shortcuts
-Play/Pause: strg+leer
-
-Fast Forward: strg+f
-
-Quit: Esc
 
 # Codestruktur
 
