@@ -14,6 +14,7 @@
 
 ## Mac OSX
 Schritte:
+
 1. brew install python
 2. brew install hg
 3. hg clone ssh://hg@bitbucket.org/timsn/tetrisagent
@@ -22,7 +23,8 @@ Schritte:
 6. sudo pip install -r requirements.txt --allow-external BitVector --allow-unverified BitVector
 
 ## Anmerkung
-Wir wollen eigentlich ein Docker file verwenden, um die Installation zu erleichtern.# Ausführung
+Wir wollen eigentlich ein Docker file verwenden, um die Installation zu erleichtern.
+# Ausführung
 python gui.py
 
 # Keyboard Shortcuts
