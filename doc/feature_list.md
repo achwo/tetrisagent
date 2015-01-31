@@ -25,10 +25,3 @@ Der Tetrisagent verfuegt ueber folgende wesentliche Features.
 ### Agent
 - Q-Learning mit eigener PerceivedState-Klasse, die mittels Features den Zustand modelliert.
 
-# Keyboard Shortcuts
-Play/Pause: strg+leer
-
-Fast Forward: strg+f
-
-Quit: Esc
-
