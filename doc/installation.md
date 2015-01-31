@@ -2,6 +2,7 @@
 
 ## Mac OSX
 Schritte:
+
 1. brew install python
 2. brew install hg
 3. hg clone ssh://hg@bitbucket.org/timsn/tetrisagent
