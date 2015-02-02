@@ -1,4 +1,4 @@
 matplotlib
 BitVector
 mock<=1.0.1
-numpy<=1.7.1
+numpy
