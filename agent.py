@@ -36,6 +36,20 @@ class Agent(object):
         self._initialize_state()
         self.random = random.Random()
         self.Q = defaultdict(int)
+        # NOTE(felix): i think q should be initialized to minint, because we have
+        # negative rewards, so all our values are below 0.
+        # that means, if we init to 0, all new values are considered
+        # to have a better value than old ones.
+        # 
+        # i leave it as it is, because it causes more exploration and 
+        # therefore good results, and because it's too early to judge without
+        # review.
+        #
+        # possible fix: 
+#        self.Q = defaultdict(lambda:-sys.maxint - 1)
+
+        # alternative would be to not allow negative rewards
+
         self.alpha = 0.9  # lernrate
         self.gamma = 0.8  # discount rate
         self.epsilon = 0.3  # probability of random action in epsilon greedy policy
